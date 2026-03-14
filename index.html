@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta name="theme-color" content="#3d3d3d" media="(prefers-color-scheme: dark)" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="css/font.css" />
+  <link rel="stylesheet" href="css/cmd.css" />
+  <link rel="stylesheet" href="css/keyframes.css" />
+  <link rel="stylesheet" href="css/window-mode.css">
+  <title>Microsoft Windows 11 24H2</title>
+  <link rel="shortcut icon" href="icon/favicon.ico" type="image/x-icon" />
+</head>
+
+<body>
+  <!-- <div class="app-icon" data-window="folder-app">
+    <div class="icon-image">📁</div>
+    <span>My Folder</span>
+</div>
+
+<div class="app-icon" data-window="settings-app">
+    <div class="icon-image">⚙️</div>
+    <span>Settings</span>
+</div> -->
+<div class="window folder-app hidden">
+    <div class="title-bar">
+        <div class="title-window"></div>
+        <div class="window-controls">
+            <button class="control-btn minimize">−</button>
+            <button class="control-btn maximize">◻</button>
+            <button class="control-btn close">✕</button>
+        </div>
+    </div>
+    <div class="window-content">
+        <p>This is the folder app!</p>
+    </div>
+  </div>
+<div class="window settings-app hidden" style="left: 150px; top: 100px;">
+    <div class="title-bar">
+        <div class="title">Settings</div>
+        <div class="window-controls">
+            <button class="control-btn minimize">−</button>
+            <button class="control-btn maximize">◻</button>
+            <button class="control-btn close">✕</button>
+        </div>
+    </div>
+    <div class="window-content">
+        <p>This is the settings app!</p>
+    </div>
+</div>
+  <div class="lock-screen" id="lockScreen">
+    <div class="clock-and-dates">
+      <span class="clock" id="clock"></span>
+      <span class="dates-lock-screen" id="datesLockScreen"></span>
+    </div>
+  </div>
+  <div class="cmd" id="cmd">
+    <div>
+      <div>Command Prompt</div>
+      <div class="tab-tool">
+        <span>_</span>
+        <span>&#9633;</span>
+        <span onclick="closeTab('cmd')">&times;</span>
+      </div>
+    </div>
+    <div class="terminal" id="terminal">
+      <div id="win-version">
+        Microsoft Windows [Version 10.0.19044.2130]<br>
+        (c) Microsoft Corporation. All rights reserved.<br><br>
+      </div>
+      <div id="history"></div>
+      <div class="input-line">
+        <span class="prompt" id="prompt">C:Windows/System32&gt;</span>
+        <input type="text" id="command-input" autocomplete="off" autofocus />
+      </div>
+    </div>
+  </div>
+  <div class="screen-not-supported">
+    <h1>Screen is not supported</h1>
+    <p>
+      Windows is <b>not</b> designed for mobile devices, but you can still try
+      Windows 11 here in older desktop/laptop without installing it first, and
+      compatible with older processors.
+    </p>
+    <p>
+      Make sure your screen resolution is <b>at least</b> 1366&times;768px, or 16:9 aspect ratio.
+    </p>
+    <span>Copyright 2025® nievacode-dev.github.io</span>
+  </div>
+  <div class="recycle-bin-menu" id="recycleBinMenu">
+    <div class="recycle-bin-titlebar"></div>
+    <div class="recycle-bin-item" id="openBin">Open</div>
+    <div class="recycle-bin-item" id="emptyBin">
+      <span>Empty Recycle Bin</span>
+      <div class="enter-bin">Enter</div>
+    </div>
+    <div class="recycle-bin-item">Pin to Start</div>
+    <div class="recycle-bin-item">
+      <span>Properties</span>
+      <div class="altenter-bin">Alt+Enter</div>
+    </div>
+    <div class="recycle-bin-item">Show more options</div>
+  </div>
+  <div class="context-menu" id="contextMenu">
+    <div class="context-item" id="view">
+      <span><span class="ico context-item-icon">&#xf0e2;</span>View</span><span
+        class="ico context-item-chevron">&#xe76c;</span>
+      <div class="view" id="viewHover">
+        <div class="view-item">Large icons</div>
+        <div class="view-item">Medium icons</div>
+        <div class="view-item">Small icons</div>
+        <div class="view-item">Auto arrange icons</div>
+        <div class="view-item">Align icons to grid</div>
+        <div class="view-item">Show desktop icons</div>
+      </div>
+    </div>
+    <div class="context-item" id="sortBy">
+      <span><span class="ico context-item-icon">&#xe8cb;</span>Sort by</span><span
+        class="ico context-item-chevron">&#xe76c;</span>
+      <div class="sort-by" id="sortByHover">
+        <div class="sort-by-item">Name</div>
+        <div class="sort-by-item">Size</div>
+        <div class="sort-by-item">Item type</div>
+        <div class="sort-by-item">Date modified</div>
+      </div>
+    </div>
+    <div class="context-item" id="refresh">
+      <span class="ico context-item-icon">&#xe72c;</span>Refresh
+    </div>
+    <div class="context-item" id="newItem">
+      <span><span class="ico context-item-icon"></span>New item</span><span
+        class="ico context-item-chevron">&#xe76c;</span>
+      <div class="new" id="newHover">
+        <div class="new-item" id="newFolder">Folder</div>
+        <div class="new-item">Shortcut</div>
+        <div class="new-item">Bitmap image</div>
+        <div class="new-item">Text Document</div>
+        <div class="new-item">Compressed (zipped) Folder</div>
+      </div>
+    </div>
+    <div class="context-item">Display settings</div>
+    <div class="context-item">
+      <span class="ico context-item-icon" id="personalize">&#xe771;</span>Personalize
+    </div>
+    <div class="context-item">Show more options</div>
+  </div>
+  <div class="gray-bg" id="grayBg"></div>
+  <div class="popup" id="popup">
+    <span class="close-popup" id="closePopup">&times;</span>
+    <h2>OS Version</h2>
+    <p id="popupText"></p>
+  </div>
+  <div id="wTab"></div>
+  <div class="apps" id="newApps">
+    <div class="app-desktop">
+      <img src="icon/recyclebinempty.ico" alt="Recycle Bin" class="app application" id="recycleBin" />
+      <span class="app-name">Recycle Bin</span>
+    </div>
+    <div class="app-desktop">
+      <div class="app-shortcut">
+        <img src="icon/edge.ico" alt="Microsoft Edge" class="app application" id="msedge" />
+        <img src="icon/shortcut.ico" class="shortcut" />
+      </div>
+      <span class="app-name">Microsoft Edge</span>
+    </div>
+    <!-- <div class="app-desktop">
+            <div class="app-shortcut">
+                <img src="icon/visualcode.ico" alt="Visual Studio Code" class="app application" id="vscode">
+                <img src="icon/shortcut.ico" class="shortcut">
+            </div>
+            <span class="app-name">Visual Studio Code</span>
+        </div> -->
+  </div>
+  <div class="shutdown-tab" id="shutdownTab">
+    <div class="shutdown-titlebar">
+      <span class="shutdown-title">Shut Down Windows</span>
+    </div>
+    <div class="shutdown-content">
+      <img src="icon/Windows_11_logo.svg" alt="Windows 11" class="windows-logo" />
+      <p class="shutdown-text">What do you want the computer to do?</p>
+      <select id="shutdownSelector" class="shutdown-select" onchange="shutdownText()">
+        <option value="shutdown">Shutdown</option>
+        <option value="restart">Restart</option>
+        <option value="sleep">Sleep</option>
+      </select>
+      <p class="selector-text" id="selectorText">
+        Close all apps and turns off the PC.
+      </p>
+      <div class="btn-parent">
+        <button class="ok-btn" onclick="shutdownwin()">OK</button>
+        <button class="cancel-btn" onclick="closeTab('shutdownTab')">
+          Cancel
+        </button>
+        <button class="help-btn"><u>H</u>elp</button>
+      </div>
+    </div>
+  </div>
+  <div class="about-tab" id="aboutTab">
+    <div class="about-titlebar">
+      <span class="about-title">About Windows</span>
+      <button class="close-x" onclick="closeTab('aboutTab')">&times;</button>
+    </div>
+    <div class="about-content">
+      <img src="icon/Windows_11_logo.svg" alt="Windows 11" class="about-logo" />
+      <div class="about-border"></div>
+      <div class="about-content">
+        <p class="about-text">
+          Microsoft Windows<br />
+          Version 24H2 (OS Build 26100.3476)<br />
+          &copy;Microsoft Corporation. All rights reserved.
+        </p>
+        <p class="about-text">
+          The Windows 11 Pro operating system and its user interface are
+          protected by trademark and other pending or existing intellectual
+          property rights in the United States and other countries/regions.
+        </p>
+        <p class="about-text">
+          This product is licensed under the
+          <a href="#">Microsoft Software License Terms</a> to:
+        </p>
+        <p class="about-text">nievacode.dev@github.io</p>
+      </div>
+      <div class="about-btn">
+        <button class="about-ok" onclick="closeTab('aboutTab')">OK</button>
+      </div>
+    </div>
+  </div>
+  <div class="start-menu" id="startMenu">
+    <input type="text" class="search-bar" placeholder="Type here to search" />
+    <div class="start-content">
+      <p class="pinned">Pinned</p>
+      <button class="all-apps">
+        All apps <span class="ico all-apps-chevron">&#xe76c;</span>
+      </button>
+      <div class="start-apps">
+        <div class="start-app">
+          <img src="icon/edge.ico" class="app-list application" />
+          <span class="start-app-name">Edge</span>
+        </div>
+        <div class="start-app">
+          <img src="icon/word.ico" class="app-list application" />
+          <span class="start-app-name">Word</span>
+        </div>
+        <div class="start-app">
+          <img src="icon/excel.ico" class="app-list application" />
+          <span class="start-app-name">Excel</span>
+        </div>
+        <div class="start-app">
+          <img src="icon/powerpoint.ico" class="app-list application" />
+          <span class="start-app-name">PowerPoint</span>
+        </div>
+        <div class="start-app">
+          <img src="icon/Microsoft_365_Copilot_Icon.svg_.png" class="app-list application" />
+          <span class="start-app-name">Copilot</span>
+        </div>
+        <div class="start-app">
+          <img src="icon/outlook.ico" class="app-list application" />
+          <span class="start-app-name">Outlook (new)</span>
+        </div>
+        <div class="start-app">
+          <img src="icon/store4.ico" class="app-list application" />
+          <span class="start-app-name">Microsoft Store</span>
+        </div>
+        <div class="start-app">
+          <img src="icon/photos.ico" class="app-list application" />
+          <span class="start-app-name">Photos</span>
+        </div>
+        <div class="start-app">
+          <img src="icon/settings.ico" class="app-list application" />
+          <span class="start-app-name">Settings</span>
+        </div>
+        <div class="start-app">
+          <img src="icon/tasks.ico" class="app-list application" />
+          <span class="start-app-name">To Do</span>
+        </div>
+        <div class="start-app">
+          <img src="icon/calculator.ico" class="app-list application" />
+          <span class="start-app-name">Calculator</span>
+        </div>
+        <div class="start-app">
+          <img src="icon/alarm.ico" class="app-list application" />
+          <span class="start-app-name">Alarm</span>
+        </div>
+        <div class="start-app">
+          <img src="icon/notepad.ico" class="app-list application" />
+          <span class="start-app-name">Notepad</span>
+        </div>
+        <div class="start-app">
+          <img src="icon/paint.ico" class="app-list application" />
+          <span class="start-app-name">Paint</span>
+        </div>
+        <div class="start-app">
+          <img src="icon/snippingtool.ico" class="app-list application" />
+          <span class="start-app-name">Snipping Tool</span>
+        </div>
+        <div class="start-app">
+          <img src="icon/onenote.ico" class="app-list application" />
+          <span class="start-app-name">OneNote</span>
+        </div>
+        <div class="start-app">
+          <img src="icon/explorer.ico" class="app-list application" />
+          <span class="start-app-name">File Explorer</span>
+        </div>
+      </div>
+      <p class="recommended">Recommended</p>
+    </div>
+    <div class="shutdown-menu" id="shutDownMenu">
+      <div class="shutdown-item">Lock</div>
+      <div class="shutdown-item" id="sleepBtn" onclick="sleep()">Sleep</div>
+      <div class="shutdown-item" onclick="shutdown()">Shutdown</div>
+      <div class="shutdown-item" id="restartBtn">Restart</div>
+    </div>
+    <div class="user-menu" id="userMenu">
+      <div class="user-profile">
+        <img src="icon/icon-7797704_640.png" alt="Profile" class="profile-picture" />
+        <span class="username">nievacode.dev@github.io</span>
+      </div>
+      <div class="shutdown-btn ico" id="shutDownBtn">&#xe7e8;</div>
+    </div>
+  </div>
+  <div class="widgets-menu" id="widgetsMenu">
+    <!-- <div class="test-bg"></div> -->
+  </div>
+  <div class="search-menu" id="searchMenu">
+    <input type="text" class="search-bar" placeholder="Type here to search" />
+    <span>All</span>
+  </div>
+  <div class="run-failed" id="runFailed">
+    <div class="run-failed-titlebar">
+      <span id="errorTitle">error-test</span>
+      <button class="close-x" onclick="retryRun('runFailed')">&times;</button>
+    </div>
+    <div class="error-msg">
+      <img src="icon/error.ico" alt="Error" />
+      <p id="runError">
+        Windows cannot find '<span id="getError">error-test</span>' Make sure
+        you typed the name correctly, and then try again.
+      </p>
+    </div>
+    <span class="run-failed-title" id="runTitle"></span>
+    <div class="run-failed-bottom">
+      <div class="run-ok-btn">
+        <button class="ok-return" onclick="retryRun('runFailed')">OK</button>
+      </div>
+    </div>
+  </div>
+  <div class="run-program" id="runProgram">
+    <div class="run-titlebar">
+      <img src="icon/run.ico" alt="Run" />
+      <span class="run-title">Run</span>
+      <button class="run-close" onclick="closeTab('runProgram')">
+        &times;
+      </button>
+    </div>
+    <div class="run-content">
+      <div class="run-text">
+        <img src="icon/run.ico" alt="Run" />
+        <p>
+          Type the name of a program, folder, document, or Internet resource,
+          and Windows will open it for you.
+        </p>
+      </div>
+      <span class="run-open"><u>O</u>pen: </span>
+      <input type="text" id="runInput" class="run-input" list="runCommand" />
+      <datalist id="runCommand">
+        <option value="winver">winver</option>
+        <option value="sdtab">sdtab</option>
+      </datalist>
+      <!-- <select id="runInput" class="run-input">
+                <option value="winver">winver</option>
+                <option value="sdtab">sdtab</option>
+            </select> -->
+      <div class="run-btn">
+        <button class="run-ok" onclick="runWindows()" disabled id="okBtn">
+          OK
+        </button>
+        <button class="run-cancel" onclick="closeTab('runProgram')">
+          Cancel
+        </button>
+        <button class="run-browse" onclick="browse()"><u>B</u>rowse</button>
+      </div>
+    </div>
+  </div>
+  <div class="quick-settings" id="quickSettings">
+    <div class="quick-settings-main">
+      <div class="quick-settings-grid">
+        <div class="quick-settings-list">
+          <div class="quick-settings-list-btn ico">
+            <div class="quick-settings-ico">&#xe701;</div>
+            <div class="chevron-right">&#xe76c;</div>
+          </div>
+          <span class="quick-settings-list-name">Wi-Fi</span>
+        </div>
+        <div class="quick-settings-list">
+          <div class="quick-settings-list-btn ico">
+            <div class="quick-settings-ico">&#xe702;</div>
+            <div class="chevron-right">&#xe76c;</div>
+          </div>
+          <span class="quick-settings-list-name">Bluetooth</span>
+        </div>
+        <div class="quick-settings-list">
+          <div class="quick-settings-list-btn ico">
+            <div class="quick-setting-ico">&#xe709;</div>
+          </div>
+          <span class="quick-settings-list-name">Airplane mode</span>
+        </div>
+        <div class="quick-settings-list">
+          <div class="quick-settings-list-btn ico">
+            <div class="quick-setting-ico">&#xe863;</div>
+          </div>
+          <span class="quick-settings-list-name">Battery saver</span>
+        </div>
+        <div class="quick-settings-list">
+          <div class="quick-settings-list-btn ico">
+            <div class="quick-setting-ico">&#xf08c;</div>
+          </div>
+          <span class="quick-settings-list-name">Night light</span>
+        </div>
+        <div class="quick-settings-list">
+          <div class="quick-settings-list-btn ico">
+            <div class="quick-setting-ico">&#xe776; &#xe76c;</div>
+          </div>
+          <span class="quick-settings-list-name">Accessibility</span>
+        </div>
+      </div>
+    </div>
+    <div class="quick-settings-slider-menu">
+      <div class="quick-settings-slider">
+        <span class="brightness-icon ico">&#xe706;</span>
+        <input type="range" id="brightnessSlider" class="slider" max="100" value="100" min="30" />
+      </div>
+      <div class="quick-settings-slider">
+        <span class="brightness-icon ico">&#xe767;</span>
+        <input type="range" id="brightnessSlider" class="slider" max="100" value="100" min="30" />
+      </div>
+    </div>
+    <div class="quick-settings-edit">
+      <div class="battery-info">
+        <span class="battery ico">&#xe858;</span>
+        <span class="battery-percentage">70%</span>
+      </div>
+      <span class="setting ico">&#xe713;</span>
+    </div>
+  </div>
+  <div class="taskbar">
+    <div class="taskbar-middle" id="taskbarApps">
+      <div class="start-quick-link">
+        <div class="quick-link-menu" id="quickLink">
+          <div class="quick-link-item">Apps and Features</div>
+          <div class="quick-link-item">Mobility Centre</div>
+          <div class="quick-link-item">Power Options</div>
+          <div class="quick-link-item">Event Viewer</div>
+          <div class="quick-link-item">Device Manager</div>
+          <div class="quick-link-item">Network Connections</div>
+          <div class="quick-link-item">Disk Management</div>
+          <div class="quick-link-item">Computer Management</div>
+          <div class="quick-link-item">Windows Terminal</div>
+          <div class="quick-link-item">Windows Terminal (Admin)</div>
+          <div class="quick-link-item">Task Manager</div>
+          <div class="quick-link-item">Settings</div>
+          <div class="quick-link-item">File Explorer</div>
+          <div class="quick-link-item">Search</div>
+          <div class="quick-link-item">Run</div>
+          <div class="quick-link-item" id="shutdownQuickLink">
+            <span>Shut down or sign out</span>
+            <div class="shutdown-quick-link" id="shutdownQuickLinkHover">
+              <div class="shutdown-quick-link-item">Lock</div>
+              <div class="shutdown-quick-link-item">Sleep</div>
+              <div class="shutdown-quick-link-item">Shutdown</div>
+              <div class="shutdown-quick-link-item" id="restartQuickLink">
+                Restart
+              </div>
+            </div>
+          </div>
+          <div class="quick-link-item">Desktop</div>
+        </div>
+        <img src="icon/start2.ico" alt="Start" class="taskbar-app" id="startLogo" />
+      </div>
+      <img src="icon/search2.ico" alt="Search" class="taskbar-app search-icon" id="searchIcon" />
+      <img src="icon/taskview2.ico" alt="Task View" class="taskbar-app" />
+      <img src="icon/widgets.ico" alt="Widgets" class="taskbar-app" id="widgetsIcon" />
+      <!-- <img src="icon/Microsoft_365_Copilot_Icon.svg_.png" alt="Microsoft Copilot" class="taskbar-app"> -->
+      <img src="icon/explorer.ico" alt="File Explorer" class="taskbar-app app-tb" />
+      <img src="icon/edge.ico" alt="Microsoft Edge" class="taskbar-app app-tb" />
+      <!-- <img src="icon/store4.ico" alt="Microsoft Store" class="taskbar-app app-tb"> -->
+      <!-- <img src="icon/visualcode.ico" alt="Visual Studio Code" class="taskbar-app app-tb"> -->
+    </div>
+    <div class="tray" id="trayBtn">
+      <div class="tray-content" id="trayContent">
+        <img src="icon/defender.ico" alt="Windows Security" class="defender tray-app" />
+      </div>
+      <span class="tray-btn ico" id="trayIco">&#xe971;</span>
+    </div>
+    <div class="quick-settings-btn" id="quickSettingsBtn">
+      <span class="quick-settings-content ico">&#xe701;</span>
+      <span class="quick-settings-content ico">&#xe767;</span>
+      <span class="quick-settings-content ico">&#xe858;</span>
+    </div>
+    <div class="language">
+      <span class="language-content">ENG</span>
+    </div>
+    <div class="date-times" id="dateTimes">
+      <span class="times" id="times">10:00</span>
+      <span class="dates" id="dates">DD/MM/YYYY</span>
+    </div>
+  </div>
+  <input type="file" id="fileInput" style="display: none" />
+  <script src="main.js"></script>
+  <script src="js/app_runtime.js"></script>
+  <script src="js/cmd.js"></script>
+  <!-- <script src="js/experiment.js"></script> -->
+  <script src="js/copy-and-paste.js"></script>
+  <script src="js/window-mode.js"></script>
+</body>
+
+</html>

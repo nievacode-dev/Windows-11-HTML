@@ -1,0 +1,120 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden; /* Prevent scrolling on the desktop */
+}
+
+/* App Icon Styling */
+.app-icon {
+    width: 74px;
+    height: 74px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    margin: 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.app-icon:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.icon-image {
+    font-size: 32px;
+    margin-bottom: 5px;
+}
+
+.app-icon span {
+    font-size: 12px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
+
+/* Window Styling */
+.window {
+    width: 600px;
+    height: 400px;
+    background-color: #f3f3f3;
+    border-radius: 8px; /* Win11 rounded corners */
+    border: 1px solid rgba(0,0,0,0.1);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    position: absolute;
+    top: 50px;
+    left: 100px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: width 0.2s, height 0.2s, top 0.2s, left 0.2s, border-radius 0.2s;
+}
+
+.window.hidden {
+    display: none;
+}
+
+/* Fullscreen / Maximized State */
+.window.maximized {
+    width: 100% !important;
+    height: 100% !important;
+    top: 0 !important;
+    left: 0 !important;
+    border-radius: 0; /* Remove rounded corners when maximized */
+}
+
+/* Title Bar */
+.title-bar {
+    height: 32px;
+    background-color: #ffffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none; /* Prevent text selection while dragging */
+}
+
+.title-window {
+    padding-left: 12px;
+    font-size: 12px;
+    color: #333;
+}
+
+/* Window Controls */
+.window-controls {
+    display: flex;
+    height: 100%;
+}
+
+.control-btn {
+    width: 46px;
+    height: 100%;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    cursor: default;
+    transition: background 0.1s;
+}
+
+.control-btn:hover {
+    background-color: #e5e5e5;
+}
+
+.control-btn.close:hover {
+    background-color: #e81123;
+    color: white;
+}
+
+/* Window Content Area */
+.window-content {
+    padding: 20px;
+    flex-grow: 1;
+    background-color: #fafafa;
+    border-top: 1px solid #e0e0e0;
+}
+/* Add this anywhere in your style.css */
+.window.dragging {
+    transition: none !important; /* Removes the lag while dragging */
+}

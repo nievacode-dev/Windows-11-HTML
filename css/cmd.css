@@ -1,0 +1,144 @@
+.cmd {
+  display: none;
+  width: 1000px;
+  height: 600px;
+  background-color: rgb(12, 12, 12);
+  border: 1px solid rgb(50, 50, 50);
+  border-radius: 6px;
+  backdrop-filter: blur(20px);
+  animation: opentab 0.2s;
+  transition: transform 0.5s, opacity 0.2s, display 0.2s allow-discrete,
+    top 0.2s;
+  box-shadow: 0px 5px 10px rgba(15, 15, 15, 0.8);
+  position: fixed;
+  top: 80px;
+  left: 200px;
+}
+
+.cmd > div:nth-child(1) {
+  color: white;
+  height: 20px;
+  padding: 10px;
+  background-color: rgb(51, 51, 51);
+  /* border-bottom: 1px solid rgb(50, 50, 50); */
+  border-radius: 6px 6px 0px 0px;
+  backdrop-filter: blur(10px);
+  width: 980px;
+}
+
+.cmd > div:nth-child(1) > div {
+  color: white;
+  /* padding: 10px 70px 10px 70px; */
+  height: 40px;
+  width: 300px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgb(0, 0, 0);
+  border-radius: 10px 10px 0px 0px;
+  position: fixed;
+  left: 15px;
+  bottom: 0;
+}
+
+.terminal {
+  font-family: monospace;
+  font-size: 20px;
+  padding: 20px;
+  height: 560px;
+  overflow-y: auto;
+  box-sizing: border-box;
+  color: white;
+  /* background-color: blue; */
+}
+
+.terminal::-webkit-scrollbar {
+  display: none;
+}
+
+#history {
+  white-space: pre-wrap;
+}
+
+.input-line {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.prompt {
+  user-select: none;
+}
+
+#command-input {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-family: monospace;
+  flex-grow: 1;
+  outline: none;
+  font-size: 1em;
+}
+
+.tab-tool {
+  display: flex;
+  gap: 10px;
+  position: fixed;
+  right: 0px;
+  top: 0px;
+}
+
+.tab-tool span {
+  font-size: 20px;
+  font-family: Segoe-Fluent;
+}
+
+.tab-tool > span:nth-child(1) {
+  border: none;
+  padding: 0px 20px 15px 20px;
+  background-color: transparent;
+  font-size: 20px;
+  font-weight: bold;
+  color: white;
+  cursor: default;
+  position: fixed;
+  right: 109px;
+  top: 0px;
+}
+
+.tab-tool > span:nth-child(1):hover {
+  background-color: rgb(73, 73, 73);
+}
+
+.tab-tool > span:nth-child(2):hover {
+  background-color: rgb(73, 73, 73);
+}
+
+.tab-tool > span:nth-child(2) {
+  position: fixed;
+  right: 54px;
+  top: 0px;
+  border: none;
+  padding: 5px 20px 6px 20px;
+  background-color: transparent;
+  font-size: 23px;
+  color: white;
+  cursor: default;
+}
+
+.tab-tool > span:nth-child(3) {
+  position: fixed;
+  right: 0px;
+  top: 0px;
+  color: white;
+  font-size: 25px;
+  padding: 6px 20px 2px 20px;
+  border: none;
+  background-color: transparent;
+  border-radius: 0px 6px 0px 0px;
+}
+
+.tab-tool > span:nth-child(3):hover {
+  background-color: red;
+  cursor: default;
+}
