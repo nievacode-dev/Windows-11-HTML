@@ -3,9 +3,9 @@
 Windows 11 24H2 online version with only HTML, CSS and JavaScript.
 <div align="center">
 
-![Windows 11 Logo](/Windows_11_24H2/references/win11_bl.png)
+![Windows 11 Logo](/references/win11_bl.png)
 
-![Windows 11](/Windows_11_24H2/references/windows-11-screenshots_21xa.jpg)
+![Windows 11](/references/windows-11-screenshots_21xa.jpg)
 
 </div>
 
