@@ -88,22 +88,28 @@ document.addEventListener("DOMContentLoaded", () => {
       if (typeof createWindow !== 'undefined') {
         const title = item.dataset.title || "Application";
         const iconImg = item.querySelector("img");
-        createWindow(title, null, iconImg ? iconImg.src : null);
+        
+        if (title.toLowerCase() === 'settings') {
+          if (typeof openSettingsWindow === 'function') openSettingsWindow();
+        } else {
+          createWindow(title, null, iconImg ? iconImg.src : null);
+        }
+        
         // Optionally close start menu
         startMenu.classList.remove("menu-open");
       }
     });
   });
-  
+
   // Reset viewport when start menu closes
   document.addEventListener("click", (e) => {
     // Basic detection if click was outside startmenu
     if (!startMenu.contains(e.target) && e.target !== startLogo) {
-       startMenu.classList.remove("menu-open");
-       if (startMenuViewport) {
-           // delay removal to reset after it's hidden
-           setTimeout(() => startMenuViewport.classList.remove("show-all-apps"), 200);
-       }
+      startMenu.classList.remove("menu-open");
+      if (startMenuViewport) {
+        // delay removal to reset after it's hidden
+        setTimeout(() => startMenuViewport.classList.remove("show-all-apps"), 200);
+      }
     }
   });
 });

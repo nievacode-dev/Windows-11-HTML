@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="css/cmd.css" />
   <link rel="stylesheet" href="css/keyframes.css" />
   <link rel="stylesheet" href="css/window-mode.css">
+  <link rel="stylesheet" href="css/settings.css">
   <title>Microsoft Windows 11 24H2</title>
   <link rel="shortcut icon" href="icon/favicon.ico" type="image/x-icon" />
 </head>
@@ -25,7 +26,7 @@
     <div class="terminal-header title-bar">
       <!-- Drag Handle Area (invisible, takes remaining space) -->
       <div class="terminal-drag-region title"></div>
-      
+
       <!-- Tabs Container -->
       <div class="terminal-tabs-container" id="terminalTabsContainer">
         <!-- Tabs will be dynamically inserted here -->
@@ -41,7 +42,7 @@
         <button class="control-btn close" onclick="closeTerminalWindow()">×</button>
       </div>
     </div>
-    
+
     <div class="terminal-body" id="terminalBody">
       <!-- Session containers will be injected here -->
     </div>
@@ -193,236 +194,252 @@
   <div class="about-tab" id="aboutTab">
     <div class="about-titlebar">
       <span class="about-title">About Windows</span>
-      <button class="close-x" onclick="closeTab('aboutTab')">&times;</button>
+      <button class="close-x" onclick="closeTab('aboutTab')">
+        <svg fill="currentColor" width="12" height="12" viewBox="0 0 16 16"><path d="M1.2 1.2a1 1 0 011.4 0l5.4 5.4 5.4-5.4a1 1 0 011.4 1.4L9.4 8l5.4 5.4a1 1 0 01-1.4 1.4L8 9.4l-5.4 5.4a1 1 0 01-1.4-1.4L6.6 8 1.2 2.6a1 1 0 010-1.4z"/></svg>
+      </button>
     </div>
     <div class="about-content">
       <img src="icon/Windows_11_logo.svg" alt="Windows 11" class="about-logo" />
       <div class="about-border"></div>
-      <div class="about-content">
+      <div class="about-text-container">
         <p class="about-text">
           Microsoft Windows<br />
-          Version 24H2 (OS Build 26100.3476)<br />
-          &copy;Microsoft Corporation. All rights reserved.
+          Version 25H2 (OS Build 26200.5670)<br />
+          &copy; Microsoft Corporation. All rights reserved.
         </p>
         <p class="about-text">
-          The Windows 11 Pro operating system and its user interface are
+          The Windows 11 HTML operating system and its user interface are
           protected by trademark and other pending or existing intellectual
           property rights in the United States and other countries/regions.
         </p>
         <p class="about-text">
           This product is licensed under the
-          <a href="#">Microsoft Software License Terms</a> to:
+          <a href="#" class="about-link">Microsoft Software Licence Terms</a> to:
         </p>
-        <p class="about-text">nievacode.dev@github.io</p>
+        <div class="about-user-info">
+          <p class="about-text">nievacode-dev</p>
+          <p class="about-text">GitHub</p>
+        </div>
       </div>
-      <div class="about-btn">
+      <div class="about-btn-container">
         <button class="about-ok" onclick="closeTab('aboutTab')">OK</button>
       </div>
     </div>
   </div>
   <div class="start-menu" id="startMenu">
-    <input type="text" class="search-bar" placeholder="Type here to search" />
+    <div class="search-bar-container">
+      <span class="ico search-icon">&#xe721;</span>
+      <input type="text" class="search-bar" placeholder="Type here to search" />
+    </div>
     <div class="start-menu-viewport" id="startMenuViewport">
       <div class="start-content">
-      <p class="pinned">Pinned</p>
-      <button class="all-apps">
-        All apps <span class="ico all-apps-chevron">&#xe76c;</span>
-      </button>
-      <div class="start-apps">
-        <div class="start-app">
-          <img src="icon/edge.ico" class="app-list application" />
-          <span class="start-app-name">Edge</span>
+        <div class="start-section-header">
+          <span class="pinned">Pinned</span>
+          <button class="all-apps">
+            All apps <span class="ico all-apps-chevron">&#xe76c;</span>
+          </button>
         </div>
-        <div class="start-app">
-          <img src="icon/word.ico" class="app-list application" />
-          <span class="start-app-name">Word</span>
+        <div class="start-apps">
+          <div class="start-app">
+            <img src="icon/edge.ico" class="app-list application" />
+            <span class="start-app-name">Edge</span>
+          </div>
+          <div class="start-app">
+            <img src="icon/word.ico" class="app-list application" />
+            <span class="start-app-name">Word</span>
+          </div>
+          <div class="start-app">
+            <img src="icon/excel.ico" class="app-list application" />
+            <span class="start-app-name">Excel</span>
+          </div>
+          <div class="start-app">
+            <img src="icon/powerpoint.ico" class="app-list application" />
+            <span class="start-app-name">PowerPoint</span>
+          </div>
+          <div class="start-app">
+            <img src="icon/Microsoft_365_Copilot_Icon.svg_.png" class="app-list application" />
+            <span class="start-app-name">Copilot</span>
+          </div>
+          <div class="start-app">
+            <img src="icon/outlook.ico" class="app-list application" />
+            <span class="start-app-name">Outlook (new)</span>
+          </div>
+          <div class="start-app">
+            <img src="icon/store4.ico" class="app-list application" />
+            <span class="start-app-name">Microsoft Store</span>
+          </div>
+          <div class="start-app">
+            <img src="icon/photos.ico" class="app-list application" />
+            <span class="start-app-name">Photos</span>
+          </div>
+          <div class="start-app">
+            <img src="icon/settings.ico" class="app-list application" />
+            <span class="start-app-name">Settings</span>
+          </div>
+          <div class="start-app">
+            <img src="icon/tasks.ico" class="app-list application" />
+            <span class="start-app-name">To Do</span>
+          </div>
+          <div class="start-app">
+            <img src="icon/calculator.ico" class="app-list application" />
+            <span class="start-app-name">Calculator</span>
+          </div>
+          <div class="start-app">
+            <img src="icon/alarm.ico" class="app-list application" />
+            <span class="start-app-name">Alarm</span>
+          </div>
+          <div class="start-app">
+            <img src="icon/notepad.ico" class="app-list application" />
+            <span class="start-app-name">Notepad</span>
+          </div>
+          <div class="start-app">
+            <img src="icon/paint.ico" class="app-list application" />
+            <span class="start-app-name">Paint</span>
+          </div>
+          <div class="start-app">
+            <img src="icon/snippingtool.ico" class="app-list application" />
+            <span class="start-app-name">Snipping Tool</span>
+          </div>
+          <div class="start-app">
+            <img src="icon/onenote.ico" class="app-list application" />
+            <span class="start-app-name">OneNote</span>
+          </div>
+          <div class="start-app">
+            <img src="icon/explorer.ico" class="app-list application" />
+            <span class="start-app-name">File Explorer</span>
+          </div>
         </div>
-        <div class="start-app">
-          <img src="icon/excel.ico" class="app-list application" />
-          <span class="start-app-name">Excel</span>
+        <div class="start-section-header" style="margin-top: 20px;">
+          <span class="recommended-title">Recommended</span>
         </div>
-        <div class="start-app">
-          <img src="icon/powerpoint.ico" class="app-list application" />
-          <span class="start-app-name">PowerPoint</span>
-        </div>
-        <div class="start-app">
-          <img src="icon/Microsoft_365_Copilot_Icon.svg_.png" class="app-list application" />
-          <span class="start-app-name">Copilot</span>
-        </div>
-        <div class="start-app">
-          <img src="icon/outlook.ico" class="app-list application" />
-          <span class="start-app-name">Outlook (new)</span>
-        </div>
-        <div class="start-app">
-          <img src="icon/store4.ico" class="app-list application" />
-          <span class="start-app-name">Microsoft Store</span>
-        </div>
-        <div class="start-app">
-          <img src="icon/photos.ico" class="app-list application" />
-          <span class="start-app-name">Photos</span>
-        </div>
-        <div class="start-app">
-          <img src="icon/settings.ico" class="app-list application" />
-          <span class="start-app-name">Settings</span>
-        </div>
-        <div class="start-app">
-          <img src="icon/tasks.ico" class="app-list application" />
-          <span class="start-app-name">To Do</span>
-        </div>
-        <div class="start-app">
-          <img src="icon/calculator.ico" class="app-list application" />
-          <span class="start-app-name">Calculator</span>
-        </div>
-        <div class="start-app">
-          <img src="icon/alarm.ico" class="app-list application" />
-          <span class="start-app-name">Alarm</span>
-        </div>
-        <div class="start-app">
-          <img src="icon/notepad.ico" class="app-list application" />
-          <span class="start-app-name">Notepad</span>
-        </div>
-        <div class="start-app">
-          <img src="icon/paint.ico" class="app-list application" />
-          <span class="start-app-name">Paint</span>
-        </div>
-        <div class="start-app">
-          <img src="icon/snippingtool.ico" class="app-list application" />
-          <span class="start-app-name">Snipping Tool</span>
-        </div>
-        <div class="start-app">
-          <img src="icon/onenote.ico" class="app-list application" />
-          <span class="start-app-name">OneNote</span>
-        </div>
-        <div class="start-app">
-          <img src="icon/explorer.ico" class="app-list application" />
-          <span class="start-app-name">File Explorer</span>
+        <div class="recommended-content">
+          <p class="recommended-text">To show your recent files and new apps, turn them on in Settings. <a href="#"
+              style="color: #6eb5ff; text-decoration: underline;">Launch Settings Start.</a></p>
         </div>
       </div>
-      <p class="recommended">Recommended</p>
-    </div>
-    <div class="all-apps-view" id="allAppsView">
-      <div class="all-apps-header">
-        <span class="all-apps-title">All apps</span>
-        <button class="back-btn" id="backBtn">
-          <span class="ico">&#xe76b;</span> Back
-        </button>
+      <div class="all-apps-view" id="allAppsView">
+        <div class="all-apps-header">
+          <span class="all-apps-title">All apps</span>
+          <button class="back-btn" id="backBtn">
+            <span class="ico">&#xe76b;</span> Back
+          </button>
+        </div>
+        <div class="all-apps-list" id="allAppsList">
+          <!-- Letters and Apps Will Be Inserted via JS or Hardcoded -->
+          <div class="letter-group">
+            <div class="letter">#</div>
+            <div class="start-app all-app-item" data-title="7-Zip">
+              <img src="icon/folder.ico" class="app-list" />
+              <span class="start-app-name">7-Zip</span>
+            </div>
+          </div>
+          <div class="letter-group">
+            <div class="letter">A</div>
+            <div class="start-app all-app-item" data-title="Accessibility">
+              <img src="icon/folder.ico" class="app-list" />
+              <span class="start-app-name">Accessibility</span>
+            </div>
+            <div class="start-app all-app-item" data-title="Alarm">
+              <img src="icon/alarm.ico" class="app-list" />
+              <span class="start-app-name">Alarm</span>
+            </div>
+          </div>
+          <div class="letter-group">
+            <div class="letter">C</div>
+            <div class="start-app all-app-item" data-title="Calculator">
+              <img src="icon/calculator.ico" class="app-list" />
+              <span class="start-app-name">Calculator</span>
+            </div>
+            <div class="start-app all-app-item" data-title="Copilot">
+              <img src="icon/Microsoft_365_Copilot_Icon.svg_.png" class="app-list" />
+              <span class="start-app-name">Copilot</span>
+            </div>
+          </div>
+          <div class="letter-group">
+            <div class="letter">E</div>
+            <div class="start-app all-app-item" data-title="Edge">
+              <img src="icon/edge.ico" class="app-list" />
+              <span class="start-app-name">Edge</span>
+            </div>
+            <div class="start-app all-app-item" data-title="Excel">
+              <img src="icon/excel.ico" class="app-list" />
+              <span class="start-app-name">Excel</span>
+            </div>
+          </div>
+          <div class="letter-group">
+            <div class="letter">F</div>
+            <div class="start-app all-app-item" data-title="File Explorer">
+              <img src="icon/explorer.ico" class="app-list" />
+              <span class="start-app-name">File Explorer</span>
+            </div>
+          </div>
+          <div class="letter-group">
+            <div class="letter">M</div>
+            <div class="start-app all-app-item" data-title="Microsoft Store">
+              <img src="icon/store4.ico" class="app-list" />
+              <span class="start-app-name">Microsoft Store</span>
+            </div>
+          </div>
+          <div class="letter-group">
+            <div class="letter">N</div>
+            <div class="start-app all-app-item" data-title="Notepad">
+              <img src="icon/notepad.ico" class="app-list" />
+              <span class="start-app-name">Notepad</span>
+            </div>
+          </div>
+          <div class="letter-group">
+            <div class="letter">O</div>
+            <div class="start-app all-app-item" data-title="OneNote">
+              <img src="icon/onenote.ico" class="app-list" />
+              <span class="start-app-name">OneNote</span>
+            </div>
+            <div class="start-app all-app-item" data-title="Outlook">
+              <img src="icon/outlook.ico" class="app-list" />
+              <span class="start-app-name">Outlook (new)</span>
+            </div>
+          </div>
+          <div class="letter-group">
+            <div class="letter">P</div>
+            <div class="start-app all-app-item" data-title="Paint">
+              <img src="icon/paint.ico" class="app-list" />
+              <span class="start-app-name">Paint</span>
+            </div>
+            <div class="start-app all-app-item" data-title="Photos">
+              <img src="icon/photos.ico" class="app-list" />
+              <span class="start-app-name">Photos</span>
+            </div>
+            <div class="start-app all-app-item" data-title="PowerPoint">
+              <img src="icon/powerpoint.ico" class="app-list" />
+              <span class="start-app-name">PowerPoint</span>
+            </div>
+          </div>
+          <div class="letter-group">
+            <div class="letter">S</div>
+            <div class="start-app all-app-item" data-title="Settings">
+              <img src="icon/settings.ico" class="app-list" />
+              <span class="start-app-name">Settings</span>
+            </div>
+            <div class="start-app all-app-item" data-title="Snipping Tool">
+              <img src="icon/snippingtool.ico" class="app-list" />
+              <span class="start-app-name">Snipping Tool</span>
+            </div>
+          </div>
+          <div class="letter-group">
+            <div class="letter">T</div>
+            <div class="start-app all-app-item" data-title="To Do">
+              <img src="icon/tasks.ico" class="app-list" />
+              <span class="start-app-name">To Do</span>
+            </div>
+          </div>
+          <div class="letter-group">
+            <div class="letter">W</div>
+            <div class="start-app all-app-item" data-title="Word">
+              <img src="icon/word.ico" class="app-list" />
+              <span class="start-app-name">Word</span>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="all-apps-list" id="allAppsList">
-        <!-- Letters and Apps Will Be Inserted via JS or Hardcoded -->
-        <div class="letter-group">
-          <div class="letter">#</div>
-          <div class="start-app all-app-item" data-title="7-Zip">
-             <img src="icon/folder.ico" class="app-list" />
-             <span class="start-app-name">7-Zip</span>
-          </div>
-        </div>
-        <div class="letter-group">
-          <div class="letter">A</div>
-          <div class="start-app all-app-item" data-title="Accessibility">
-             <img src="icon/folder.ico" class="app-list" />
-             <span class="start-app-name">Accessibility</span>
-          </div>
-          <div class="start-app all-app-item" data-title="Alarm">
-             <img src="icon/alarm.ico" class="app-list" />
-             <span class="start-app-name">Alarm</span>
-          </div>
-        </div>
-        <div class="letter-group">
-          <div class="letter">C</div>
-          <div class="start-app all-app-item" data-title="Calculator">
-             <img src="icon/calculator.ico" class="app-list" />
-             <span class="start-app-name">Calculator</span>
-          </div>
-          <div class="start-app all-app-item" data-title="Copilot">
-             <img src="icon/Microsoft_365_Copilot_Icon.svg_.png" class="app-list" />
-             <span class="start-app-name">Copilot</span>
-          </div>
-        </div>
-        <div class="letter-group">
-          <div class="letter">E</div>
-          <div class="start-app all-app-item" data-title="Edge">
-             <img src="icon/edge.ico" class="app-list" />
-             <span class="start-app-name">Edge</span>
-          </div>
-          <div class="start-app all-app-item" data-title="Excel">
-             <img src="icon/excel.ico" class="app-list" />
-             <span class="start-app-name">Excel</span>
-          </div>
-        </div>
-        <div class="letter-group">
-          <div class="letter">F</div>
-          <div class="start-app all-app-item" data-title="File Explorer">
-             <img src="icon/explorer.ico" class="app-list" />
-             <span class="start-app-name">File Explorer</span>
-          </div>
-        </div>
-        <div class="letter-group">
-          <div class="letter">M</div>
-          <div class="start-app all-app-item" data-title="Microsoft Store">
-             <img src="icon/store4.ico" class="app-list" />
-             <span class="start-app-name">Microsoft Store</span>
-          </div>
-        </div>
-        <div class="letter-group">
-          <div class="letter">N</div>
-          <div class="start-app all-app-item" data-title="Notepad">
-             <img src="icon/notepad.ico" class="app-list" />
-             <span class="start-app-name">Notepad</span>
-          </div>
-        </div>
-        <div class="letter-group">
-          <div class="letter">O</div>
-          <div class="start-app all-app-item" data-title="OneNote">
-             <img src="icon/onenote.ico" class="app-list" />
-             <span class="start-app-name">OneNote</span>
-          </div>
-          <div class="start-app all-app-item" data-title="Outlook">
-             <img src="icon/outlook.ico" class="app-list" />
-             <span class="start-app-name">Outlook (new)</span>
-          </div>
-        </div>
-        <div class="letter-group">
-          <div class="letter">P</div>
-          <div class="start-app all-app-item" data-title="Paint">
-             <img src="icon/paint.ico" class="app-list" />
-             <span class="start-app-name">Paint</span>
-          </div>
-          <div class="start-app all-app-item" data-title="Photos">
-             <img src="icon/photos.ico" class="app-list" />
-             <span class="start-app-name">Photos</span>
-          </div>
-          <div class="start-app all-app-item" data-title="PowerPoint">
-             <img src="icon/powerpoint.ico" class="app-list" />
-             <span class="start-app-name">PowerPoint</span>
-          </div>
-        </div>
-        <div class="letter-group">
-          <div class="letter">S</div>
-          <div class="start-app all-app-item" data-title="Settings">
-             <img src="icon/settings.ico" class="app-list" />
-             <span class="start-app-name">Settings</span>
-          </div>
-          <div class="start-app all-app-item" data-title="Snipping Tool">
-             <img src="icon/snippingtool.ico" class="app-list" />
-             <span class="start-app-name">Snipping Tool</span>
-          </div>
-        </div>
-        <div class="letter-group">
-          <div class="letter">T</div>
-          <div class="start-app all-app-item" data-title="To Do">
-             <img src="icon/tasks.ico" class="app-list" />
-             <span class="start-app-name">To Do</span>
-          </div>
-        </div>
-        <div class="letter-group">
-          <div class="letter">W</div>
-          <div class="start-app all-app-item" data-title="Word">
-             <img src="icon/word.ico" class="app-list" />
-             <span class="start-app-name">Word</span>
-          </div>
-        </div>
-      </div>
-    </div>
     </div>
     <div class="shutdown-menu" id="shutDownMenu">
       <div class="shutdown-item">Lock</div>
@@ -581,7 +598,8 @@
           <div class="quick-link-item">Settings</div>
           <div class="quick-link-item">File Explorer</div>
           <div class="quick-link-item" onclick="searchMenu.classList.toggle('menu-open');">Search</div>
-          <div class="quick-link-item" onclick="document.getElementById('runProgram').style.display = 'block';">Run</div>
+          <div class="quick-link-item" onclick="document.getElementById('runProgram').style.display = 'block';">Run
+          </div>
           <div class="quick-link-item" id="shutdownQuickLink">
             <span>Shut down or sign out</span>
             <div class="shutdown-quick-link" id="shutdownQuickLinkHover">
@@ -626,6 +644,256 @@
     </div>
   </div>
   <input type="file" id="fileInput" style="display: none" />
+  
+  <!-- Settings App -->
+  <div class="settings-window window" id="settingsWindow" data-app-id="settings">
+    <div class="settings-header title-bar">
+      <!-- Drag Handle Area -->
+      <div class="settings-drag-region title"></div>
+      
+      <!-- Window Controls -->
+      <div class="window-controls">
+        <button class="control-btn minimize" onclick="minimizeWindow('settings')">−</button>
+        <button class="control-btn maximize" onclick="maximizeWindow('settings')">□</button>
+        <button class="control-btn close" onclick="closeSettingsWindow()">×</button>
+      </div>
+    </div>
+    
+    <div class="settings-body" id="settingsBody">
+      <div class="settings-sidebar">
+        <div class="settings-user-profile">
+          <img src="icon/user.png" alt="User Avatar" class="settings-avatar" />
+          <div class="settings-user-info">
+            <span class="settings-user-name">WindowsLatest .com</span>
+            <span class="settings-user-email">local account</span>
+          </div>
+        </div>
+        
+        <div class="settings-search-container">
+          <span class="ico settings-search-icon">&#xe721;</span>
+          <input type="text" class="settings-search" placeholder="Find a setting" />
+        </div>
+        
+        <div class="settings-nav">
+          <div class="settings-nav-item active">
+            <span class="ico nav-icon" style="color: #6eb5ff;">&#xe80f;</span>
+            <span class="nav-text">Home</span>
+          </div>
+          <div class="settings-nav-item">
+            <span class="ico nav-icon">&#xe770;</span>
+            <span class="nav-text">System</span>
+          </div>
+          <div class="settings-nav-item">
+            <span class="ico nav-icon">&#xe702;</span>
+            <span class="nav-text">Bluetooth & devices</span>
+          </div>
+          <div class="settings-nav-item">
+            <span class="ico nav-icon">&#xe701;</span>
+            <span class="nav-text">Network & internet</span>
+          </div>
+          <div class="settings-nav-item">
+            <span class="ico nav-icon">&#xe771;</span>
+            <span class="nav-text">Personalization</span>
+          </div>
+          <div class="settings-nav-item">
+            <span class="ico nav-icon">&#xe71d;</span>
+            <span class="nav-text">Apps</span>
+          </div>
+          <div class="settings-nav-item">
+            <span class="ico nav-icon">&#xe77b;</span>
+            <span class="nav-text">Accounts</span>
+          </div>
+          <div class="settings-nav-item">
+            <span class="ico nav-icon">&#xe775;</span>
+            <span class="nav-text">Time & language</span>
+          </div>
+          <div class="settings-nav-item">
+            <span class="ico nav-icon">&#xe7fc;</span>
+            <span class="nav-text">Gaming</span>
+          </div>
+          <div class="settings-nav-item">
+            <span class="ico nav-icon">&#xe776;</span>
+            <span class="nav-text">Accessibility</span>
+          </div>
+          <div class="settings-nav-item">
+            <span class="ico nav-icon">&#xe72e;</span>
+            <span class="nav-text">Privacy & security</span>
+          </div>
+          <div class="settings-nav-item">
+            <span class="ico nav-icon" style="color: #6eb5ff;">&#xe895;</span>
+            <span class="nav-text">Windows Update</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="settings-main-content">
+        <h1 class="settings-page-title">Home</h1>
+        
+        <div class="settings-dashboard-grid">
+          <!-- Column 1 -->
+          <div class="settings-column">
+            
+            <!-- Hero Card -->
+            <div class="settings-card hero-card">
+              <div class="hero-header">
+                <img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg" alt="Wallpaper" class="hero-wallpaper" />
+                <div class="hero-info">
+                  <h2 class="hero-pc-name">DESKTOP-5SNQPC2</h2>
+                  <span class="hero-pc-model">VMware7,1</span>
+                  <a href="#" class="hero-link">Rename</a>
+                </div>
+              </div>
+              <div class="hero-status">
+                <div class="status-item">
+                  <span class="ico status-ico">&#xe839;</span>
+                  <div class="status-text">
+                    <span class="status-title">Ethernet0</span>
+                    <span class="status-sub">Connected</span>
+                  </div>
+                </div>
+                <div class="status-item">
+                  <span class="ico status-ico" style="color:#6eb5ff;">&#xe895;</span>
+                  <div class="status-text">
+                    <span class="status-title">Windows Update</span>
+                    <span class="status-sub">Last checked: 8 minutes ago</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Recommended Settings -->
+            <div class="settings-card">
+              <div class="card-header">
+                <h3>Recommended settings</h3>
+                <p>Recent and commonly used settings</p>
+              </div>
+              <div class="card-list">
+                <div class="list-item">
+                  <span class="ico list-ico">&#xe7e8;</span>
+                  <span class="list-text">Power</span>
+                  <span class="ico list-chevron">&#xe76c;</span>
+                </div>
+                <div class="list-item">
+                  <span class="ico list-ico">&#xe7f4;</span>
+                  <span class="list-text">Display</span>
+                  <span class="ico list-chevron">&#xe76c;</span>
+                </div>
+                <div class="list-item">
+                  <span class="ico list-ico">&#xe767;</span>
+                  <span class="list-text">Sound</span>
+                  <span class="ico list-chevron">&#xe76c;</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Bluetooth -->
+            <div class="settings-card">
+              <div class="card-header">
+                <h3>Bluetooth devices</h3>
+                <p>Manage, add, and remove devices</p>
+              </div>
+              <div class="card-box">
+                <div class="box-content">
+                  <span class="ico box-ico">&#xe702;</span>
+                  <div class="box-texts">
+                    <span class="box-title">Bluetooth</span>
+                    <span class="box-sub">Discoverable as "DESKTOP-5SNQPC2"</span>
+                  </div>
+                  <div class="toggle-switch active">
+                    <span class="toggle-text">On</span>
+                    <div class="switch-track"><div class="switch-thumb"></div></div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <a href="#" class="footer-link">View all devices</a>
+                <button class="footer-btn">Add device <span class="ico">&#xe76c;</span></button>
+              </div>
+            </div>
+            
+            <!-- Personalize -->
+            <div class="settings-card">
+              <div class="card-header">
+                <h3>Personalize your device</h3>
+              </div>
+              <div class="theme-grid">
+                <div class="theme-item active"><img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg" /></div>
+                <div class="theme-item"><img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg" style="filter: hue-rotate(90deg);" /></div>
+                <div class="theme-item"><img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg" style="filter: sepia(100%);" /></div>
+                <div class="theme-item"><img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg" style="filter: hue-rotate(-90deg);" /></div>
+                <div class="theme-item"><img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg" style="filter: saturate(50%);" /></div>
+                <div class="theme-item"><img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg" style="filter: invert(100%);" /></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Column 2 -->
+          <div class="settings-column">
+            
+            <!-- Cloud Storage -->
+            <div class="settings-card">
+              <div class="card-header">
+                <span class="ico header-ico" style="color: #6eb5ff;">&#xe753;</span>
+                <h3>Cloud storage</h3>
+                <p>With available storage, you can back up files or send and receive email on Outlook.</p>
+              </div>
+              <div class="storage-bar-container">
+                <span class="storage-text"><strong>3.5 GB</strong> used of 5 GB (70%)</span>
+                <div class="storage-bar">
+                  <div class="storage-fill" style="width: 70%;"></div>
+                </div>
+              </div>
+              <div class="card-list no-bg">
+                <div class="list-item">
+                  <span class="ico list-ico">&#xe753;</span>
+                  <span class="list-text">PC backup</span>
+                  <span class="list-subtext">Backed up <span class="ico">&#xe8a7;</span></span>
+                </div>
+                <div class="list-item">
+                  <span class="ico list-ico">&#xe713;</span>
+                  <span class="list-text">Manage cloud storage</span>
+                  <span class="ico list-chevron">&#xe76c;</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Recovery -->
+            <div class="settings-card">
+              <div class="card-header">
+                <span class="ico header-ico" style="color: #6eb5ff;">&#xe73e;</span>
+                <h3>Never lose access to your account</h3>
+                <p>Add a recovery email address to make sure you can always get in to your account.</p>
+              </div>
+              <div class="card-footer left">
+                <button class="footer-btn action-btn">Add now</button>
+              </div>
+            </div>
+            
+            <!-- Microsoft 365 -->
+            <div class="settings-card promo-card">
+              <div class="card-header">
+                <img src="icon/store.ico" class="promo-icon" />
+                <h3>Try Microsoft 365</h3>
+                <p>Get more cloud storage, advanced security, and use premium apps like Word, Excel, and PowerPoint with a Microsoft 365 Family trial.</p>
+              </div>
+              <div class="promo-apps">
+                <img src="icon/word.ico" class="app-icon" />
+                <img src="icon/excel.ico" class="app-icon" />
+                <img src="icon/powerpoint.ico" class="app-icon" />
+              </div>
+              <div class="card-footer left">
+                <button class="footer-btn action-btn">Try for free</button>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="window-resize"></div>
+  </div>
+  
+  <script src="js/settings.js"></script>
   <script src="main.js"></script>
   <script src="js/app_runtime.js"></script>
   <script src="js/cmd.js"></script>

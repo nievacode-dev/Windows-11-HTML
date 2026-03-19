@@ -559,6 +559,8 @@ function initializeAppShortcuts() {
       
       if (appId === 'cmd') {
           if (typeof openTerminalWindow === 'function') openTerminalWindow();
+      } else if (appTitle.toLowerCase() === 'settings' || appId === 'settings') {
+          if (typeof openSettingsWindow === 'function') openSettingsWindow();
       } else {
           createWindow(appTitle, appId, appIcon);
       }
