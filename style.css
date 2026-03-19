@@ -1,13 +1,15 @@
 html {
   height: 100%;
   margin: 0;
+  padding: 0;
 }
 
 body {
   background-color: black;
   background-size: cover;
-  height: 95%;
-  font-family: "Segoe UI Variable";
+  height: 100vh;
+  width: 100vw;
+  font-family: "Segoe UI";
   background-position: center;
   background-repeat: no-repeat;
   /* background-image: url(wallpaper/windows-11-blue-material-3y-1920x1080.jpg); */
@@ -565,10 +567,17 @@ body {
   gap: 5px;
   text-align: center;
   width: 80px;
+  cursor: pointer;
+  transition: background-color 0.1s, transform 0.15s ease-out;
 }
 
 .start-app:hover {
   background-color: rgba(175, 174, 174, 0.1);
+  transform: scale(1.02);
+}
+
+.start-app:active {
+  transform: scale(0.98);
 }
 
 .app-list {
@@ -845,63 +854,116 @@ body {
 
 .shutdown-tab {
   display: none;
-  border: 1px solid rgb(175, 174, 174);
-  width: 600px;
-  height: 350px;
-  border-radius: 6px;
-  background-color: rgb(247, 247, 247);
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 380px;
+  height: auto;
+  background-color: rgba(32, 32, 32, 0.92);
+  backdrop-filter: blur(40px) saturate(150%);
+  -webkit-backdrop-filter: blur(40px) saturate(150%);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
   animation: opentab 0.2s;
-  transition: transform 0.5s, opacity 0.2s, display 0.2s allow-discrete;
+  transition: opacity 0.2s, display 0.2s allow-discrete;
+  z-index: 2000;
+  color: white;
+  font-family: "Segoe UI";
 }
 
 .shutdown-titlebar {
-  background-color: white;
-  padding: 10px;
-  border-radius: 6px 6px 0px 0px;
+  background-color: rgba(45, 45, 45, 0.6);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  padding: 10px 16px;
+  border-radius: 8px 8px 0px 0px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .shutdown-title {
   font-size: 12px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.shutdown-content {
+  padding: 16px 20px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.shutdown-text {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  margin: 0;
 }
 
 .shutdown-select {
-  width: 400px;
-  height: 25px;
-  border: 1px solid rgb(175, 174, 174);
-  border-radius: 3px;
+  width: 100%;
+  height: 28px;
+  background-color: rgba(60, 60, 60, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  color: white;
+  padding: 0 8px;
+  font-size: 13px;
+  font-family: "Segoe UI";
+  cursor: default;
 }
 
 .shutdown-select:focus {
   outline: none;
-  background-color: rgba(158, 197, 255, 0.4);
+  border-color: rgba(79, 191, 255, 0.8);
+}
+
+.shutdown-select option {
+  background-color: rgb(45, 45, 45);
 }
 
 .selector-text {
-  width: 60ch;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 12px;
+  margin: 0;
+  width: auto;
 }
 
 .windows-logo {
-  width: 350px;
+  width: 260px;
+  align-self: center;
 }
 
 .btn-parent {
-  display: inline;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  width: 100%;
+  margin-top: 6px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .ok-btn,
 .cancel-btn,
 .help-btn {
-  height: 40px;
+  height: 28px;
   width: 80px;
-  border: 1px solid rgb(175, 174, 174);
+  background-color: rgba(60, 60, 60, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 5px;
+  color: white;
+  font-size: 13px;
+  font-family: "Segoe UI";
+  cursor: default;
 }
 
 .ok-btn:hover,
 .cancel-btn:hover,
 .help-btn:hover {
-  border: 1px solid rgb(87, 87, 223);
-  background-color: rgba(158, 197, 255, 0.4);
+  border: 1px solid rgba(79, 191, 255, 0.6);
+  background-color: rgba(79, 191, 255, 0.15);
 }
 
 .run-program {
@@ -1149,6 +1211,17 @@ h2 {
   position: relative;
   width: 55px;
   height: 55px;
+  cursor: pointer;
+  transition: transform 0.15s ease-out, filter 0.15s ease-out;
+}
+
+.app-shortcut:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+}
+
+.app-shortcut:active {
+  transform: scale(0.98);
 }
 
 .app-desktop {

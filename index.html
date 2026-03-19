@@ -15,41 +15,6 @@
 </head>
 
 <body>
-  <!-- <div class="app-icon" data-window="folder-app">
-    <div class="icon-image">📁</div>
-    <span>My Folder</span>
-</div>
-
-<div class="app-icon" data-window="settings-app">
-    <div class="icon-image">⚙️</div>
-    <span>Settings</span>
-</div> -->
-<div class="window folder-app hidden">
-    <div class="title-bar">
-        <div class="title-window"></div>
-        <div class="window-controls">
-            <button class="control-btn minimize">−</button>
-            <button class="control-btn maximize">◻</button>
-            <button class="control-btn close">✕</button>
-        </div>
-    </div>
-    <div class="window-content">
-        <p>This is the folder app!</p>
-    </div>
-  </div>
-<div class="window settings-app hidden" style="left: 150px; top: 100px;">
-    <div class="title-bar">
-        <div class="title">Settings</div>
-        <div class="window-controls">
-            <button class="control-btn minimize">−</button>
-            <button class="control-btn maximize">◻</button>
-            <button class="control-btn close">✕</button>
-        </div>
-    </div>
-    <div class="window-content">
-        <p>This is the settings app!</p>
-    </div>
-</div>
   <div class="lock-screen" id="lockScreen">
     <div class="clock-and-dates">
       <span class="clock" id="clock"></span>
@@ -153,26 +118,26 @@
     <p id="popupText"></p>
   </div>
   <div id="wTab"></div>
-  <div class="apps" id="newApps">
-    <div class="app-desktop">
-      <img src="icon/recyclebinempty.ico" alt="Recycle Bin" class="app application" id="recycleBin" />
-      <span class="app-name">Recycle Bin</span>
+  <!-- <div class="apps" id="newApps"> -->
+  <div class="app-desktop" data-id="recycle-bin" data-title="Recycle Bin">
+    <img src="icon/recyclebinempty.ico" alt="Recycle Bin" class="app application" id="recycleBin" />
+    <span class="app-name">Recycle Bin</span>
+  </div>
+  <div class="app-desktop" data-id="browser" data-title="Edge">
+    <div class="app-shortcut">
+      <img src="icon/edge.ico" alt="Microsoft Edge" class="app application" id="msedge" />
+      <img src="icon/shortcut.ico" class="shortcut" />
     </div>
-    <div class="app-desktop">
-      <div class="app-shortcut">
-        <img src="icon/edge.ico" alt="Microsoft Edge" class="app application" id="msedge" />
-        <img src="icon/shortcut.ico" class="shortcut" />
-      </div>
-      <span class="app-name">Microsoft Edge</span>
-    </div>
-    <!-- <div class="app-desktop">
+    <span class="app-name">Microsoft Edge</span>
+  </div>
+  <!-- <div class="app-desktop">
             <div class="app-shortcut">
                 <img src="icon/visualcode.ico" alt="Visual Studio Code" class="app application" id="vscode">
                 <img src="icon/shortcut.ico" class="shortcut">
             </div>
             <span class="app-name">Visual Studio Code</span>
         </div> -->
-  </div>
+  <!-- </div> -->
   <div class="shutdown-tab" id="shutdownTab">
     <div class="shutdown-titlebar">
       <span class="shutdown-title">Shut Down Windows</span>
@@ -364,14 +329,14 @@
       </div>
       <span class="run-open"><u>O</u>pen: </span>
       <input type="text" id="runInput" class="run-input" list="runCommand" />
-      <datalist id="runCommand">
+      <!-- <datalist id="runCommand">
         <option value="winver">winver</option>
         <option value="sdtab">sdtab</option>
-      </datalist>
+      </datalist> -->
       <!-- <select id="runInput" class="run-input">
-                <option value="winver">winver</option>
-                <option value="sdtab">sdtab</option>
-            </select> -->
+        <option value="winver">winver</option>
+        <option value="sdtab">sdtab</option>
+      </select> -->
       <div class="run-btn">
         <button class="run-ok" onclick="runWindows()" disabled id="okBtn">
           OK
@@ -379,7 +344,8 @@
         <button class="run-cancel" onclick="closeTab('runProgram')">
           Cancel
         </button>
-        <button class="run-browse" onclick="browse()"><u>B</u>rowse</button>
+        <button class="run-browse" onclick="fileBrowse()"><u>B</u>rowse</button>
+        <input type="file" style="display: none;" id="runBrowse" onchange="writePath()">
       </div>
     </div>
   </div>
@@ -456,13 +422,19 @@
           <div class="quick-link-item">Network Connections</div>
           <div class="quick-link-item">Disk Management</div>
           <div class="quick-link-item">Computer Management</div>
-          <div class="quick-link-item">Windows Terminal</div>
-          <div class="quick-link-item">Windows Terminal (Admin)</div>
+          <div class="quick-link-item" onclick="document.getElementById('cmd').style.display='block';
+            runProgram.style.display='none' ; runProgram.classList.add('close-anim'); setTimeout(()=> {
+            runProgram.classList.remove('close-anim');
+            }, 300);">Windows Terminal</div>
+          <div class="quick-link-item" onclick="document.getElementById('cmd').style.display='block';
+            runProgram.style.display='none' ; runProgram.classList.add('close-anim'); setTimeout(()=> {
+            runProgram.classList.remove('close-anim');
+            }, 300);">Windows Terminal (Admin)</div>
           <div class="quick-link-item">Task Manager</div>
           <div class="quick-link-item">Settings</div>
           <div class="quick-link-item">File Explorer</div>
-          <div class="quick-link-item">Search</div>
-          <div class="quick-link-item">Run</div>
+          <div class="quick-link-item" onclick="searchMenu.classList.toggle('menu-open');">Search</div>
+          <div class="quick-link-item" onclick="document.getElementById('runProgram').style.display = 'block';">Run</div>
           <div class="quick-link-item" id="shutdownQuickLink">
             <span>Shut down or sign out</span>
             <div class="shutdown-quick-link" id="shutdownQuickLinkHover">

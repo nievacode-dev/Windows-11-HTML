@@ -1,4 +1,4 @@
-// const swipeDiv = document.getElementById('lockScreen');
+
 
 // let isDragging = false;
 // let startY = 0;

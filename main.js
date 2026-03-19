@@ -312,8 +312,6 @@ document.addEventListener("keydown", function (e) {
     document.getElementById("shutdownTab").style.display = "block";
   } else if (e.key === "r") {
     document.getElementById("runProgram").style.display = "block";
-  } else if (e.key === "m") {
-    startMenu.style.display = "block";
   } else if (e.key === "d") {
     recycleBin.src = "/Windows_11_24H2/icon/recyclebinfull.ico";
   } else if (e.key === "x") {
@@ -644,4 +642,21 @@ function closeTab(getElId) {
 
 function minimizeTab(getElId) {
   document.getElementById(getElId).style.transform = "scale(0.5)";
+}
+
+// Opening Window
+
+// run path
+
+function fileBrowse() {
+  document.getElementById("runBrowse").click();
+}
+
+function writePath() {
+  const fileInput = document.getElementById("runBrowse");
+  const display = document.getElementById("runInput");
+
+  if (fileInput.files.length > 0) {
+    display.value = fileInput.files[0].name;
+  }
 }
