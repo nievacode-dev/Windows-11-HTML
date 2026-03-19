@@ -1,5 +1,11 @@
 let windowId = 0;
 let windows = {};
+let activeWindowId = null;
+
+// Snap preview element
+const snapPreview = document.createElement("div");
+snapPreview.classList.add("snap-preview");
+document.body.appendChild(snapPreview);
 
 // Create a new window
 function createWindow(appTitle = "Window", appId = null, appIcon = null) {
@@ -10,8 +16,8 @@ function createWindow(appTitle = "Window", appId = null, appIcon = null) {
   windowElement.classList.add("window");
   windowElement.id = id;
   windowElement.dataset.appId = appId;
-  windowElement.style.left = `${100 + (windowId % 5) * 20}px`;
-  windowElement.style.top = `${50 + (windowId % 5) * 20}px`;
+  windowElement.style.left = `${100 + (windowId % 5) * 30}px`;
+  windowElement.style.top = `${50 + (windowId % 5) * 30}px`;
   
   const titleBar = document.createElement("div");
   titleBar.classList.add("title-bar");
@@ -39,7 +45,8 @@ function createWindow(appTitle = "Window", appId = null, appIcon = null) {
   // Minimize button
   const minimizeBtn = document.createElement("button");
   minimizeBtn.classList.add("control-btn", "minimize");
-  minimizeBtn.textContent = "_";
+  minimizeBtn.textContent = "−";
+  minimizeBtn.onpointerdown = (e) => e.stopPropagation(); // prevent drag
   minimizeBtn.onclick = (e) => {
     e.stopPropagation();
     minimizeWindow(id);
@@ -49,6 +56,7 @@ function createWindow(appTitle = "Window", appId = null, appIcon = null) {
   const maximizeBtn = document.createElement("button");
   maximizeBtn.classList.add("control-btn", "maximize");
   maximizeBtn.textContent = "□";
+  maximizeBtn.onpointerdown = (e) => e.stopPropagation();
   maximizeBtn.onclick = (e) => {
     e.stopPropagation();
     maximizeWindow(id);
@@ -58,6 +66,7 @@ function createWindow(appTitle = "Window", appId = null, appIcon = null) {
   const closeBtn = document.createElement("button");
   closeBtn.classList.add("control-btn", "close");
   closeBtn.textContent = "×";
+  closeBtn.onpointerdown = (e) => e.stopPropagation();
   closeBtn.onclick = (e) => {
     e.stopPropagation();
     closeWindow(id);
@@ -84,12 +93,6 @@ function createWindow(appTitle = "Window", appId = null, appIcon = null) {
   
   document.body.appendChild(windowElement);
   
-  // Make window draggable
-  makeWindowDraggable(id);
-  
-  // Make window resizable
-  makeWindowResizable(id);
-  
   // Store window info
   windows[id] = {
     element: windowElement,
@@ -97,13 +100,19 @@ function createWindow(appTitle = "Window", appId = null, appIcon = null) {
     isMinimized: false,
     appTitle: appTitle,
     appIcon: appIcon,
-    originalPosition: { 
-      top: windowElement.style.top,
-      left: windowElement.style.left,
-      width: "600px",
-      height: "400px"
-    }
+    x: parseInt(windowElement.style.left),
+    y: parseInt(windowElement.style.top),
+    width: 600,
+    height: 400,
+    originalState: null,
+    taskbarElement: null
   };
+  
+  // Create taskbar icon
+  createTaskbarItem(id);
+  
+  // Setup Interaction
+  makeWindowInteractive(id, titleBar, resizeHandle);
   
   // Set initial z-index (bring to front)
   updateZIndex(id);
@@ -111,291 +120,454 @@ function createWindow(appTitle = "Window", appId = null, appIcon = null) {
   return id;
 }
 
-// Make window draggable
-function makeWindowDraggable(windowId) {
-  const windowElement = document.getElementById(windowId);
-  const titleBar = windowElement.querySelector(".title-bar");
+// Unified Interaction Engine (Drag & Resize via rAF)
+function makeWindowInteractive(windowId, titleBar, resizeHandle) {
+  const win = windows[windowId];
+  const el = win.element;
+  
+  if (el.dataset.interactiveHooked === "true") return;
+  el.dataset.interactiveHooked = "true";
+  
+  // State 
   let isDragging = false;
-  let currentX = 0;
-  let currentY = 0;
-  let initialMouseX = 0;
-  let initialMouseY = 0;
-  let dragStartTime = 0;
-  let wasMaximized = false;
+  let isResizing = false;
+  let startPointerX, startPointerY;
+  let startX, startY;
+  let startW, startH;
+  let animationFrameId = null;
   
-  // Double-click to maximize/restore
-  titleBar.addEventListener("dblclick", (e) => {
-    if (e.target.classList.contains("control-btn")) return;
-    maximizeWindow(windowId);
-  });
+  let currentSnapType = null; // 'maximize', 'left', 'right'
   
-  titleBar.addEventListener("mousedown", (e) => {
-    if (e.target.classList.contains("control-btn")) return;
-    
-    dragStartTime = Date.now();
-    wasMaximized = windows[windowId].isMaximized;
-    
-    // If window is maximized, restore it but keep dragging
-    if (wasMaximized) {
-      const mouseXPercent = e.clientX / window.innerWidth;
-      maximizeWindow(windowId); // This will restore it
-      
-      // Position window under cursor
-      const newWidth = parseInt(windowElement.style.width) || 600;
-      windowElement.style.left = (e.clientX - newWidth * mouseXPercent) + "px";
-      windowElement.style.top = "10px";
-      
-      currentX = windowElement.offsetLeft;
-      currentY = windowElement.offsetTop;
-    } else {
-      currentX = windowElement.offsetLeft;
-      currentY = windowElement.offsetTop;
+  // Helper to render frame
+  const renderLoop = () => {
+    if (isDragging) {
+      el.style.left = `${win.x}px`;
+      el.style.top = `${win.y}px`;
+      animationFrameId = requestAnimationFrame(renderLoop);
+    } else if (isResizing) {
+      el.style.width = `${win.width}px`;
+      el.style.height = `${win.height}px`;
+      animationFrameId = requestAnimationFrame(renderLoop);
     }
-    
-    isDragging = true;
-    windowElement.classList.add("dragging");
-    
-    initialMouseX = e.clientX;
-    initialMouseY = e.clientY;
+  };
+
+  // Dragging Logic
+  titleBar.addEventListener("pointerdown", (e) => {
+    // Ignore if clicked on controls
+    if (e.target.closest('.control-btn')) return;
     
     updateZIndex(windowId);
+    isDragging = true;
+    titleBar.setPointerCapture(e.pointerId);
+    
+    // If maximized, restore and attach to cursor proportionally
+    if (win.isMaximized) {
+      const pointerPercent = e.clientX / window.innerWidth;
+      
+      // Detach and restore width implicitly
+      win.isMaximized = false;
+      el.classList.remove("maximized");
+      
+      const targetWidth = win.originalState ? win.originalState.width : 600;
+      el.style.width = `${targetWidth}px`;
+      
+      win.x = e.clientX - (targetWidth * pointerPercent);
+      win.y = 0;
+      el.style.left = `${win.x}px`;
+      el.style.top = `${win.y}px`;
+      
+      // Save state so snap assist works smoothly
+      win.originalState = { width: targetWidth, height: win.originalState ? win.originalState.height : 400 };
+    }
+    
+    startPointerX = e.clientX;
+    startPointerY = e.clientY;
+    startX = win.x;
+    startY = win.y;
+    
+    if (!animationFrameId) {
+      animationFrameId = requestAnimationFrame(renderLoop);
+    }
   });
   
-  document.addEventListener("mousemove", (e) => {
+  titleBar.addEventListener("pointermove", (e) => {
     if (!isDragging) return;
     
-    const deltaX = e.clientX - initialMouseX;
-    const deltaY = e.clientY - initialMouseY;
+    const deltaX = e.clientX - startPointerX;
+    const deltaY = e.clientY - startPointerY;
     
-    windowElement.style.left = (currentX + deltaX) + "px";
-    windowElement.style.top = Math.max(0, currentY + deltaY) + "px";
+    win.x = startX + deltaX;
+    win.y = startY + deltaY;
     
-    // Snap to top for maximize
-    if (e.clientY < 5 && !wasMaximized) {
-      windowElement.style.opacity = "0.7";
-    } else {
-      windowElement.style.opacity = "1";
-    }
+    // Stop dragging above top edge
+    if (win.y < 0) win.y = 0;
+    
+    // Snap Preview Logic
+    currentSnapType = checkSnapZones(e.clientX, e.clientY);
   });
   
-  document.addEventListener("mouseup", (e) => {
-    if (isDragging) {
-      isDragging = false;
-      windowElement.classList.remove("dragging");
-      
-      // Snap to maximize if dragged to top
-      if (e.clientY < 5 && !wasMaximized && Date.now() - dragStartTime > 200) {
-        maximizeWindow(windowId);
-      }
-      
-      windowElement.style.opacity = "1";
+  titleBar.addEventListener("pointerup", (e) => {
+    if (!isDragging) return;
+    isDragging = false;
+    titleBar.releasePointerCapture(e.pointerId);
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+    
+    // Apply Snapping if applicable
+    if (currentSnapType) {
+      applySnap(windowId, currentSnapType);
+      currentSnapType = null;
+      hideSnapPreview();
     }
   });
-  
-  // Bring window to front on click
-  windowElement.addEventListener("mousedown", () => {
+
+  // Double click Title bar to maximize
+  titleBar.addEventListener("dblclick", (e) => {
+    if (e.target.closest('.control-btn')) return;
+    maximizeWindow(windowId);
+  });
+
+  // Resizing Logic
+  resizeHandle.addEventListener("pointerdown", (e) => {
     updateZIndex(windowId);
+    isResizing = true;
+    resizeHandle.setPointerCapture(e.pointerId);
+    
+    startPointerX = e.clientX;
+    startPointerY = e.clientY;
+    
+    startW = el.offsetWidth;
+    startH = el.offsetHeight;
+    
+    if (!animationFrameId) {
+      animationFrameId = requestAnimationFrame(renderLoop);
+    }
+  });
+  
+  resizeHandle.addEventListener("pointermove", (e) => {
+    if (!isResizing) return;
+    
+    const deltaX = e.clientX - startPointerX;
+    const deltaY = e.clientY - startPointerY;
+    
+    win.width = Math.max(300, startW + deltaX); // Min bounds
+    win.height = Math.max(200, startH + deltaY);
+  });
+  
+  resizeHandle.addEventListener("pointerup", (e) => {
+    if (!isResizing) return;
+    isResizing = false;
+    resizeHandle.releasePointerCapture(e.pointerId);
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+  });
+
+  // Focus on content click
+  el.addEventListener("pointerdown", () => {
+    if (activeWindowId !== windowId) {
+      updateZIndex(windowId);
+    }
   });
 }
 
-// Make window resizable
-function makeWindowResizable(windowId) {
-  const windowElement = document.getElementById(windowId);
-  const resizeHandle = windowElement.querySelector(".window-resize");
-  let isResizing = false;
-  let startX = 0;
-  let startY = 0;
-  let startWidth = 0;
-  let startHeight = 0;
+// Snap Assist Logic
+function checkSnapZones(clientX, clientY) {
+  const edgeThreshold = 10;
+  hideSnapPreview(); // reset
   
-  resizeHandle.addEventListener("mousedown", (e) => {
-    isResizing = true;
-    startX = e.clientX;
-    startY = e.clientY;
-    startWidth = windowElement.offsetWidth;
-    startHeight = windowElement.offsetHeight;
-    windowElement.classList.add("dragging");
-  });
+  if (clientY <= edgeThreshold) {
+    showSnapPreview('maximize');
+    return 'maximize';
+  } else if (clientX <= edgeThreshold) {
+    showSnapPreview('left');
+    return 'left';
+  } else if (clientX >= window.innerWidth - edgeThreshold) {
+    showSnapPreview('right');
+    return 'right';
+  }
   
-  document.addEventListener("mousemove", (e) => {
-    if (!isResizing) return;
-    
-    const deltaX = e.clientX - startX;
-    const deltaY = e.clientY - startY;
-    
-    const newWidth = Math.max(400, startWidth + deltaX);
-    const newHeight = Math.max(300, startHeight + deltaY);
-    
-    windowElement.style.width = newWidth + "px";
-    windowElement.style.height = newHeight + "px";
-  });
+  return null;
+}
+
+function showSnapPreview(type) {
+  snapPreview.classList.add("visible");
+  const taskbarHeight = 48; // Estimate
   
-  document.addEventListener("mouseup", () => {
-    if (isResizing) {
-      isResizing = false;
-      windowElement.classList.remove("dragging");
+  if (type === 'maximize') {
+    snapPreview.style.top = '0';
+    snapPreview.style.left = '0';
+    snapPreview.style.width = '100%';
+    snapPreview.style.height = `calc(100% - ${taskbarHeight}px)`;
+  } else if (type === 'left') {
+    snapPreview.style.top = '0';
+    snapPreview.style.left = '0';
+    snapPreview.style.width = '50%';
+    snapPreview.style.height = `calc(100% - ${taskbarHeight}px)`;
+  } else if (type === 'right') {
+    snapPreview.style.top = '0';
+    snapPreview.style.left = '50%';
+    snapPreview.style.width = '50%';
+    snapPreview.style.height = `calc(100% - ${taskbarHeight}px)`;
+  }
+}
+
+function hideSnapPreview() {
+  snapPreview.classList.remove("visible");
+}
+
+function applySnap(windowId, type) {
+  const win = windows[windowId];
+  const el = win.element;
+  
+  // Save state before snapping
+  if (!win.isMaximized) {
+    win.originalState = {
+      x: win.x,
+      y: win.y,
+      width: el.offsetWidth,
+      height: el.offsetHeight
+    };
+  }
+  
+  el.classList.add("animating"); // Enable layout transitions explicitly
+  
+  // Force reflow to ensure transition is disabled/enabled properly
+  void el.offsetWidth;
+  
+  if (type === 'maximize') {
+    maximizeWindow(windowId, true); // true = force maximize, skipping toggle logic slightly
+  } else {
+    win.isMaximized = false;
+    el.classList.remove("maximized");
+    
+    // Half screen coordinates
+    const taskbarHeight = 48;
+    win.y = 0;
+    win.width = window.innerWidth / 2;
+    win.height = window.innerHeight - taskbarHeight;
+    
+    if (type === 'left') {
+      win.x = 0;
+    } else if (type === 'right') {
+      win.x = window.innerWidth / 2;
     }
-  });
+    
+    el.style.top = `${win.y}px`;
+    el.style.left = `${win.x}px`;
+    el.style.width = `${win.width}px`;
+    el.style.height = `${win.height}px`;
+  }
+  
+  // Clean up animation class after transition
+  setTimeout(() => el.classList.remove("animating"), 300);
 }
 
 // Update z-index to bring window to front
 function updateZIndex(windowId) {
+  if (activeWindowId === windowId) return;
+  activeWindowId = windowId;
+  
   let maxZIndex = 1000;
   
-  // Remove active class from all windows
+  // Remove active class from all windows and find highest z
   Object.keys(windows).forEach(id => {
     windows[id].element.classList.remove("active");
+    if (windows[id].taskbarElement) {
+      windows[id].taskbarElement.classList.remove("active");
+    }
     const zIndex = parseInt(window.getComputedStyle(windows[id].element).zIndex) || 0;
     if (zIndex > maxZIndex) {
       maxZIndex = zIndex;
     }
   });
   
-  // Set new z-index and add active class to focused window
-  const windowElement = document.getElementById(windowId);
-  windowElement.style.zIndex = maxZIndex + 1;
-  windowElement.classList.add("active");
+  // Set new z-index and active class
+  const el = windows[windowId].element;
+  el.style.zIndex = maxZIndex + 1;
+  el.classList.add("active");
+  if (windows[windowId].taskbarElement) {
+    windows[windowId].taskbarElement.classList.add("active");
+  }
+}
+
+// Taskbar Logic
+function createTaskbarItem(windowId) {
+  const win = windows[windowId];
+  const taskbarApps = document.getElementById("taskbarApps");
+  
+  if (taskbarApps) {
+    const taskbarItem = document.createElement("div");
+    taskbarItem.classList.add("taskbar-item", "open");
+    taskbarItem.dataset.windowId = windowId;
+    
+    if (win.appIcon) {
+      const iconImg = document.createElement("img");
+      iconImg.src = win.appIcon;
+      iconImg.classList.add("taskbar-icon");
+      taskbarItem.appendChild(iconImg);
+    }
+    
+    const indicator = document.createElement("div");
+    indicator.classList.add("taskbar-indicator");
+    taskbarItem.appendChild(indicator);
+    
+    taskbarItem.onclick = () => {
+      if (activeWindowId === windowId && !win.isMinimized) {
+        minimizeWindow(windowId);
+      } else {
+        if (win.isMinimized) {
+          minimizeWindow(windowId); // Restores it
+        } else {
+          updateZIndex(windowId);
+        }
+      }
+    };
+    
+    taskbarApps.appendChild(taskbarItem);
+    win.taskbarElement = taskbarItem;
+  }
 }
 
 // Minimize window
 function minimizeWindow(windowId) {
-  const windowElement = document.getElementById(windowId);
-  const window_data = windows[windowId];
+  const win = windows[windowId];
+  const el = win.element;
   
-  if (window_data.isMinimized) {
-    // Restore window
-    windowElement.classList.remove("hidden");
-    window_data.isMinimized = false;
+  if (win.isMinimized) {
+    // Restore
+    el.classList.remove("minimizing");
+    el.classList.remove("hidden");
+    win.isMinimized = false;
     
-    // Remove from taskbar
-    const taskbarItem = document.querySelector(`[data-window-id="${windowId}"]`);
-    if (taskbarItem) {
-      taskbarItem.remove();
-    }
+    updateZIndex(windowId);
   } else {
-    // Minimize window
-    windowElement.classList.add("hidden");
-    window_data.isMinimized = true;
+    // Minimize
+    el.classList.add("minimizing");
     
-    // Add to taskbar
-    const taskbarApps = document.getElementById("taskbarApps");
-    if (taskbarApps) {
-      const taskbarItem = document.createElement("div");
-      taskbarItem.classList.add("minimized-taskbar-item");
-      taskbarItem.dataset.windowId = windowId;
-      
-      // Add icon if available
-      if (window_data.appIcon) {
-        const iconImg = document.createElement("img");
-        iconImg.src = window_data.appIcon;
-        iconImg.classList.add("minimized-taskbar-icon");
-        taskbarItem.appendChild(iconImg);
+    setTimeout(() => {
+        el.classList.add("hidden");
+    }, 200); // Wait for animation
+    
+    win.isMinimized = true;
+    
+    // Remove focus state visually from taskbar
+    if (activeWindowId === windowId) {
+      activeWindowId = null;
+      if (win.taskbarElement) {
+        win.taskbarElement.classList.remove("active");
       }
-      
-      
-      taskbarItem.onclick = () => minimizeWindow(windowId);
-      
-      taskbarApps.appendChild(taskbarItem);
     }
   }
-  
-  updateZIndex(windowId);
 }
 
 // Maximize window
-function maximizeWindow(windowId) {
-  const windowElement = document.getElementById(windowId);
-  if (windows[windowId].isMaximized) {
-    // Restore to original size
-    windowElement.classList.remove("maximized");
-    windowElement.style.width = windows[windowId].originalPosition.width;
-    windowElement.style.height = windows[windowId].originalPosition.height;
-    windowElement.style.top = windows[windowId].originalPosition.top;
-    windowElement.style.left = windows[windowId].originalPosition.left;
-    windows[windowId].isMaximized = false;
+function maximizeWindow(windowId, forceMaximize = false) {
+  const win = windows[windowId];
+  const el = win.element;
+  
+  el.classList.add("animating"); // Ensure smooth transition
+  void el.offsetWidth; // Force layout
+  
+  if (win.isMaximized && !forceMaximize) {
+    // Restore
+    el.classList.remove("maximized");
+    
+    if (win.originalState) {
+        win.width = win.originalState.width;
+        win.height = win.originalState.height;
+        win.x = win.originalState.x;
+        win.y = win.originalState.y;
+    }
+    
+    el.style.width = `${win.width}px`;
+    el.style.height = `${win.height}px`;
+    el.style.top = `${win.y}px`;
+    el.style.left = `${win.x}px`;
+    
+    win.isMaximized = false;
   } else {
     // Maximize
-    windows[windowId].originalPosition = {
-      top: windowElement.style.top,
-      left: windowElement.style.left,
-      width: windowElement.style.width,
-      height: windowElement.style.height
-    };
-    windowElement.classList.add("maximized");
-    windows[windowId].isMaximized = true;
+    if (!win.isMaximized) {
+      win.originalState = { x: win.x, y: win.y, width: el.offsetWidth, height: el.offsetHeight };
+    }
+    
+    el.classList.add("maximized");
+    el.style.width = ''; // Handled by CSS class important tags
+    el.style.height = ''; 
+    el.style.top = ''; 
+    el.style.left = '';
+    
+    win.isMaximized = true;
   }
+  
+  setTimeout(() => el.classList.remove("animating"), 300);
 }
 
 // Close window
 function closeWindow(windowId) {
-  const windowElement = document.getElementById(windowId);
+  const el = document.getElementById(windowId);
+  const win = windows[windowId];
   
-  // Remove from taskbar if minimized
-  const taskbarItem = document.querySelector(`[data-window-id="${windowId}"]`);
-  if (taskbarItem) {
-    taskbarItem.remove();
+  if (windowId === 'cmd') {
+      // For the Terminal, we just hide it instead of destroying the DOM
+      if (el) el.style.display = 'none';
+      if (win && win.taskbarElement) {
+          win.taskbarElement.remove();
+      }
+      delete windows[windowId];
+      return;
   }
   
-  windowElement.classList.add("closing");
+  if (win && win.taskbarElement) {
+    win.taskbarElement.remove();
+  }
+  
+  el.classList.add("closing");
   setTimeout(() => {
-    windowElement.remove();
+    el.remove();
     delete windows[windowId];
-  }, 150);
+  }, 150); // Matches opactity transition time
 }
 
-// Handle app-shortcut and start-app clicks
+// Global hook up
 function initializeAppShortcuts() {
   const appShortcuts = document.querySelectorAll(".app-shortcut, .start-app");
   
   appShortcuts.forEach(shortcut => {
     shortcut.style.cursor = "pointer";
-    
-    // Remove any existing listeners by cloning
     const newShortcut = shortcut.cloneNode(true);
     shortcut.parentNode.replaceChild(newShortcut, shortcut);
     
     newShortcut.addEventListener("click", (e) => {
       e.stopPropagation();
-      
-      // Get app title and icon from different sources
       let appTitle = "Application";
       let appId = null;
       let appIcon = null;
       
       if (newShortcut.classList.contains("app-shortcut")) {
-        // From desktop app
         const appDesktop = newShortcut.closest(".app-desktop");
         appTitle = appDesktop.dataset.title || "Application";
         appId = appDesktop.dataset.id || null;
-        
-        // Get icon from app-shortcut
         const iconImg = newShortcut.querySelector("img.app");
-        if (iconImg) {
-          appIcon = iconImg.src;
-        }
+        if (iconImg) appIcon = iconImg.src;
       } else if (newShortcut.classList.contains("start-app")) {
-        // From start menu app
         const appNameSpan = newShortcut.querySelector(".start-app-name");
         appTitle = appNameSpan ? appNameSpan.textContent : "Application";
-        
-        // Get icon from start-app
         const iconImg = newShortcut.querySelector("img.app-list");
-        if (iconImg) {
-          appIcon = iconImg.src;
-        }
+        if (iconImg) appIcon = iconImg.src;
       }
       
-      createWindow(appTitle, appId, appIcon);
+      if (appId === 'cmd') {
+          if (typeof openTerminalWindow === 'function') openTerminalWindow();
+      } else {
+          createWindow(appTitle, appId, appIcon);
+      }
     });
     
-    // Double-click support
-    newShortcut.addEventListener("dblclick", (e) => {
-      e.stopPropagation();
-    });
+    newShortcut.addEventListener("dblclick", (e) => e.stopPropagation());
   });
 }
 
-// Handle .app-tb taskbar icon clicks
 function initializeTaskbarApps() {
   const taskbarApps = document.querySelectorAll(".app-tb");
   taskbarApps.forEach(appImg => {
@@ -409,7 +581,6 @@ function initializeTaskbarApps() {
   });
 }
 
-// Initialize when DOM is ready
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", () => {
     initializeAppShortcuts();

@@ -263,85 +263,317 @@ const commands = {
   },
 };
 
-const terminal = document.getElementById("terminal");
-const history = document.getElementById("history");
-const input = document.getElementById("command-input");
-const prompt = document.getElementById("prompt");
+// ===================================
+// TERMINAL MANAGER (MULTI-TAB LOGIC)
+// ===================================
 
-function addHistoryEntry(text) {
+const terminalContainer = document.getElementById("cmd");
+const terminalBody = document.getElementById("terminalBody");
+const tabsContainer = document.getElementById("terminalTabsContainer");
+const newTabBtn = document.getElementById("newTabBtn");
+
+let terminalSessions = {};
+let activeSessionId = null;
+let tabCounter = 0;
+
+// Boilerplate messages for PowerShell/Terminal feel
+const TERMINAL_WELCOME = `Windows PowerShell
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+Install the latest PowerShell for new features and improvements! https://aka.ms/PSWindows
+`;
+
+function createTerminalTab() {
+  tabCounter++;
+  const sessionId = `term-session-${tabCounter}`;
+  
+  // 1. Create Data Model
+  terminalSessions[sessionId] = {
+    id: sessionId,
+    history: [],
+    historyIndex: -1,
+    currentDir: fileSystem.children[0].children[0], // Start in c:/Windows/System32 usually
+    tabElement: null,
+    sessionElement: null,
+    inputElement: null,
+    historyElement: null,
+    promptElement: null
+  };
+  
+  const ctx = terminalSessions[sessionId];
+  
+  // 2. Create UI Tab
+  const tabBtn = document.createElement("div");
+  tabBtn.classList.add("terminal-tab");
+  tabBtn.innerHTML = `
+    <div class="terminal-tab-inner">
+      <img src="icon/terminal.ico" class="terminal-tab-icon" onerror="this.src='icon/cmd.ico'" />
+      <span>Windows PowerShell</span>
+    </div>
+    <div class="terminal-tab-close"><span>×</span></div>
+  `;
+  
+  // Tab click activates session
+  tabBtn.addEventListener("pointerdown", (e) => {
+    // Only switch if we didn't click close
+    if (!e.target.closest('.terminal-tab-close')) {
+      switchTerminalTab(sessionId);
+    }
+  });
+  
+  // Close click
+  const closeBtn = tabBtn.querySelector(".terminal-tab-close");
+  closeBtn.addEventListener("pointerdown", (e) => {
+    e.stopPropagation();
+    closeTerminalTab(sessionId);
+  });
+  
+  // Insert before the new tab button
+  tabsContainer.insertBefore(tabBtn, newTabBtn);
+  ctx.tabElement = tabBtn;
+  
+  // 3. Create Session DOM
+  const sessionDiv = document.createElement("div");
+  sessionDiv.classList.add("terminal-session");
+  
+  sessionDiv.innerHTML = `
+    <div class="terminal-history">
+       <div>${TERMINAL_WELCOME}</div>
+    </div>
+    <div class="terminal-input-line">
+      <span class="terminal-prompt"></span>
+      <input type="text" class="terminal-input" autocomplete="off" spellcheck="false" />
+    </div>
+  `;
+  
+  ctx.historyElement = sessionDiv.querySelector(".terminal-history");
+  ctx.promptElement = sessionDiv.querySelector(".terminal-prompt");
+  ctx.inputElement = sessionDiv.querySelector(".terminal-input");
+  
+  // Attach Key Events to Input
+  ctx.inputElement.addEventListener("keydown", (e) => handleTerminalInput(e, sessionId));
+  
+  // Click anywhere in session focuses input
+  sessionDiv.addEventListener("click", () => ctx.inputElement.focus());
+  
+  terminalBody.appendChild(sessionDiv);
+  ctx.sessionElement = sessionDiv;
+  
+  // Initialize Prompt
+  updateSessionPrompt(sessionId);
+  
+  // Switch to new tab
+  switchTerminalTab(sessionId);
+  
+  return sessionId;
+}
+
+function switchTerminalTab(sessionId) {
+  // Remove active from old
+  if (activeSessionId && terminalSessions[activeSessionId]) {
+    const oldCtx = terminalSessions[activeSessionId];
+    oldCtx.tabElement.classList.remove("active");
+    oldCtx.sessionElement.classList.remove("active");
+  }
+  
+  // Set new active
+  activeSessionId = sessionId;
+  const newCtx = terminalSessions[sessionId];
+  newCtx.tabElement.classList.add("active");
+  newCtx.sessionElement.classList.add("active");
+  
+  // Give focus slightly delayed to ensure display block is processed
+  setTimeout(() => {
+    newCtx.inputElement.focus();
+    newCtx.sessionElement.scrollTop = newCtx.sessionElement.scrollHeight;
+  }, 10);
+}
+
+function closeTerminalTab(sessionId) {
+  const ctx = terminalSessions[sessionId];
+  
+  // Remove UI
+  ctx.tabElement.remove();
+  ctx.sessionElement.remove();
+  delete terminalSessions[sessionId];
+  
+  const remainingIds = Object.keys(terminalSessions);
+  if (remainingIds.length === 0) {
+    // No tabs left, close window
+    closeTerminalWindow();
+  } else if (activeSessionId === sessionId) {
+    // We closed active tab, switch to last available tab
+    switchTerminalTab(remainingIds[remainingIds.length - 1]);
+  }
+}
+
+// Global Terminal Controls
+function openTerminalWindow() {
+  if (terminalContainer.style.display !== "flex") {
+    // If no tabs exist (first open), create one
+    if (Object.keys(terminalSessions).length === 0) {
+      createTerminalTab();
+    }
+    
+    terminalContainer.style.setProperty("display", "flex", "important");
+    
+    // Register it as a window for interaction engine if it wasn't already
+    if (!windows['cmd']) {
+       windows['cmd'] = {
+          element: terminalContainer,
+          isMaximized: false,
+          isMinimized: false,
+          appTitle: "Windows Terminal",
+          appIcon: "icon/terminal.ico",
+          x: parseInt(terminalContainer.style.left) || 150,
+          y: parseInt(terminalContainer.style.top) || 100,
+          width: 900,
+          height: 550,
+          originalState: null,
+          taskbarElement: null
+       };
+       
+       const dragHandle = terminalContainer.querySelector(".terminal-drag-region");
+       const resizeHan = terminalContainer.querySelector(".window-resize");
+       makeWindowInteractive('cmd', dragHandle, resizeHan);
+       createTaskbarItem('cmd');
+    } else if (!windows['cmd'].taskbarElement) {
+       // if we reused window but closed taskbar
+       createTaskbarItem('cmd');
+    }
+    
+    updateZIndex('cmd');
+    
+    // Focus active tab input
+    if (activeSessionId && terminalSessions[activeSessionId]) {
+      setTimeout(() => terminalSessions[activeSessionId].inputElement.focus(), 50);
+    }
+  } else {
+     // If minimizing logic applies, it's handled via taskbar item click in window-mode.js
+     updateZIndex('cmd');
+  }
+}
+
+function closeTerminalWindow() {
+  // We don't actually destroy the container, just hide to simulate closing
+  closeWindow('cmd');
+  // Optional: clear out sessions if you want it to restart fresh next time.
+  Object.keys(terminalSessions).forEach(id => {
+      terminalSessions[id].tabElement.remove();
+      terminalSessions[id].sessionElement.remove();
+  });
+  terminalSessions = {};
+  activeSessionId = null;
+  tabCounter = 0;
+}
+
+// Event Listeners for + button
+newTabBtn.addEventListener("pointerdown", (e) => {
+  e.stopPropagation();
+  createTerminalTab();
+});
+
+
+// ===================================
+// TERMINAL COMMAND PARSING & CONTEXT
+// ===================================
+
+function getSessionPath(sessionId) {
+  const dir = terminalSessions[sessionId].currentDir;
+  let parts = [];
+  let current = dir;
+  while (current) {
+    if (current.name === "C:") break;
+    parts.unshift(current.name);
+    current = current.parent;
+  }
+  return "PS C:\\" + parts.join("\\");
+}
+
+function updateSessionPrompt(sessionId) {
+  const ctx = terminalSessions[sessionId];
+  ctx.promptElement.textContent = getSessionPath(sessionId) + ">";
+}
+
+function addToSessionHistory(sessionId, text) {
+  const ctx = terminalSessions[sessionId];
   const entry = document.createElement("div");
   entry.textContent = text;
-  history.appendChild(entry);
-  terminal.scrollTop = terminal.scrollHeight;
+  ctx.historyElement.appendChild(entry);
+  
+  // Scroll
+  ctx.sessionElement.scrollTop = ctx.sessionElement.scrollHeight;
 }
 
-function updatePrompt() {
-  prompt.textContent = getCurrentPath() + ">";
-}
-updatePrompt();
-
-input.addEventListener("keydown", async (e) => {
+async function handleTerminalInput(e, sessionId) {
+  const ctx = terminalSessions[sessionId];
+  
   if (e.key === "Enter") {
-    const commandLine = input.value.trim();
+    e.preventDefault();
+    const commandLine = ctx.inputElement.value.trim();
+    
     if (!commandLine) {
-      input.value = "";
+      // Just print empty prompt
+      addToSessionHistory(sessionId, getSessionPath(sessionId) + "> ");
+      ctx.inputElement.value = "";
+      ctx.sessionElement.scrollTop = ctx.sessionElement.scrollHeight;
       return;
     }
 
-    addHistoryEntry(getCurrentPath() + "> " + commandLine);
+    addToSessionHistory(sessionId, getSessionPath(sessionId) + "> " + commandLine);
 
-    commandHistory.push(commandLine);
-    historyIndex = commandHistory.length;
+    ctx.history.push(commandLine);
+    ctx.historyIndex = ctx.history.length;
 
-    const [cmd, ...args] = commandLine.split(" ");
+    const [cmdStr, ...args] = commandLine.split(" ");
+    const cmd = cmdStr.toLowerCase();
 
-    if (commands.hasOwnProperty(cmd.toLowerCase())) {
-      const output = await commands[cmd.toLowerCase()](args);
-      if (output) addHistoryEntry(output);
-      updatePrompt();
+    // Since our existing commands rely on global `currentDir`, 
+    // we must temporarily swap the global reference for execution
+    const tempGlobalDir = currentDir;
+    currentDir = ctx.currentDir;
+
+    if (commands.hasOwnProperty(cmd)) {
+      // Execute
+      try {
+        const output = await commands[cmd](args);
+        if (output) addToSessionHistory(sessionId, output);
+      } catch (err) {
+        addToSessionHistory(sessionId, "Error: " + err.message);
+      }
+      
+      // Some commands change the currentDir (e.g., cd)
+      // Save it back to the context
+      ctx.currentDir = currentDir;
+      updateSessionPrompt(sessionId);
     } else {
-      addHistoryEntry(
-        `'${cmd}' is not recognized as an internal or external command.`
-      );
+      addToSessionHistory(sessionId, `${cmdStr} : The term '${cmdStr}' is not recognized as the name of a cmdlet, function, script file, or operable program.`);
     }
 
-    input.value = "";
-    terminal.scrollTop = terminal.scrollHeight;
+    // Restore globals just in case
+    currentDir = tempGlobalDir;
+
+    ctx.inputElement.value = "";
+    ctx.sessionElement.scrollTop = ctx.sessionElement.scrollHeight;
+    
   } else if (e.key === "ArrowUp") {
-    if (commandHistory.length === 0) return;
-    if (historyIndex > 0) {
-      historyIndex--;
-      input.value = commandHistory[historyIndex];
-    } else if (historyIndex === 0) {
-      input.value = commandHistory[0];
-    }
-    setTimeout(
-      () => input.setSelectionRange(input.value.length, input.value.length),
-      0
-    );
     e.preventDefault();
+    if (ctx.history.length === 0) return;
+    if (ctx.historyIndex > 0) {
+      ctx.historyIndex--;
+      ctx.inputElement.value = ctx.history[ctx.historyIndex];
+    } else if (ctx.historyIndex === 0) {
+      ctx.inputElement.value = ctx.history[0];
+    }
   } else if (e.key === "ArrowDown") {
-    if (commandHistory.length === 0) return;
-    if (historyIndex < commandHistory.length - 1) {
-      historyIndex++;
-      input.value = commandHistory[historyIndex];
-    } else {
-      historyIndex = commandHistory.length;
-      input.value = "";
-    }
-    setTimeout(
-      () => input.setSelectionRange(input.value.length, input.value.length),
-      0
-    );
     e.preventDefault();
+    if (ctx.history.length === 0) return;
+    if (ctx.historyIndex < ctx.history.length - 1) {
+      ctx.historyIndex++;
+      ctx.inputElement.value = ctx.history[ctx.historyIndex];
+    } else {
+      ctx.historyIndex = ctx.history.length;
+      ctx.inputElement.value = "";
+    }
   }
-});
-
-// document.onclick = function () {
-//   setTimeout(() => {
-//     document.getElementById("cmd").style.display = "block";
-//     setTimeout(() => {
-//       closeTab('cmd');
-//     }, 220);
-//   }, 2000);
-// }
+}

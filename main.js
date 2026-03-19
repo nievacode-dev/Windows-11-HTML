@@ -60,6 +60,54 @@ searchIcon.addEventListener("click", function () {
   searchMenu.classList.toggle("menu-open");
 });
 
+// All apps logic
+document.addEventListener("DOMContentLoaded", () => {
+  const allAppsBtn = document.querySelector(".all-apps");
+  const backBtn = document.getElementById("backBtn");
+  const startMenuViewport = document.getElementById("startMenuViewport");
+
+  if (allAppsBtn && startMenuViewport) {
+    allAppsBtn.addEventListener("click", (e) => {
+      e.stopPropagation(); // prevent start menu from closing
+      startMenuViewport.classList.add("show-all-apps");
+    });
+  }
+
+  if (backBtn && startMenuViewport) {
+    backBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      startMenuViewport.classList.remove("show-all-apps");
+    });
+  }
+
+  // Hook up the all-apps list items to createWindow
+  const allAppItems = document.querySelectorAll(".all-app-item");
+  allAppItems.forEach(item => {
+    item.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (typeof createWindow !== 'undefined') {
+        const title = item.dataset.title || "Application";
+        const iconImg = item.querySelector("img");
+        createWindow(title, null, iconImg ? iconImg.src : null);
+        // Optionally close start menu
+        startMenu.classList.remove("menu-open");
+      }
+    });
+  });
+  
+  // Reset viewport when start menu closes
+  document.addEventListener("click", (e) => {
+    // Basic detection if click was outside startmenu
+    if (!startMenu.contains(e.target) && e.target !== startLogo) {
+       startMenu.classList.remove("menu-open");
+       if (startMenuViewport) {
+           // delay removal to reset after it's hidden
+           setTimeout(() => startMenuViewport.classList.remove("show-all-apps"), 200);
+       }
+    }
+  });
+});
+
 // widgetsIcon.onclick = function () {
 //   if (
 //     widgetsMenu.style.display === "none" ||
@@ -227,9 +275,55 @@ const contextMenu = document.getElementById("contextMenu");
 document.addEventListener("contextmenu", function (e) {
   e.preventDefault();
 
-  contextMenu.style.display = "block";
-  contextMenu.style.left = e.pageX + "px";
-  contextMenu.style.top = e.pageY + "px";
+  // Hide other menus
+  document.getElementById("quickLink").style.display = "none";
+  const recycleBinMenu = document.getElementById("recycleBinMenu");
+  if (recycleBinMenu) recycleBinMenu.style.display = "none";
+
+  const appDesktop = e.target.closest(".app-desktop");
+  const appContextMenu = document.getElementById("appContextMenu");
+
+  if (e.target.closest("#recycleBin") || e.target.closest("#startLogo")) {
+    // Handled by their respective listeners, just hide default context
+    contextMenu.style.display = "none";
+    if (appContextMenu) appContextMenu.style.display = "none";
+    return;
+  }
+
+  if (appDesktop) {
+    contextMenu.style.display = "none";
+    if (appContextMenu) {
+      appContextMenu.style.display = "block";
+      appContextMenu.style.left = e.pageX + "px";
+      appContextMenu.style.top = e.pageY + "px";
+
+      // Store reference to right-clicked app
+      appContextMenu.dataset.targetId = appDesktop.dataset.id;
+      appContextMenu.dataset.targetTitle = appDesktop.dataset.title;
+      const img = appDesktop.querySelector("img.app");
+      appContextMenu.dataset.targetIcon = img ? img.src : "";
+    }
+  } else {
+    if (appContextMenu) appContextMenu.style.display = "none";
+    contextMenu.style.display = "block";
+    contextMenu.style.left = e.pageX + "px";
+    contextMenu.style.top = e.pageY + "px";
+  }
+});
+
+// App context menu "Open" logic
+document.addEventListener("DOMContentLoaded", () => {
+  const appOpenBtn = document.getElementById("appOpenBtn");
+  if (appOpenBtn) {
+    appOpenBtn.addEventListener("click", () => {
+      const appContextMenu = document.getElementById("appContextMenu");
+      if (appContextMenu && typeof createWindow !== 'undefined') {
+        createWindow(appContextMenu.dataset.targetTitle || "Application",
+          appContextMenu.dataset.targetId,
+          appContextMenu.dataset.targetIcon);
+      }
+    });
+  }
 });
 
 let mouseHover;
@@ -284,6 +378,8 @@ document
 
 document.addEventListener("click", function () {
   document.getElementById("contextMenu").style.display = "none";
+  const appContextMenu = document.getElementById("appContextMenu");
+  if (appContextMenu) appContextMenu.style.display = "none";
 });
 
 startLogo.addEventListener("contextmenu", function (e) {

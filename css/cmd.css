@@ -1,144 +1,274 @@
+/* Windows 11 Terminal Base (Extends .window from window-mode.css normally, but has specific overrides) */
+#cmd {
+  display: none !important; /* Force hidden initially */
+}
+
 .cmd {
-  display: none;
-  width: 1000px;
-  height: 600px;
-  background-color: rgb(12, 12, 12);
-  border: 1px solid rgb(50, 50, 50);
-  border-radius: 6px;
-  backdrop-filter: blur(20px);
-  animation: opentab 0.2s;
-  transition: transform 0.5s, opacity 0.2s, display 0.2s allow-discrete,
-    top 0.2s;
-  box-shadow: 0px 5px 10px rgba(15, 15, 15, 0.8);
-  position: fixed;
-  top: 80px;
-  left: 200px;
+  width: 900px;
+  height: 550px;
+  background-color: rgba(28, 28, 28, 0.85); /* Mica effect */
+  backdrop-filter: blur(50px) saturate(150%);
+  -webkit-backdrop-filter: blur(50px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 0, 0, 0.1);
+  position: absolute;
+  top: 100px;
+  left: 150px;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 1000;
+  
+  /* Inherit dragging animations */
+  transition: width 0.2s ease-out, height 0.2s ease-out, top 0.2s ease-out, left 0.2s ease-out, opacity 0.15s ease-out, transform 0.15s ease-out;
+  opacity: 0;
+  transform: scale(0.95);
+  animation: windowOpen 0.2s ease-out forwards;
 }
 
-.cmd > div:nth-child(1) {
-  color: white;
-  height: 20px;
-  padding: 10px;
-  background-color: rgb(51, 51, 51);
-  /* border-bottom: 1px solid rgb(50, 50, 50); */
-  border-radius: 6px 6px 0px 0px;
-  backdrop-filter: blur(10px);
-  width: 980px;
+.cmd.maximized {
+  width: 100% !important;
+  height: calc(100% - 48px) !important;
+  top: 0 !important;
+  left: 0 !important;
+  border-radius: 0;
+  border: none;
 }
 
-.cmd > div:nth-child(1) > div {
-  color: white;
-  /* padding: 10px 70px 10px 70px; */
+/* Terminal Header Customization */
+.terminal-header {
   height: 40px;
-  width: 300px;
+  background-color: transparent; /* Parent handles blur */
   display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: rgb(0, 0, 0);
-  border-radius: 10px 10px 0px 0px;
-  position: fixed;
-  left: 15px;
-  bottom: 0;
-}
-
-.terminal {
-  font-family: monospace;
-  font-size: 20px;
-  padding: 20px;
-  height: 560px;
-  overflow-y: auto;
-  box-sizing: border-box;
-  color: white;
-  /* background-color: blue; */
-}
-
-.terminal::-webkit-scrollbar {
-  display: none;
-}
-
-#history {
-  white-space: pre-wrap;
-}
-
-.input-line {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.prompt {
+  justify-content: space-between;
+  align-items: flex-end; /* Align tabs to bottom of header */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* very subtle */
+  position: relative;
+  z-index: 2;
   user-select: none;
+  touch-action: none;
 }
 
-#command-input {
+/* 
+  The invisible box that acts as the draggable handle for the window 
+  if the user clicks outside of a tab.
+*/
+.terminal-drag-region {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  cursor: move;
+}
+
+/* Window Controls (Top Right) overrides for Terminal specifically to sit above drag region */
+.terminal-header .window-controls {
+  position: relative;
+  z-index: 20;
+  height: 100%;
+  padding-bottom: 8px; /* Move them up slightly from the bottom alignment */
+}
+
+.terminal-header .window-controls .control-btn {
+    height: 32px; /* standard height */
+    align-self: flex-start; /* align to very top of header */
+}
+
+/* Tabs Container */
+.terminal-tabs-container {
+  display: flex;
+  flex-direction: row;
+  height: 32px; /* Slightly shorter than header height */
+  margin-left: 8px; /* Offset from left edge */
+  z-index: 10;
+  position: relative;
+  align-items: flex-end;
+  max-width: calc(100% - 150px); /* Leave room for window controls */
+  overflow: hidden;
+}
+
+.terminal-tab {
+  height: 32px;
+  min-width: 160px;
+  max-width: 240px;
+  background-color: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  border-radius: 8px 8px 0 0; /* Win11 tab styling */
+  cursor: pointer;
+  position: relative;
+  margin-right: 2px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  font-size: 13px;
+  border: 1px solid transparent;
+  border-bottom: none;
+}
+
+.terminal-tab::before {
+  /* Separator line between inactive tabs */
+  content: '';
+  position: absolute;
+  right: -2px;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background-color: rgba(255, 255, 255, 0.1);
+  transition: opacity 0.1s;
+}
+
+.terminal-tab.active::before,
+.terminal-tab:hover::before {
+  opacity: 0; /* Hide separator next to active/hovered tabs */
+}
+
+.terminal-tab:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.terminal-tab.active {
+  background-color: rgba(28, 28, 28, 0.85); /* Match terminal body */
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.08); /* Highlight edge */
+  border-bottom: none;
+  z-index: 12;
+}
+
+.terminal-tab-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-grow: 1;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.terminal-tab-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.terminal-tab-close {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.15s, background-color 0.15s;
+}
+
+.terminal-tab:hover .terminal-tab-close,
+.terminal-tab.active .terminal-tab-close {
+  opacity: 1;
+}
+
+.terminal-tab-close:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.new-tab-btn {
+  width: 32px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 5px;
+  margin-bottom: 2px;
+  transition: background-color 0.1s;
+  z-index: 10;
+}
+
+.new-tab-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+/* Terminal Body */
+.terminal-body {
+  flex-grow: 1;
+  position: relative;
+  background-color: transparent; /* Parent handles mica */
+}
+
+/* Individual Terminal Session */
+.terminal-session {
+  display: none; /* Hidden unless active */
+  width: 100%;
+  height: 100%;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 15px; /* Better readability */
+  padding: 15px;
+  box-sizing: border-box;
+  color: #CCCCCC; /* Modern powershell text color */
+  overflow-y: auto;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.terminal-session.active {
+  display: block;
+}
+
+.terminal-session::-webkit-scrollbar {
+  width: 10px;
+}
+
+.terminal-session::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.terminal-session::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  background-clip: padding-box;
+  border: 2px solid transparent; /* invisible border trick */
+}
+
+.terminal-session::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Terminal Text Formatting */
+.terminal-history {
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin-bottom: 5px;
+}
+
+.terminal-history div {
+    line-height: 1.4;
+}
+
+.terminal-input-line {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* space between prompt and input */
+}
+
+.terminal-prompt {
+  user-select: none;
+  color: #CCCCCC;
+}
+
+.terminal-input {
   background: transparent;
   border: none;
   color: inherit;
-  font-family: monospace;
+  font-family: inherit;
+  font-size: inherit;
   flex-grow: 1;
   outline: none;
-  font-size: 1em;
-}
-
-.tab-tool {
-  display: flex;
-  gap: 10px;
-  position: fixed;
-  right: 0px;
-  top: 0px;
-}
-
-.tab-tool span {
-  font-size: 20px;
-  font-family: Segoe-Fluent;
-}
-
-.tab-tool > span:nth-child(1) {
-  border: none;
-  padding: 0px 20px 15px 20px;
-  background-color: transparent;
-  font-size: 20px;
-  font-weight: bold;
-  color: white;
-  cursor: default;
-  position: fixed;
-  right: 109px;
-  top: 0px;
-}
-
-.tab-tool > span:nth-child(1):hover {
-  background-color: rgb(73, 73, 73);
-}
-
-.tab-tool > span:nth-child(2):hover {
-  background-color: rgb(73, 73, 73);
-}
-
-.tab-tool > span:nth-child(2) {
-  position: fixed;
-  right: 54px;
-  top: 0px;
-  border: none;
-  padding: 5px 20px 6px 20px;
-  background-color: transparent;
-  font-size: 23px;
-  color: white;
-  cursor: default;
-}
-
-.tab-tool > span:nth-child(3) {
-  position: fixed;
-  right: 0px;
-  top: 0px;
-  color: white;
-  font-size: 25px;
-  padding: 6px 20px 2px 20px;
-  border: none;
-  background-color: transparent;
-  border-radius: 0px 6px 0px 0px;
-}
-
-.tab-tool > span:nth-child(3):hover {
-  background-color: red;
-  cursor: default;
+  caret-color: white; /* Block cursor simulation (sort of) */
 }

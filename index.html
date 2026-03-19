@@ -21,26 +21,31 @@
       <span class="dates-lock-screen" id="datesLockScreen"></span>
     </div>
   </div>
-  <div class="cmd" id="cmd">
-    <div>
-      <div>Command Prompt</div>
-      <div class="tab-tool">
-        <span>_</span>
-        <span>&#9633;</span>
-        <span onclick="closeTab('cmd')">&times;</span>
+  <div class="cmd window" id="cmd" data-app-id="cmd">
+    <div class="terminal-header title-bar">
+      <!-- Drag Handle Area (invisible, takes remaining space) -->
+      <div class="terminal-drag-region title"></div>
+      
+      <!-- Tabs Container -->
+      <div class="terminal-tabs-container" id="terminalTabsContainer">
+        <!-- Tabs will be dynamically inserted here -->
+        <button class="new-tab-btn" id="newTabBtn" title="Open a new tab">
+          <span class="ico">&#xe710;</span>
+        </button>
+      </div>
+
+      <!-- Window Controls -->
+      <div class="window-controls">
+        <button class="control-btn minimize" onclick="minimizeWindow('cmd')">−</button>
+        <button class="control-btn maximize" onclick="maximizeWindow('cmd')">□</button>
+        <button class="control-btn close" onclick="closeTerminalWindow()">×</button>
       </div>
     </div>
-    <div class="terminal" id="terminal">
-      <div id="win-version">
-        Microsoft Windows [Version 10.0.19044.2130]<br>
-        (c) Microsoft Corporation. All rights reserved.<br><br>
-      </div>
-      <div id="history"></div>
-      <div class="input-line">
-        <span class="prompt" id="prompt">C:Windows/System32&gt;</span>
-        <input type="text" id="command-input" autocomplete="off" autofocus />
-      </div>
+    
+    <div class="terminal-body" id="terminalBody">
+      <!-- Session containers will be injected here -->
     </div>
+    <div class="window-resize"></div>
   </div>
   <div class="screen-not-supported">
     <h1>Screen is not supported</h1>
@@ -110,6 +115,29 @@
       <span class="ico context-item-icon" id="personalize">&#xe771;</span>Personalize
     </div>
     <div class="context-item">Show more options</div>
+  </div>
+  <div class="context-menu" id="appContextMenu">
+    <div class="context-item" id="appOpenBtn">
+      <span><span class="ico context-item-icon">&#xe8e5;</span>Open</span>
+    </div>
+    <div class="context-item">
+      <span><span class="ico context-item-icon">&#xe8a1;</span>Open file location</span>
+    </div>
+    <div class="context-item">
+      <span><span class="ico context-item-icon">&#xe7ef;</span>Run as administrator</span>
+    </div>
+    <div class="context-item">
+      <span><span class="ico context-item-icon">&#xe7b8;</span>Compress to ZIP file</span>
+    </div>
+    <div class="context-item">
+      <span><span class="ico context-item-icon">&#xe8c8;</span>Copy as path</span>
+    </div>
+    <div class="context-item">
+      <span><span class="ico context-item-icon">&#xe946;</span>Properties</span>
+    </div>
+    <div class="context-item">
+      <span>Show more options</span>
+    </div>
   </div>
   <div class="gray-bg" id="grayBg"></div>
   <div class="popup" id="popup">
@@ -194,7 +222,8 @@
   </div>
   <div class="start-menu" id="startMenu">
     <input type="text" class="search-bar" placeholder="Type here to search" />
-    <div class="start-content">
+    <div class="start-menu-viewport" id="startMenuViewport">
+      <div class="start-content">
       <p class="pinned">Pinned</p>
       <button class="all-apps">
         All apps <span class="ico all-apps-chevron">&#xe76c;</span>
@@ -270,6 +299,130 @@
         </div>
       </div>
       <p class="recommended">Recommended</p>
+    </div>
+    <div class="all-apps-view" id="allAppsView">
+      <div class="all-apps-header">
+        <span class="all-apps-title">All apps</span>
+        <button class="back-btn" id="backBtn">
+          <span class="ico">&#xe76b;</span> Back
+        </button>
+      </div>
+      <div class="all-apps-list" id="allAppsList">
+        <!-- Letters and Apps Will Be Inserted via JS or Hardcoded -->
+        <div class="letter-group">
+          <div class="letter">#</div>
+          <div class="start-app all-app-item" data-title="7-Zip">
+             <img src="icon/folder.ico" class="app-list" />
+             <span class="start-app-name">7-Zip</span>
+          </div>
+        </div>
+        <div class="letter-group">
+          <div class="letter">A</div>
+          <div class="start-app all-app-item" data-title="Accessibility">
+             <img src="icon/folder.ico" class="app-list" />
+             <span class="start-app-name">Accessibility</span>
+          </div>
+          <div class="start-app all-app-item" data-title="Alarm">
+             <img src="icon/alarm.ico" class="app-list" />
+             <span class="start-app-name">Alarm</span>
+          </div>
+        </div>
+        <div class="letter-group">
+          <div class="letter">C</div>
+          <div class="start-app all-app-item" data-title="Calculator">
+             <img src="icon/calculator.ico" class="app-list" />
+             <span class="start-app-name">Calculator</span>
+          </div>
+          <div class="start-app all-app-item" data-title="Copilot">
+             <img src="icon/Microsoft_365_Copilot_Icon.svg_.png" class="app-list" />
+             <span class="start-app-name">Copilot</span>
+          </div>
+        </div>
+        <div class="letter-group">
+          <div class="letter">E</div>
+          <div class="start-app all-app-item" data-title="Edge">
+             <img src="icon/edge.ico" class="app-list" />
+             <span class="start-app-name">Edge</span>
+          </div>
+          <div class="start-app all-app-item" data-title="Excel">
+             <img src="icon/excel.ico" class="app-list" />
+             <span class="start-app-name">Excel</span>
+          </div>
+        </div>
+        <div class="letter-group">
+          <div class="letter">F</div>
+          <div class="start-app all-app-item" data-title="File Explorer">
+             <img src="icon/explorer.ico" class="app-list" />
+             <span class="start-app-name">File Explorer</span>
+          </div>
+        </div>
+        <div class="letter-group">
+          <div class="letter">M</div>
+          <div class="start-app all-app-item" data-title="Microsoft Store">
+             <img src="icon/store4.ico" class="app-list" />
+             <span class="start-app-name">Microsoft Store</span>
+          </div>
+        </div>
+        <div class="letter-group">
+          <div class="letter">N</div>
+          <div class="start-app all-app-item" data-title="Notepad">
+             <img src="icon/notepad.ico" class="app-list" />
+             <span class="start-app-name">Notepad</span>
+          </div>
+        </div>
+        <div class="letter-group">
+          <div class="letter">O</div>
+          <div class="start-app all-app-item" data-title="OneNote">
+             <img src="icon/onenote.ico" class="app-list" />
+             <span class="start-app-name">OneNote</span>
+          </div>
+          <div class="start-app all-app-item" data-title="Outlook">
+             <img src="icon/outlook.ico" class="app-list" />
+             <span class="start-app-name">Outlook (new)</span>
+          </div>
+        </div>
+        <div class="letter-group">
+          <div class="letter">P</div>
+          <div class="start-app all-app-item" data-title="Paint">
+             <img src="icon/paint.ico" class="app-list" />
+             <span class="start-app-name">Paint</span>
+          </div>
+          <div class="start-app all-app-item" data-title="Photos">
+             <img src="icon/photos.ico" class="app-list" />
+             <span class="start-app-name">Photos</span>
+          </div>
+          <div class="start-app all-app-item" data-title="PowerPoint">
+             <img src="icon/powerpoint.ico" class="app-list" />
+             <span class="start-app-name">PowerPoint</span>
+          </div>
+        </div>
+        <div class="letter-group">
+          <div class="letter">S</div>
+          <div class="start-app all-app-item" data-title="Settings">
+             <img src="icon/settings.ico" class="app-list" />
+             <span class="start-app-name">Settings</span>
+          </div>
+          <div class="start-app all-app-item" data-title="Snipping Tool">
+             <img src="icon/snippingtool.ico" class="app-list" />
+             <span class="start-app-name">Snipping Tool</span>
+          </div>
+        </div>
+        <div class="letter-group">
+          <div class="letter">T</div>
+          <div class="start-app all-app-item" data-title="To Do">
+             <img src="icon/tasks.ico" class="app-list" />
+             <span class="start-app-name">To Do</span>
+          </div>
+        </div>
+        <div class="letter-group">
+          <div class="letter">W</div>
+          <div class="start-app all-app-item" data-title="Word">
+             <img src="icon/word.ico" class="app-list" />
+             <span class="start-app-name">Word</span>
+          </div>
+        </div>
+      </div>
+    </div>
     </div>
     <div class="shutdown-menu" id="shutDownMenu">
       <div class="shutdown-item">Lock</div>
@@ -422,14 +575,8 @@
           <div class="quick-link-item">Network Connections</div>
           <div class="quick-link-item">Disk Management</div>
           <div class="quick-link-item">Computer Management</div>
-          <div class="quick-link-item" onclick="document.getElementById('cmd').style.display='block';
-            runProgram.style.display='none' ; runProgram.classList.add('close-anim'); setTimeout(()=> {
-            runProgram.classList.remove('close-anim');
-            }, 300);">Windows Terminal</div>
-          <div class="quick-link-item" onclick="document.getElementById('cmd').style.display='block';
-            runProgram.style.display='none' ; runProgram.classList.add('close-anim'); setTimeout(()=> {
-            runProgram.classList.remove('close-anim');
-            }, 300);">Windows Terminal (Admin)</div>
+          <div class="quick-link-item" onclick="openTerminalWindow()">Windows Terminal</div>
+          <div class="quick-link-item" onclick="openTerminalWindow()">Windows Terminal (Admin)</div>
           <div class="quick-link-item">Task Manager</div>
           <div class="quick-link-item">Settings</div>
           <div class="quick-link-item">File Explorer</div>
