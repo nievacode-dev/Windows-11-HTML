@@ -399,52 +399,124 @@ body {
   border: 1px solid rgba(82, 82, 82, 0.2);
 }
 
+/* === Recycle Bin Context Menu — Windows 11 Style === */
 .recycle-bin-menu {
   display: none;
   position: fixed;
-  height: 250px;
-  width: 270px;
-  background-color: rgb(49, 49, 49, 0.5);
-  border-radius: 6px;
-  border: 1px solid rgb(50, 50, 50);
-  color: white;
-  backdrop-filter: blur(20px);
+  width: 300px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 4px 0;
+  z-index: 9999;
   cursor: default;
-  justify-content: center;
+  animation: contextMenuOpen 0.12s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+  transform-origin: top left;
+}
+
+@keyframes contextMenuOpen {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Action bar (top icon row) */
+.rb-menu-actions {
+  display: flex;
   align-items: center;
-  flex-direction: row;
+  padding: 6px 10px 8px 10px;
+  gap: 2px;
 }
 
-.recycle-bin-titlebar {
-  padding: 25px;
-  background-color: rgba(66, 66, 66, 0.4);
-  backdrop-filter: blur(20px);
+.rb-action-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.1s;
 }
 
-.recycle-bin-item {
-  padding: 0.5em 1.5em;
+.rb-action-btn:hover {
+  background-color: rgba(0, 0, 0, 0.06);
 }
 
-.recycle-bin-item:hover {
-  background-color: rgba(50, 50, 50, 0.4);
+.rb-action-ico {
+  font-size: 18px;
+  color: #ffffff;
 }
 
-.recycle-bin-item:last-child {
-  padding-bottom: 12px;
-  border-top: 1px solid rgb(50, 50, 50);
+/* Divider */
+.rb-menu-divider {
+  height: 1px;
+  background-color: rgba(0, 0, 0, 0.08);
+  margin: 3px 0;
 }
 
-.recycle-bin-item:nth-child(3) {
-  opacity: 0.3;
+/* Menu Item */
+.rb-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 14px 9px 14px;
+  transition: background-color 0.08s;
+  border-radius: 4px;
+  margin: 0 4px;
+  cursor: pointer;
 }
 
-.enter-bin {
-  opacity: 0.8;
+.rb-menu-item:hover {
+  background-color: rgba(0, 0, 0, 0.06);
 }
 
-.altenter-bin {
-  opacity: 0.8;
+.rb-item-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  object-fit: contain;
 }
+
+.rb-item-icon-ico {
+  font-size: 18px;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+  color: #ffffff;
+}
+
+.rb-item-label {
+  font-size: 13px;
+  color: #ffffff;
+  flex-grow: 1;
+  font-family: 'Segoe UI Variable', 'Segoe UI', sans-serif;
+  font-weight: 400;
+}
+
+.rb-item-shortcut {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+  flex-shrink: 0;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.rb-item-more .rb-item-icon-ico {
+  color: #555;
+}
+
+
 
 .about-tab {
   display: none;
@@ -590,7 +662,8 @@ body {
 
 .start-menu {
   width: 650px;
-  overflow: hidden; /* Prevent horizontal scrollbar during slide */
+  overflow: hidden;
+  /* Prevent horizontal scrollbar during slide */
 }
 
 /* Slide Viewport */
@@ -600,14 +673,17 @@ body {
   height: 545px;
   display: flex;
   overflow: hidden;
-  margin-top: 5px; /* Spacing between search bar and apps */
+  margin-top: 5px;
+  /* Spacing between search bar and apps */
 }
 
-.start-content, .all-apps-view {
+.start-content,
+.all-apps-view {
   width: 100%;
   height: 100%;
   flex-shrink: 0;
-  transition: transform 0.3s cubic-bezier(0.85, 0, 0.15, 1); /* Windows 11 ease */
+  transition: transform 0.3s cubic-bezier(0.85, 0, 0.15, 1);
+  /* Windows 11 ease */
 }
 
 .start-content {
@@ -677,20 +753,23 @@ body {
 .all-apps-list {
   flex-grow: 1;
   overflow-y: auto;
-  padding-right: 15px; /* Scrollbar padding */
+  padding-right: 15px;
+  /* Scrollbar padding */
 }
 
 /* Custom scrollbar for all apps list */
 .all-apps-list::-webkit-scrollbar {
   width: 10px;
 }
+
 .all-apps-list::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .all-apps-list::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 5px;
-  border: 2px solid rgba(0,0,0,0);
+  border: 2px solid rgba(0, 0, 0, 0);
   background-clip: padding-box;
 }
 
@@ -707,7 +786,8 @@ body {
 
 .all-app-item {
   display: flex;
-  flex-direction: row; /* Horizontal layout */
+  flex-direction: row;
+  /* Horizontal layout */
   justify-content: flex-start;
   align-items: center;
   width: 100%;
@@ -786,7 +866,8 @@ body {
   display: none;
 }
 
-.pinned, .recommended-title {
+.pinned,
+.recommended-title {
   color: white;
   font-weight: 600;
   font-size: 14px;
@@ -816,7 +897,8 @@ body {
 }
 
 .all-apps-chevron {
-  font-size: 10px; /* Small chevron */
+  font-size: 10px;
+  /* Small chevron */
 }
 
 .recommended-content {
@@ -1711,6 +1793,7 @@ h2 {
 }
 
 @media screen and (max-width: 790px) {
+
   div,
   img,
   span,
@@ -1734,4 +1817,221 @@ h2 {
   h1 {
     width: 80%;
   }
+}
+
+/* ============================================================
+   LIGHT MODE — applied when body.light-mode is set
+   ============================================================ */
+
+body.light-mode {
+  background-image: url(wallpaper/windows_11_blue_stock_white_background_light_4k_hd_windows_11-1920x1080.jpg);
+}
+
+/* Taskbar stays dark in Win11 light mode (by design), but we add a subtle tint */
+body.light-mode .taskbar {
+  background-color: rgba(240, 240, 240, 0.7);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .times,
+body.light-mode .dates,
+body.light-mode .language-content,
+body.light-mode .quick-settings-content {
+  color: #1a1a1a;
+}
+
+body.light-mode .taskbar-app {
+  filter: drop-shadow(0px 0px 1px rgba(0, 0, 0, 0.2)) invert(1) invert(0);
+  /* keep icons visible */
+}
+
+body.light-mode .taskbar-app:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+body.light-mode .ico {
+  color: #1a1a1a;
+}
+
+/* Start Menu */
+body.light-mode .start-menu,
+body.light-mode .search-menu {
+  background-color: rgba(243, 243, 243, 0.85);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.14);
+}
+
+body.light-mode .pinned,
+body.light-mode .recommended-title,
+body.light-mode .start-app-name,
+body.light-mode .all-apps-title,
+body.light-mode .letter {
+  color: #1a1a1a;
+}
+
+body.light-mode .start-app:hover,
+body.light-mode .all-app-item:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+body.light-mode .all-apps,
+body.light-mode .back-btn {
+  background-color: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #1a1a1a;
+}
+
+body.light-mode .all-apps:hover,
+body.light-mode .back-btn:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode .search-bar-container {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+body.light-mode .search-bar {
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  color: #1a1a1a;
+}
+
+body.light-mode .search-bar::placeholder {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+body.light-mode .search-icon {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+body.light-mode .recommended-content p {
+  color: #333;
+}
+
+body.light-mode .recommended-content a {
+  color: #0067c0;
+}
+
+body.light-mode .start-section-header .all-apps-chevron {
+  color: #1a1a1a;
+}
+
+/* Shutdown menu */
+body.light-mode .shutdown-menu {
+  background-color: rgba(243, 243, 243, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode .shutdown-item {
+  color: #1a1a1a;
+}
+
+body.light-mode .shutdown-item:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+/* User menu */
+body.light-mode .user-menu {
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: rgba(230, 230, 230, 0.6);
+}
+
+body.light-mode .username {
+  color: #1a1a1a;
+}
+
+/* Context menus */
+body.light-mode .context-menu,
+body.light-mode .quick-link-menu,
+body.light-mode #appContextMenu {
+  background-color: rgba(243, 243, 243, 0.92);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+}
+
+body.light-mode .context-item,
+body.light-mode .quick-link-item {
+  color: #1a1a1a;
+}
+
+body.light-mode .context-item-icon {
+  color: #444;
+}
+
+body.light-mode .context-item:hover,
+body.light-mode .quick-link-item:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+  color: #000;
+}
+
+body.light-mode .context-separator {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Quick settings */
+body.light-mode .quick-settings {
+  background-color: rgba(240, 240, 240, 0.85);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode .quick-settings-main {
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .quick-settings-edit {
+  border-top-color: rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .battery-info {
+  color: #1a1a1a;
+}
+
+body.light-mode .battery-info .ico,
+body.light-mode .setting .ico {
+  color: #1a1a1a;
+}
+
+body.light-mode .tray-content {
+  background-color: rgba(240, 240, 240, 0.9);
+}
+
+/* Recycle bin context menu */
+body.light-mode .recycle-bin-menu {
+  background: rgba(243, 243, 243, 0.92);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode .rb-item-label {
+  color: #1a1a1a;
+}
+
+body.light-mode .rb-item-icon-ico {
+  color: #2d2d2d;
+}
+
+body.light-mode .rb-action-ico {
+  color: #2d2d2d;
+}
+
+body.light-mode .rb-menu-divider {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode .rb-menu-item:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+body.light-mode .rb-action-btn:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+body.light-mode .rb-item-shortcut {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+/* App icons on desktop */
+body.light-mode .app-name {
+  color: white;
+  /* keep white — wallpaper usually provides enough contrast */
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }

@@ -88,13 +88,13 @@ document.addEventListener("DOMContentLoaded", () => {
       if (typeof createWindow !== 'undefined') {
         const title = item.dataset.title || "Application";
         const iconImg = item.querySelector("img");
-        
+
         if (title.toLowerCase() === 'settings') {
           if (typeof openSettingsWindow === 'function') openSettingsWindow();
         } else {
           createWindow(title, null, iconImg ? iconImg.src : null);
         }
-        
+
         // Optionally close start menu
         startMenu.classList.remove("menu-open");
       }
@@ -172,29 +172,41 @@ shutDownBtn.addEventListener("click", function () {
 
 const recycleBin = document.getElementById("recycleBin");
 recycleBin.addEventListener("contextmenu", function (event) {
+  event.preventDefault();
+  event.stopPropagation(); // prevent document handler from hiding the menu right after
+
   const recycleBinMenu = document.getElementById("recycleBinMenu");
-  if (
-    recycleBin.getAttribute("src") ===
-    "/Windows_11_24H2/icon/recyclebinfull.ico"
-  ) {
-    emptyBin.style.opacity = "1";
+  // getAttribute returns the literal attribute value (e.g. "icon/recyclebinfull.ico")
+  const isFull = recycleBin.src.includes("recyclebinfull");
 
-    recycleBinMenu.style.display = "block";
-    recycleBinMenu.style.left = event.pageX + "px";
-    recycleBinMenu.style.top = event.pageY + "px";
-  } else {
-    emptyBin.style.opacity = "0.3";
+  document.getElementById("emptyBin").style.opacity = isFull ? "1" : "0.3";
 
-    recycleBinMenu.style.display = "block";
-    recycleBinMenu.style.left = event.pageX + "px";
-    recycleBinMenu.style.top = event.pageY + "px";
-  }
+  recycleBinMenu.style.display = "block";
+  recycleBinMenu.style.left = event.pageX + "px";
+  recycleBinMenu.style.top = event.pageY + "px";
 });
+
 
 const emptyBin = document.getElementById("emptyBin");
 emptyBin.onclick = function () {
   recycleBin.src = "/Windows_11_24H2/icon/recyclebinempty.ico";
 };
+
+// Open Recycle Bin on double-click
+recycleBin.addEventListener("dblclick", function () {
+  if (typeof createWindow !== "undefined") {
+    createWindow("Recycle Bin", "recycle-bin", recycleBin.src);
+  }
+});
+
+// Wire up the "Open" button in the recycle bin context menu
+document.getElementById("openBin").addEventListener("click", function () {
+  document.getElementById("recycleBinMenu").style.display = "none";
+  if (typeof createWindow !== "undefined") {
+    createWindow("Recycle Bin", "recycle-bin", recycleBin.src);
+  }
+});
+
 
 document.getElementById("closePopup").onclick = function () {
   document.getElementById("popup").style.display = "none";

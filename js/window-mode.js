@@ -2,6 +2,11 @@ let windowId = 0;
 let windows = {};
 let activeWindowId = null;
 
+// Workspaces / Desktops Tracking
+let desktops = [ { id: 1, name: "Desktop 1" } ];
+let activeDesktopId = 1;
+let desktopCounter = 1;
+
 // Snap preview element
 const snapPreview = document.createElement("div");
 snapPreview.classList.add("snap-preview");
@@ -105,7 +110,8 @@ function createWindow(appTitle = "Window", appId = null, appIcon = null) {
     width: 600,
     height: 400,
     originalState: null,
-    taskbarElement: null
+    taskbarElement: null,
+    desktopId: activeDesktopId
   };
   
   // Create taskbar icon
@@ -390,6 +396,32 @@ function updateZIndex(windowId) {
   }
 }
 
+// Workspace Logic
+function switchDesktop(id) {
+  if (activeDesktopId === id) return;
+  activeDesktopId = id;
+  
+  Object.keys(windows).forEach(winId => {
+    const win = windows[winId];
+    if (win.desktopId !== activeDesktopId) {
+      win.element.style.display = 'none';
+      if (win.taskbarElement) win.taskbarElement.style.display = 'none';
+    } else {
+      if (!win.isMinimized) {
+        win.element.style.display = 'flex';
+      }
+      if (win.taskbarElement) win.taskbarElement.style.display = 'flex';
+    }
+  });
+}
+
+function addDesktop() {
+  desktopCounter++;
+  const newDesktop = { id: desktopCounter, name: `Desktop ${desktops.length + 1}` };
+  desktops.push(newDesktop);
+  renderTaskViewDesktops();
+}
+
 // Taskbar Logic
 function createTaskbarItem(windowId) {
   const win = windows[windowId];
@@ -522,11 +554,19 @@ function closeWindow(windowId) {
     win.taskbarElement.remove();
   }
   
+  // Stamp the current rendered values explicitly so the CSS transition
+  // has a concrete starting point (animation-held values don't count).
+  el.style.opacity = '1';
+  el.style.transform = 'scale(1)';
+  // Force a reflow so the browser registers the above values before
+  // we switch to the closing state.
+  void el.offsetWidth;
+  
   el.classList.add("closing");
   setTimeout(() => {
     el.remove();
     delete windows[windowId];
-  }, 150); // Matches opactity transition time
+  }, 200); // Matches closing transition time
 }
 
 // Global hook up
@@ -583,12 +623,193 @@ function initializeTaskbarApps() {
   });
 }
 
+// Task View Logic
+function renderTaskViewDesktops() {
+  const taskViewDesktops = document.getElementById("taskViewDesktops");
+  if (!taskViewDesktops) return;
+  
+  taskViewDesktops.innerHTML = "";
+  
+  desktops.forEach((desk, index) => {
+    const dItem = document.createElement("div");
+    dItem.className = "desktop-item";
+    if (desk.id === activeDesktopId) dItem.classList.add("active");
+    
+    // Header (name above preview)
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "desktop-name";
+    nameSpan.textContent = desk.name;
+    
+    // Preview image
+    const preview = document.createElement("div");
+    preview.className = "desktop-preview";
+    preview.style.backgroundImage = "url('wallpaper/windows-11-blue-material-3y-1920x1080.jpg')";
+    
+    // Optional indicator
+    const indicator = document.createElement("div");
+    indicator.className = "desktop-indicator";
+    
+    dItem.appendChild(nameSpan);
+    dItem.appendChild(preview);
+    dItem.appendChild(indicator);
+    
+    dItem.onclick = (e) => {
+      e.stopPropagation();
+      switchDesktop(desk.id);
+      document.getElementById("taskViewOverlay").classList.remove("visible");
+    };
+    
+    taskViewDesktops.appendChild(dItem);
+  });
+  
+  // "New desktop" button
+  const newBtn = document.createElement("div");
+  newBtn.className = "desktop-item new-desktop";
+  
+  const newName = document.createElement("span");
+  newName.className = "desktop-name";
+  newName.textContent = "New desktop";
+  
+  const box = document.createElement("div");
+  box.className = "desktop-preview ico-box";
+  const plusIcon = document.createElement("span");
+  plusIcon.className = "ico";
+  plusIcon.textContent = "+";
+  box.appendChild(plusIcon);
+  
+  newBtn.appendChild(newName);
+  newBtn.appendChild(box);
+  
+  // invisible indicator for alignment
+  const ghostIndicator = document.createElement("div");
+  ghostIndicator.className = "desktop-indicator";
+  newBtn.appendChild(ghostIndicator);
+  
+  newBtn.onclick = (e) => {
+    e.stopPropagation();
+    addDesktop();
+  };
+  
+  taskViewDesktops.appendChild(newBtn);
+}
+
+function initializeTaskView() {
+  const taskViewBtn = document.getElementById("taskViewBtn");
+  const taskViewOverlay = document.getElementById("taskViewOverlay");
+  const taskViewWindows = document.getElementById("taskViewWindows");
+  
+  if (!taskViewBtn || !taskViewOverlay || !taskViewWindows) return;
+  
+  function toggleTaskView() {
+    if (taskViewOverlay.classList.contains("visible")) {
+      taskViewOverlay.classList.remove("visible");
+      taskViewWindows.innerHTML = "";
+    } else {
+      taskViewWindows.innerHTML = "";
+      // Filter windows for only the active desktop
+      const windowIds = Object.keys(windows).filter(id => windows[id].desktopId === activeDesktopId);
+      
+      if (windowIds.length === 0) {
+        taskViewWindows.innerHTML = "<div style='color:white; font-size:14px;'>No open windows</div>";
+      } else {
+        windowIds.forEach(id => {
+          const win = windows[id];
+          if (win.element && win.element.style.display !== 'none' || win.isMinimized) {
+            const card = document.createElement("div");
+            card.className = "tv-card";
+            card.style.display = "flex";
+            
+            const header = document.createElement("div");
+            header.className = "tv-card-header";
+            
+            const titleContainer = document.createElement("div");
+            titleContainer.className = "tv-card-title-container";
+            
+            if (win.appIcon) {
+              const icon = document.createElement("img");
+              icon.src = win.appIcon;
+              icon.className = "tv-card-icon";
+              titleContainer.appendChild(icon);
+            }
+            
+            const title = document.createElement("div");
+            title.className = "tv-card-title";
+            title.textContent = win.appTitle || "Window";
+            titleContainer.appendChild(title);
+            
+            const closeBtn = document.createElement("div");
+            closeBtn.className = "tv-card-close";
+            closeBtn.textContent = "×";
+            closeBtn.onclick = (e) => {
+              e.stopPropagation();
+              closeWindow(id);
+              card.remove();
+              if (Object.keys(windows).filter(wid => windows[wid].desktopId === activeDesktopId).length === 0) {
+                 taskViewWindows.innerHTML = "<div style='color:white; font-size:14px;'>No open windows</div>";
+              }
+            };
+            
+            header.appendChild(titleContainer);
+            header.appendChild(closeBtn);
+            
+            const preview = document.createElement("div");
+            preview.className = "tv-card-preview";
+            if (win.appIcon) {
+              const previewIcon = document.createElement("img");
+              previewIcon.src = win.appIcon;
+              preview.appendChild(previewIcon);
+            } else {
+              const fallback = document.createElement("div");
+              fallback.textContent = win.appTitle ? win.appTitle[0].toUpperCase() : "W";
+              fallback.style.fontSize = "32px";
+              fallback.style.color = "white";
+              preview.appendChild(fallback);
+            }
+            
+            card.appendChild(header);
+            card.appendChild(preview);
+            
+            card.onclick = () => {
+              if (win.isMinimized) {
+                  minimizeWindow(id);
+              }
+              updateZIndex(id);
+              taskViewOverlay.classList.remove("visible");
+            };
+            
+            taskViewWindows.appendChild(card);
+          }
+        });
+      }
+      
+      renderTaskViewDesktops();
+      taskViewOverlay.classList.add("visible");
+    }
+  }
+  
+  taskViewBtn.addEventListener("click", toggleTaskView);
+  
+  taskViewOverlay.addEventListener("click", (e) => {
+    if (e.target === taskViewOverlay || e.target === taskViewWindows) {
+      taskViewOverlay.classList.remove("visible");
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && taskViewOverlay.classList.contains("visible")) {
+      taskViewOverlay.classList.remove("visible");
+    }
+  });
+}
+
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", () => {
     initializeAppShortcuts();
     initializeTaskbarApps();
+    initializeTaskView();
   });
 } else {
   initializeAppShortcuts();
   initializeTaskbarApps();
+  initializeTaskView();
 }

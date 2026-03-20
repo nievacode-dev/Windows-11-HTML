@@ -53,7 +53,7 @@
     opacity: 0;
     transform: scale(0.9);
     pointer-events: none; /* Prevents clicks while it is fading out */
-    transition: opacity 0.15s ease-out, transform 0.15s ease-out !important;
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out !important;
     animation: none;
 }
 
@@ -315,4 +315,353 @@
 .taskbar-item.active .taskbar-indicator {
     width: 16px; 
     background-color: #60CDFF; /* Bright blue when active */
+}
+
+/* ============================================================
+   Task View Overlay
+   ============================================================ */
+.task-view-overlay {
+    display: none; /* hidden by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: calc(100vh - 50px);
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    z-index: 9998; /* just below taskbar but above windows */
+    flex-direction: column;
+    padding: 0;
+    box-sizing: border-box;
+    opacity: 0;
+    transition: opacity 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+
+.task-view-overlay.visible {
+    display: flex;
+    opacity: 1;
+}
+
+.task-view-windows {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 40px;
+}
+
+.task-view-windows::-webkit-scrollbar {
+    width: 8px;
+}
+
+.task-view-windows::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.tv-card {
+    width: 320px;
+    height: 200px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+    overflow: hidden;
+}
+
+.tv-card:hover {
+    transform: translateY(-2px) scale(1.02);
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.tv-card-header {
+    height: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 10px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tv-card-title-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
+}
+
+.tv-card-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.tv-card-title {
+    color: white;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tv-card-close {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 4px;
+    color: white;
+    font-size: 16px;
+    opacity: 0;
+    transition: opacity 0.15s ease, background-color 0.1s ease;
+}
+
+.tv-card:hover .tv-card-close {
+    opacity: 1;
+}
+
+.tv-card-close:hover {
+    background-color: #c42b1c;
+}
+
+.tv-card-preview {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.tv-card-preview img {
+    width: 64px;
+    height: 64px;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+}
+
+.task-view-desktops {
+    height: 180px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(30, 30, 30, 0.6);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+}
+
+.desktop-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    box-sizing: border-box;
+}
+
+.desktop-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.desktop-name {
+    color: white;
+    font-size: 13px;
+    padding-left: 2px;
+}
+
+.desktop-preview {
+    width: 180px;
+    height: 100px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.desktop-indicator {
+    height: 3px;
+    width: 30px;
+    border-radius: 2px;
+    background-color: transparent;
+    margin: 2px auto 0;
+}
+
+.desktop-item.active .desktop-indicator {
+    background-color: #60CDFF;
+}
+
+.desktop-item.new-desktop .ico-box {
+    width: 180px;
+    height: 100px;
+    background-color: rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background-color 0.1s ease;
+}
+
+.desktop-item.new-desktop:hover .ico-box {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.desktop-item.new-desktop .ico-box .ico {
+    font-size: 24px;
+    color: white;
+}
+
+/* ============================================================
+   LIGHT MODE window overrides
+   ============================================================ */
+
+body.light-mode .window {
+    background-color: rgba(243, 243, 243, 0.88);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+/* Title bar */
+body.light-mode .title-bar {
+    background-color: rgba(235, 235, 235, 0.9);
+    border-bottom-color: rgba(0, 0, 0, 0.07);
+}
+
+body.light-mode .title-bar .title {
+    color: #1a1a1a;
+}
+
+body.light-mode .title-bar .app-title {
+    color: #1a1a1a;
+}
+
+body.light-mode .title-bar .ico {
+    color: #333;
+}
+
+/* Window control buttons */
+body.light-mode .control-btn {
+    color: #1a1a1a;
+}
+
+body.light-mode .control-btn.minimize:hover,
+body.light-mode .control-btn.maximize:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+    color: #000;
+}
+
+body.light-mode .control-btn.close:hover {
+    background-color: #c42b1c;
+    color: white;
+}
+
+/* Taskbar items */
+body.light-mode .taskbar-item {
+    background-color: transparent;
+}
+
+body.light-mode .taskbar-item:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+}
+
+body.light-mode .taskbar-item.active {
+    background-color: rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .taskbar-label {
+    color: #1a1a1a;
+}
+
+body.light-mode .taskbar-indicator {
+    background-color: rgba(0, 0, 0, 0.35);
+}
+
+body.light-mode .taskbar-item.active .taskbar-indicator {
+    background-color: #0067c0;
+}
+
+body.light-mode .task-view-overlay {
+    background-color: transparent;
+}
+
+body.light-mode .tv-card {
+    background-color: rgba(255, 255, 255, 0.7);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode .tv-card:hover {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-color: rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+body.light-mode .tv-card-header {
+    background-color: rgba(235, 235, 235, 0.9);
+    border-bottom-color: rgba(0, 0, 0, 0.05);
+}
+
+body.light-mode .tv-card-title {
+    color: #1a1a1a;
+}
+
+body.light-mode .tv-card-close {
+    color: #1a1a1a;
+}
+
+body.light-mode .tv-card-close:hover {
+    color: white;
+}
+
+body.light-mode .tv-card-preview {
+    background-color: rgba(240, 240, 240, 0.6);
+}
+
+body.light-mode .task-view-desktops {
+    background-color: rgba(243, 243, 243, 0.85); /* distinct frosted white bottom */
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode .desktop-name {
+    color: #1a1a1a;
+}
+
+body.light-mode .desktop-preview {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+body.light-mode .desktop-item:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+body.light-mode .desktop-item.new-desktop .ico-box {
+    background-color: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode .desktop-item.new-desktop:hover .ico-box {
+    background-color: rgba(255, 255, 255, 1);
+}
+
+body.light-mode .desktop-item.new-desktop .ico-box .ico {
+    color: #1a1a1a;
+}
+
+body.light-mode .desktop-item.active .desktop-indicator {
+    background-color: #0067c0;
 }

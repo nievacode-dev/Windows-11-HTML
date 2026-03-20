@@ -61,19 +61,44 @@
     <span>Copyright 2025® nievacode-dev.github.io</span>
   </div>
   <div class="recycle-bin-menu" id="recycleBinMenu">
-    <div class="recycle-bin-titlebar"></div>
-    <div class="recycle-bin-item" id="openBin">Open</div>
-    <div class="recycle-bin-item" id="emptyBin">
-      <span>Empty Recycle Bin</span>
-      <div class="enter-bin">Enter</div>
+    <!-- Top action bar (thumbnail/preview row) -->
+    <div class="rb-menu-actions">
+      <button class="rb-action-btn" title="Open in new window">
+        <span class="ico rb-action-ico">&#xe8a7;</span>
+      </button>
     </div>
-    <div class="recycle-bin-item">Pin to Start</div>
-    <div class="recycle-bin-item">
-      <span>Properties</span>
-      <div class="altenter-bin">Alt+Enter</div>
+    <div class="rb-menu-divider"></div>
+    <!-- Open -->
+    <div class="rb-menu-item" id="openBin">
+      <img src="icon/explorer.ico" class="rb-item-icon" />
+      <span class="rb-item-label">Open</span>
+      <span class="rb-item-shortcut">Enter</span>
     </div>
-    <div class="recycle-bin-item">Show more options</div>
+    <!-- Empty Recycle Bin -->
+    <div class="rb-menu-item" id="emptyBin">
+      <span class="ico rb-item-icon-ico">&#xe74d;</span>
+      <span class="rb-item-label">Empty Recycle Bin</span>
+    </div>
+    <!-- Pin to Start -->
+    <div class="rb-menu-item">
+      <span class="ico rb-item-icon-ico">&#xe840;</span>
+      <span class="rb-item-label">Pin to Start</span>
+    </div>
+    <!-- Properties -->
+    <div class="rb-menu-item">
+      <span class="ico rb-item-icon-ico">&#xe946;</span>
+      <span class="rb-item-label">Properties</span>
+      <span class="rb-item-shortcut">Alt+Enter</span>
+    </div>
+    <div class="rb-menu-divider"></div>
+    <!-- Show more options -->
+    <div class="rb-menu-item rb-item-more">
+      <span class="ico rb-item-icon-ico">&#xe712;</span>
+      <span class="rb-item-label">Show more options</span>
+      <span class="rb-item-shortcut">Shift+F10</span>
+    </div>
   </div>
+
   <div class="context-menu" id="contextMenu">
     <div class="context-item" id="view">
       <span><span class="ico context-item-icon">&#xf0e2;</span>View</span><span
@@ -195,7 +220,10 @@
     <div class="about-titlebar">
       <span class="about-title">About Windows</span>
       <button class="close-x" onclick="closeTab('aboutTab')">
-        <svg fill="currentColor" width="12" height="12" viewBox="0 0 16 16"><path d="M1.2 1.2a1 1 0 011.4 0l5.4 5.4 5.4-5.4a1 1 0 011.4 1.4L9.4 8l5.4 5.4a1 1 0 01-1.4 1.4L8 9.4l-5.4 5.4a1 1 0 01-1.4-1.4L6.6 8 1.2 2.6a1 1 0 010-1.4z"/></svg>
+        <svg fill="currentColor" width="12" height="12" viewBox="0 0 16 16">
+          <path
+            d="M1.2 1.2a1 1 0 011.4 0l5.4 5.4 5.4-5.4a1 1 0 011.4 1.4L9.4 8l5.4 5.4a1 1 0 01-1.4 1.4L8 9.4l-5.4 5.4a1 1 0 01-1.4-1.4L6.6 8 1.2 2.6a1 1 0 010-1.4z" />
+        </svg>
       </button>
     </div>
     <div class="about-content">
@@ -580,6 +608,13 @@
       <span class="setting ico">&#xe713;</span>
     </div>
   </div>
+  
+  <!-- Task View Overlay -->
+  <div class="task-view-overlay" id="taskViewOverlay">
+    <div class="task-view-windows" id="taskViewWindows"></div>
+    <div class="task-view-desktops" id="taskViewDesktops"></div>
+  </div>
+
   <div class="taskbar">
     <div class="taskbar-middle" id="taskbarApps">
       <div class="start-quick-link">
@@ -616,7 +651,7 @@
         <img src="icon/start2.ico" alt="Start" class="taskbar-app" id="startLogo" />
       </div>
       <img src="icon/search2.ico" alt="Search" class="taskbar-app search-icon" id="searchIcon" />
-      <img src="icon/taskview2.ico" alt="Task View" class="taskbar-app" />
+      <img src="icon/taskview2.ico" alt="Task View" class="taskbar-app" id="taskViewBtn" />
       <img src="icon/widgets.ico" alt="Widgets" class="taskbar-app" id="widgetsIcon" />
       <!-- <img src="icon/Microsoft_365_Copilot_Icon.svg_.png" alt="Microsoft Copilot" class="taskbar-app"> -->
       <img src="icon/explorer.ico" alt="File Explorer" class="taskbar-app app-tb" />
@@ -644,39 +679,45 @@
     </div>
   </div>
   <input type="file" id="fileInput" style="display: none" />
-  
+
   <!-- Settings App -->
   <div class="settings-window window" id="settingsWindow" data-app-id="settings">
     <div class="settings-header title-bar">
-      <!-- Drag Handle Area -->
+      <!-- App Title -->
+      <span class="settings-title-text ico" style="font-size:14px;">&#xe713;</span>
+      <span class="settings-title-text">Settings</span>
+      <!-- Drag Handle -->
       <div class="settings-drag-region title"></div>
-      
       <!-- Window Controls -->
       <div class="window-controls">
-        <button class="control-btn minimize" onclick="minimizeWindow('settings')">−</button>
-        <button class="control-btn maximize" onclick="maximizeWindow('settings')">□</button>
-        <button class="control-btn close" onclick="closeSettingsWindow()">×</button>
+        <button class="control-btn minimize" onpointerdown="event.stopPropagation()"
+          onclick="minimizeWindow('settings')">−</button>
+        <button class="control-btn maximize" onpointerdown="event.stopPropagation()"
+          onclick="maximizeWindow('settings')">□</button>
+        <button class="control-btn close" onpointerdown="event.stopPropagation()"
+          onclick="closeSettingsWindow()">×</button>
       </div>
     </div>
-    
+
     <div class="settings-body" id="settingsBody">
+      <!-- ========= SIDEBAR ========= -->
       <div class="settings-sidebar">
         <div class="settings-user-profile">
-          <img src="icon/user.png" alt="User Avatar" class="settings-avatar" />
+          <img src="icon/icon-7797704_640.png" alt="User Avatar" class="settings-avatar" />
           <div class="settings-user-info">
-            <span class="settings-user-name">WindowsLatest .com</span>
-            <span class="settings-user-email">local account</span>
+            <span class="settings-user-name">nievacode-dev</span>
+            <span class="settings-user-email">GitHub Account</span>
           </div>
         </div>
-        
+
         <div class="settings-search-container">
           <span class="ico settings-search-icon">&#xe721;</span>
           <input type="text" class="settings-search" placeholder="Find a setting" />
         </div>
-        
+
         <div class="settings-nav">
           <div class="settings-nav-item active">
-            <span class="ico nav-icon" style="color: #6eb5ff;">&#xe80f;</span>
+            <span class="ico nav-icon" style="color:#60CDFF;">&#xe80f;</span>
             <span class="nav-text">Home</span>
           </div>
           <div class="settings-nav-item">
@@ -685,11 +726,11 @@
           </div>
           <div class="settings-nav-item">
             <span class="ico nav-icon">&#xe702;</span>
-            <span class="nav-text">Bluetooth & devices</span>
+            <span class="nav-text">Bluetooth &amp; devices</span>
           </div>
           <div class="settings-nav-item">
             <span class="ico nav-icon">&#xe701;</span>
-            <span class="nav-text">Network & internet</span>
+            <span class="nav-text">Network &amp; internet</span>
           </div>
           <div class="settings-nav-item">
             <span class="ico nav-icon">&#xe771;</span>
@@ -705,7 +746,7 @@
           </div>
           <div class="settings-nav-item">
             <span class="ico nav-icon">&#xe775;</span>
-            <span class="nav-text">Time & language</span>
+            <span class="nav-text">Time &amp; language</span>
           </div>
           <div class="settings-nav-item">
             <span class="ico nav-icon">&#xe7fc;</span>
@@ -717,50 +758,51 @@
           </div>
           <div class="settings-nav-item">
             <span class="ico nav-icon">&#xe72e;</span>
-            <span class="nav-text">Privacy & security</span>
+            <span class="nav-text">Privacy &amp; security</span>
           </div>
           <div class="settings-nav-item">
-            <span class="ico nav-icon" style="color: #6eb5ff;">&#xe895;</span>
+            <span class="ico nav-icon" style="color:#60CDFF;">&#xe895;</span>
             <span class="nav-text">Windows Update</span>
           </div>
         </div>
       </div>
-      
+
+      <!-- ========= MAIN CONTENT ========= -->
       <div class="settings-main-content">
         <h1 class="settings-page-title">Home</h1>
-        
-        <div class="settings-dashboard-grid">
-          <!-- Column 1 -->
-          <div class="settings-column">
-            
-            <!-- Hero Card -->
-            <div class="settings-card hero-card">
-              <div class="hero-header">
-                <img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg" alt="Wallpaper" class="hero-wallpaper" />
-                <div class="hero-info">
-                  <h2 class="hero-pc-name">DESKTOP-5SNQPC2</h2>
-                  <span class="hero-pc-model">VMware7,1</span>
-                  <a href="#" class="hero-link">Rename</a>
-                </div>
-              </div>
-              <div class="hero-status">
-                <div class="status-item">
-                  <span class="ico status-ico">&#xe839;</span>
-                  <div class="status-text">
-                    <span class="status-title">Ethernet0</span>
-                    <span class="status-sub">Connected</span>
-                  </div>
-                </div>
-                <div class="status-item">
-                  <span class="ico status-ico" style="color:#6eb5ff;">&#xe895;</span>
-                  <div class="status-text">
-                    <span class="status-title">Windows Update</span>
-                    <span class="status-sub">Last checked: 8 minutes ago</span>
-                  </div>
-                </div>
+
+        <!-- Hero PC Card -->
+        <div class="hero-pc-card">
+          <img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg" alt="Wallpaper" class="hero-wallpaper" />
+          <div class="hero-info">
+            <h2 class="hero-pc-name">DESKTOP-5SNQPC2</h2>
+            <span class="hero-pc-model">VMware7,1</span>
+            <a href="#" class="hero-link">Rename</a>
+          </div>
+          <div class="hero-status">
+            <div class="status-item">
+              <span class="ico status-ico">&#xe839;</span>
+              <div class="status-text">
+                <span class="status-title">Ethernet0</span>
+                <span class="status-sub">Connected, secured</span>
               </div>
             </div>
-            
+            <div class="status-item">
+              <span class="ico status-ico" style="color:#60CDFF;">&#xe895;</span>
+              <div class="status-text">
+                <span class="status-title">Windows Update</span>
+                <span class="status-sub">Last checked: 10 minutes ago</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Two Column Grid -->
+        <div class="settings-dashboard-grid">
+
+          <!-- ---- Column 1 ---- -->
+          <div class="settings-column">
+
             <!-- Recommended Settings -->
             <div class="settings-card">
               <div class="card-header">
@@ -770,80 +812,113 @@
               <div class="card-list">
                 <div class="list-item">
                   <span class="ico list-ico">&#xe7e8;</span>
-                  <span class="list-text">Power</span>
+                  <span class="list-text">Increase security</span>
+                  <span class="list-badge">Apply</span>
                   <span class="ico list-chevron">&#xe76c;</span>
                 </div>
                 <div class="list-item">
-                  <span class="ico list-ico">&#xe7f4;</span>
-                  <span class="list-text">Display</span>
+                  <span class="ico list-ico">&#xe896;</span>
+                  <span class="list-text">Installed apps</span>
                   <span class="ico list-chevron">&#xe76c;</span>
                 </div>
                 <div class="list-item">
-                  <span class="ico list-ico">&#xe767;</span>
-                  <span class="list-text">Sound</span>
+                  <span class="ico list-ico">&#xe701;</span>
+                  <span class="list-text">Wi-Fi</span>
+                  <span class="list-subtext">Active</span>
+                  <div class="toggle-switch" onclick="this.querySelector('.switch-track').classList.toggle('on')">
+                    <div class="switch-track on">
+                      <div class="switch-thumb"></div>
+                    </div>
+                  </div>
+                  <span class="ico list-chevron">&#xe76c;</span>
+                </div>
+                <div class="list-item">
+                  <span class="ico list-ico">&#xe7e8;</span>
+                  <span class="list-text">Power &amp; battery</span>
                   <span class="ico list-chevron">&#xe76c;</span>
                 </div>
               </div>
             </div>
-            
-            <!-- Bluetooth -->
+
+            <!-- Bluetooth Devices -->
             <div class="settings-card">
               <div class="card-header">
                 <h3>Bluetooth devices</h3>
                 <p>Manage, add, and remove devices</p>
               </div>
-              <div class="card-box">
-                <div class="box-content">
-                  <span class="ico box-ico">&#xe702;</span>
-                  <div class="box-texts">
-                    <span class="box-title">Bluetooth</span>
-                    <span class="box-sub">Discoverable as "DESKTOP-5SNQPC2"</span>
+              <!-- Bluetooth toggle row -->
+              <div class="list-item" style="border-top:1px solid rgba(255,255,255,0.04);">
+                <span class="ico list-ico">&#xe702;</span>
+                <div style="display:flex;flex-direction:column;flex-grow:1;">
+                  <span class="list-text">Bluetooth</span>
+                  <span style="font-size:11px;color:rgba(255,255,255,0.5);">Bluetooth disabled</span>
+                </div>
+                <span class="list-subtext">Not active</span>
+                <div class="toggle-switch" onclick="this.querySelector('.switch-track').classList.toggle('on')">
+                  <div class="switch-track">
+                    <div class="switch-thumb"></div>
                   </div>
-                  <div class="toggle-switch active">
-                    <span class="toggle-text">On</span>
-                    <div class="switch-track"><div class="switch-thumb"></div></div>
+                </div>
+              </div>
+              <!-- Device list -->
+              <div class="bt-device-list">
+                <div class="bt-device">
+                  <span class="ico bt-device-ico">&#xe702;</span>
+                  <div class="bt-device-info">
+                    <span class="bt-device-name">thinkplus A5</span>
+                    <span class="bt-device-status">Bluetooth disabled</span>
                   </div>
+                  <button class="bt-connect-btn">Connect</button>
+                  <button class="bt-more-btn">•••</button>
+                </div>
+                <div class="bt-device">
+                  <span class="ico bt-device-ico" style="color:#60CDFF;">&#xe8ba;</span>
+                  <div class="bt-device-info">
+                    <span class="bt-device-name">POCO X7 Pro</span>
+                    <span class="bt-device-status">Bluetooth disabled</span>
+                  </div>
+                  <button class="bt-more-btn">•••</button>
+                </div>
+                <div class="bt-device">
+                  <span class="ico bt-device-ico">&#xe702;</span>
+                  <div class="bt-device-info">
+                    <span class="bt-device-name">IWS</span>
+                    <span class="bt-device-status">Bluetooth disabled</span>
+                  </div>
+                  <button class="bt-connect-btn">Connect</button>
+                  <button class="bt-more-btn">•••</button>
                 </div>
               </div>
               <div class="card-footer">
-                <a href="#" class="footer-link">View all devices</a>
-                <button class="footer-btn">Add device <span class="ico">&#xe76c;</span></button>
+                <a href="#" class="footer-link">Show all devices</a>
+                <button class="footer-btn">Add a device <span class="ico">&#xe76c;</span></button>
               </div>
             </div>
-            
-            <!-- Personalize -->
-            <div class="settings-card">
-              <div class="card-header">
-                <h3>Personalize your device</h3>
-              </div>
-              <div class="theme-grid">
-                <div class="theme-item active"><img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg" /></div>
-                <div class="theme-item"><img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg" style="filter: hue-rotate(90deg);" /></div>
-                <div class="theme-item"><img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg" style="filter: sepia(100%);" /></div>
-                <div class="theme-item"><img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg" style="filter: hue-rotate(-90deg);" /></div>
-                <div class="theme-item"><img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg" style="filter: saturate(50%);" /></div>
-                <div class="theme-item"><img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg" style="filter: invert(100%);" /></div>
-              </div>
-            </div>
+
           </div>
-          
-          <!-- Column 2 -->
+
+          <!-- ---- Column 2 ---- -->
           <div class="settings-column">
-            
+
             <!-- Cloud Storage -->
             <div class="settings-card">
-              <div class="card-header">
-                <span class="ico header-ico" style="color: #6eb5ff;">&#xe753;</span>
-                <h3>Cloud storage</h3>
-                <p>With available storage, you can back up files or send and receive email on Outlook.</p>
-              </div>
-              <div class="storage-bar-container">
-                <span class="storage-text"><strong>3.5 GB</strong> used of 5 GB (70%)</span>
-                <div class="storage-bar">
-                  <div class="storage-fill" style="width: 70%;"></div>
+              <div class="card-header-row">
+                <span class="ico card-header-icon" style="color:#60CDFF;">&#xe753;</span>
+                <div class="card-header-texts">
+                  <h3>Cloud storage</h3>
+                  <p>With available storage, you can back up files and send and receive email on Outlook.</p>
                 </div>
               </div>
-              <div class="card-list no-bg">
+              <div class="storage-bar-container">
+                <span class="storage-text"><strong>1.1 GB</strong> used of 5 GB (22%)</span>
+                <div class="storage-bar">
+                  <div class="storage-fill" style="width:22%;"></div>
+                </div>
+              </div>
+              <div class="card-footer left">
+                <button class="footer-btn action-btn">Get more storage</button>
+              </div>
+              <div class="card-list">
                 <div class="list-item">
                   <span class="ico list-ico">&#xe753;</span>
                   <span class="list-text">PC backup</span>
@@ -856,43 +931,70 @@
                 </div>
               </div>
             </div>
-            
-            <!-- Recovery -->
+
+            <!-- Account Security -->
+            <div class="settings-card">
+              <div class="card-header-row">
+                <span class="ico card-header-icon" style="color:#60CDFF;">&#xe73e;</span>
+                <div class="card-header-texts">
+                  <h3>Never lose access to your account</h3>
+                  <p>Add a recovery phone number to make sure you can always sign in to your account.</p>
+                </div>
+              </div>
+              <div style="padding:0 18px 14px 18px;">
+                <button class="footer-btn">Add now</button>
+              </div>
+            </div>
+
+            <!-- Personalize -->
             <div class="settings-card">
               <div class="card-header">
-                <span class="ico header-ico" style="color: #6eb5ff;">&#xe73e;</span>
-                <h3>Never lose access to your account</h3>
-                <p>Add a recovery email address to make sure you can always get in to your account.</p>
+                <h3>Personalize your device</h3>
               </div>
-              <div class="card-footer left">
-                <button class="footer-btn action-btn">Add now</button>
+              <div class="theme-grid">
+                <div class="theme-item active"><img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg" /></div>
+                <div class="theme-item"><img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg"
+                    style="filter:hue-rotate(60deg);" /></div>
+                <div class="theme-item"><img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg"
+                    style="filter:hue-rotate(140deg);" /></div>
+                <div class="theme-item"><img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg"
+                    style="filter:hue-rotate(220deg);" /></div>
+                <div class="theme-item"><img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg"
+                    style="filter:saturate(40%) brightness(0.8);" /></div>
+                <div class="theme-item"><img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg"
+                    style="filter:hue-rotate(300deg);" /></div>
+              </div>
+              <div class="color-mode-row">
+                <span class="ico list-ico" style="font-size:14px;">&#xe793;</span>
+                <span class="color-mode-label">Color mode</span>
+                <select class="color-mode-select">
+                  <option>Dark</option>
+                  <option>Light</option>
+                  <option>Custom</option>
+                </select>
+              </div>
+              <div class="theme-browse-row">
+                <span class="theme-browse-text">Browse backgrounds, colors, and themes</span>
+                <span class="ico list-chevron">&#xe76c;</span>
               </div>
             </div>
-            
-            <!-- Microsoft 365 -->
-            <div class="settings-card promo-card">
-              <div class="card-header">
-                <img src="icon/store.ico" class="promo-icon" />
-                <h3>Try Microsoft 365</h3>
-                <p>Get more cloud storage, advanced security, and use premium apps like Word, Excel, and PowerPoint with a Microsoft 365 Family trial.</p>
-              </div>
-              <div class="promo-apps">
-                <img src="icon/word.ico" class="app-icon" />
-                <img src="icon/excel.ico" class="app-icon" />
-                <img src="icon/powerpoint.ico" class="app-icon" />
-              </div>
-              <div class="card-footer left">
-                <button class="footer-btn action-btn">Try for free</button>
-              </div>
+
+            <!-- Help links -->
+            <div class="settings-help-row">
+              <a href="#" class="settings-help-link"><span class="ico" style="font-size:14px;">&#xe897;</span> Get
+                help</a>
+              <a href="#" class="settings-help-link"><span class="ico" style="font-size:14px;">&#xe939;</span> Give
+                feedback</a>
             </div>
-            
+
           </div>
         </div>
       </div>
     </div>
     <div class="window-resize"></div>
   </div>
-  
+
+
   <script src="js/settings.js"></script>
   <script src="main.js"></script>
   <script src="js/app_runtime.js"></script>
