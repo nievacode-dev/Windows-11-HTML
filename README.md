@@ -1,6 +1,7 @@
-# Windows 11 24H2
+# Windows 11 24H2 Web Experience
 
-Windows 11 24H2 online version with only HTML, CSS and JavaScript.
+Welcome to a fully interactive, online recreation of **Windows 11 (24H2)**! This project brings the modern desktop experience straight to your browser, built entirely with vanilla **HTML, CSS, and JavaScript**. 
+
 <div align="center">
 
 ![Windows 11 Logo](/references/win11_bl.png)
@@ -9,4 +10,5 @@ Windows 11 24H2 online version with only HTML, CSS and JavaScript.
 
 </div>
 
-Feel free to contribute.
+### Get Involved!
+Whether you're fixing bugs, adding new apps, or refining the UI—your help is welcome! **Feel free to contribute** and be part of this awesome web OS journey.

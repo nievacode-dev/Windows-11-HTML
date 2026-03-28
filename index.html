@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="css/keyframes.css" />
   <link rel="stylesheet" href="css/window-mode.css">
   <link rel="stylesheet" href="css/settings.css">
+  <link rel="stylesheet" href="css/edge.css">
   <title>Microsoft Windows 11 24H2</title>
   <link rel="shortcut icon" href="icon/favicon.ico" type="image/x-icon" />
 </head>
@@ -997,11 +998,59 @@
 
   <script src="js/settings.js"></script>
   <script src="main.js"></script>
+  <!-- Microsoft Edge App -->
+  <div class="edge-window window" id="edgeWindow" data-app-id="edge" style="display: none;">
+    <div class="edge-header title-bar">
+      <!-- Edge Tabs Area -->
+      <div class="edge-tabs">
+        <div class="edge-tab active">
+          <img src="icon/edge.ico" alt="Edge" class="edge-tab-icon" />
+          <span class="edge-tab-title">New Tab</span>
+          <span class="edge-tab-close">×</span>
+        </div>
+        <div class="edge-tab-add">+</div>
+      </div>
+      <!-- Drag Handle -->
+      <div class="edge-drag-region title"></div>
+      <!-- Window Controls -->
+      <div class="window-controls">
+        <button class="control-btn minimize" onpointerdown="event.stopPropagation()"
+          onclick="minimizeWindow('edge')">−</button>
+        <button class="control-btn maximize" onpointerdown="event.stopPropagation()"
+          onclick="maximizeWindow('edge')">□</button>
+        <button class="control-btn close" onpointerdown="event.stopPropagation()"
+          onclick="closeEdgeWindow()">×</button>
+      </div>
+    </div>
+    
+    <div class="edge-toolbar">
+      <div class="edge-nav-btns">
+        <button class="edge-btn back" title="Back">&#xe72b;</button>
+        <button class="edge-btn forward" title="Forward">&#xe72a;</button>
+        <button class="edge-btn refresh" title="Refresh" onclick="refreshEdge()">&#xe72c;</button>
+        <button class="edge-btn home" title="Home" onclick="goEdgeHome()">&#xe80f;</button>
+      </div>
+      <div class="edge-address-bar">
+        <span class="edge-security-icon ico">&#xe72e;</span>
+        <input type="text" id="edgeUrlInput" class="edge-url-input" value="https://en.wikipedia.org" placeholder="Search or enter web address" />
+      </div>
+      <div class="edge-action-btns">
+        <button class="edge-btn" title="Extensions">&#xe840;</button>
+        <button class="edge-btn" title="Settings and more">&#xe712;</button>
+      </div>
+    </div>
+
+    <div class="edge-body" id="edgeBody">
+      <iframe src="https://en.wikipedia.org" id="edgeIframe" class="edge-iframe" frameborder="0"></iframe>
+    </div>
+  </div>
+
   <script src="js/app_runtime.js"></script>
   <script src="js/cmd.js"></script>
   <!-- <script src="js/experiment.js"></script> -->
   <script src="js/copy-and-paste.js"></script>
   <script src="js/window-mode.js"></script>
+  <script src="js/edge.js"></script>
 </body>
 
 </html>

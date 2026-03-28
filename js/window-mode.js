@@ -601,6 +601,8 @@ function initializeAppShortcuts() {
           if (typeof openTerminalWindow === 'function') openTerminalWindow();
       } else if (appTitle.toLowerCase() === 'settings' || appId === 'settings') {
           if (typeof openSettingsWindow === 'function') openSettingsWindow();
+      } else if (appTitle.toLowerCase() === 'microsoft edge' || appId === 'edge') {
+          if (typeof openEdgeWindow === 'function') openEdgeWindow();
       } else {
           createWindow(appTitle, appId, appIcon);
       }
@@ -618,7 +620,13 @@ function initializeTaskbarApps() {
       e.stopPropagation();
       const appTitle = appImg.alt || "Application";
       const appIcon = appImg.src;
-      createWindow(appTitle, null, appIcon);
+      if (appTitle.toLowerCase() === 'microsoft edge' || appImg.src.includes('edge.ico')) {
+          if (typeof openEdgeWindow === 'function') openEdgeWindow();
+      } else if (appTitle.toLowerCase() === 'settings') {
+          if (typeof openSettingsWindow === 'function') openSettingsWindow();
+      } else {
+          createWindow(appTitle, null, appIcon);
+      }
     });
   });
 }

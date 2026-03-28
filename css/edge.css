@@ -1,0 +1,269 @@
+/* Edge Window Specific Styles */
+
+.edge-window {
+    background-color: transparent !important;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Edge Title Bar & Tabs */
+.edge-header {
+    background-color: rgba(30, 30, 30, 0.95) !important;
+    height: 40px !important;
+    display: flex;
+    align-items: flex-end; /* Tabs sit at bottom of titlebar */
+    padding-left: 8px;
+}
+
+.edge-tabs {
+    display: flex;
+    align-items: flex-end;
+    height: 32px;
+    flex-grow: 1;
+    overflow: hidden;
+    z-index: 5;
+}
+
+.edge-tab {
+    background-color: rgba(43, 43, 43, 1);
+    color: white;
+    height: 32px;
+    min-width: 140px;
+    max-width: 240px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    border-radius: 6px 6px 0 0;
+    font-size: 12px;
+    font-family: 'Segoe UI', sans-serif;
+    gap: 8px;
+    position: relative;
+    cursor: default;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.edge-tab.active {
+    background-color: rgba(50, 50, 50, 1);
+    z-index: 2;
+}
+
+.edge-tab::before, .edge-tab::after {
+    /* To emulate edge tab curves if desired, keeping simple for now */
+    content: '';
+}
+
+.edge-tab-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.edge-tab-title {
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.edge-tab-close {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    opacity: 0.6;
+}
+
+.edge-tab-close:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    opacity: 1;
+}
+
+.edge-tab-add {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 18px;
+    margin-left: 2px;
+    margin-bottom: 2px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.edge-tab-add:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.edge-drag-region {
+    flex-grow: 1;
+    height: 100%;
+}
+
+/* Edge Toolbar (Address bar) */
+.edge-toolbar {
+    background-color: rgba(50, 50, 50, 1);
+    height: 48px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    gap: 8px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.5);
+    z-index: 10;
+}
+
+.edge-nav-btns, .edge-action-btns {
+    display: flex;
+    gap: 2px;
+}
+
+.edge-btn {
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.9);
+    font-family: 'Segoe-Fluent', sans-serif;
+    font-size: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.1s;
+}
+
+.edge-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.edge-btn:active {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.edge-address-bar {
+    flex-grow: 1;
+    height: 32px;
+    background-color: rgba(30, 30, 30, 1);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.edge-address-bar:focus-within {
+    background-color: rgba(20, 20, 20, 1);
+    border-color: #60CDFF;
+    outline: 2px solid rgba(96, 205, 255, 0.3);
+}
+
+.edge-security-icon {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-right: 8px;
+}
+
+.edge-url-input {
+    flex-grow: 1;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 13px;
+    font-family: 'Segoe UI', sans-serif;
+    outline: none;
+}
+
+.edge-url-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Edge Body (Iframe) */
+.edge-body {
+    flex-grow: 1;
+    background-color: white;
+    position: relative;
+    display: flex;
+    padding: 0 !important; /* override window-content padding */
+}
+
+.edge-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background-color: white;
+}
+
+/* LIGHT MODE OVERRIDES */
+body.light-mode .edge-header {
+    background-color: rgba(230, 230, 230, 0.95) !important;
+}
+
+body.light-mode .edge-tab {
+    background-color: rgba(243, 243, 243, 1);
+    color: #1a1a1a;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    border-left: 1px solid rgba(0, 0, 0, 0.05);
+    border-right: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+body.light-mode .edge-tab.active {
+    background-color: rgba(250, 250, 250, 1);
+}
+
+body.light-mode .edge-tab-close:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .edge-tab-add {
+    color: #1a1a1a;
+}
+
+body.light-mode .edge-tab-add:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .edge-toolbar {
+    background-color: rgba(250, 250, 250, 1);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+body.light-mode .edge-btn {
+    color: #1a1a1a;
+}
+
+body.light-mode .edge-btn:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+}
+
+body.light-mode .edge-address-bar {
+    background-color: white;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+body.light-mode .edge-address-bar:focus-within {
+    border-color: #0067c0;
+    outline: 2px solid rgba(0, 103, 192, 0.2);
+    box-shadow: 0 0 0 1px #0067c0 inset;
+}
+
+body.light-mode .edge-security-icon {
+    color: #555;
+}
+
+body.light-mode .edge-url-input {
+    color: #1a1a1a;
+}
+
+body.light-mode .edge-url-input::placeholder {
+    color: #777;
+}
