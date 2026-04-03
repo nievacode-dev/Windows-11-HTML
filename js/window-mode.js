@@ -3,7 +3,7 @@ let windows = {};
 let activeWindowId = null;
 
 // Workspaces / Desktops Tracking
-let desktops = [ { id: 1, name: "Desktop 1" } ];
+let desktops = [{ id: 1, name: "Desktop 1" }];
 let activeDesktopId = 1;
 let desktopCounter = 1;
 
@@ -16,20 +16,20 @@ document.body.appendChild(snapPreview);
 function createWindow(appTitle = "Window", appId = null, appIcon = null) {
   windowId++;
   const id = `window-${windowId}`;
-  
+
   const windowElement = document.createElement("div");
   windowElement.classList.add("window");
   windowElement.id = id;
   windowElement.dataset.appId = appId;
   windowElement.style.left = `${100 + (windowId % 5) * 30}px`;
   windowElement.style.top = `${50 + (windowId % 5) * 30}px`;
-  
+
   const titleBar = document.createElement("div");
   titleBar.classList.add("title-bar");
-  
+
   const titleText = document.createElement("div");
   titleText.classList.add("title");
-  
+
   // Add app icon to title bar if available
   if (appIcon) {
     const iconImg = document.createElement("img");
@@ -39,14 +39,14 @@ function createWindow(appTitle = "Window", appId = null, appIcon = null) {
     iconImg.style.display = "block";
     titleText.appendChild(iconImg);
   }
-  
+
   const titleSpan = document.createElement("span");
   titleSpan.textContent = appTitle;
   titleText.appendChild(titleSpan);
-  
+
   const windowControls = document.createElement("div");
   windowControls.classList.add("window-controls");
-  
+
   // Minimize button
   const minimizeBtn = document.createElement("button");
   minimizeBtn.classList.add("control-btn", "minimize");
@@ -56,7 +56,7 @@ function createWindow(appTitle = "Window", appId = null, appIcon = null) {
     e.stopPropagation();
     minimizeWindow(id);
   };
-  
+
   // Maximize button
   const maximizeBtn = document.createElement("button");
   maximizeBtn.classList.add("control-btn", "maximize");
@@ -66,7 +66,7 @@ function createWindow(appTitle = "Window", appId = null, appIcon = null) {
     e.stopPropagation();
     maximizeWindow(id);
   };
-  
+
   // Close button
   const closeBtn = document.createElement("button");
   closeBtn.classList.add("control-btn", "close");
@@ -76,28 +76,28 @@ function createWindow(appTitle = "Window", appId = null, appIcon = null) {
     e.stopPropagation();
     closeWindow(id);
   };
-  
+
   windowControls.appendChild(minimizeBtn);
   windowControls.appendChild(maximizeBtn);
   windowControls.appendChild(closeBtn);
-  
+
   titleBar.appendChild(titleText);
   titleBar.appendChild(windowControls);
-  
+
   const contentArea = document.createElement("div");
   contentArea.classList.add("window-content");
   contentArea.textContent = `${appTitle} is running...`;
-  
+
   // Add resize handle
   const resizeHandle = document.createElement("div");
   resizeHandle.classList.add("window-resize");
-  
+
   windowElement.appendChild(titleBar);
   windowElement.appendChild(contentArea);
   windowElement.appendChild(resizeHandle);
-  
+
   document.body.appendChild(windowElement);
-  
+
   // Store window info
   windows[id] = {
     element: windowElement,
@@ -113,16 +113,16 @@ function createWindow(appTitle = "Window", appId = null, appIcon = null) {
     taskbarElement: null,
     desktopId: activeDesktopId
   };
-  
+
   // Create taskbar icon
   createTaskbarItem(id);
-  
+
   // Setup Interaction
   makeWindowInteractive(id, titleBar, resizeHandle);
-  
+
   // Set initial z-index (bring to front)
   updateZIndex(id);
-  
+
   return id;
 }
 
@@ -130,10 +130,10 @@ function createWindow(appTitle = "Window", appId = null, appIcon = null) {
 function makeWindowInteractive(windowId, titleBar, resizeHandle) {
   const win = windows[windowId];
   const el = win.element;
-  
+
   if (el.dataset.interactiveHooked === "true") return;
   el.dataset.interactiveHooked = "true";
-  
+
   // State 
   let isDragging = false;
   let isResizing = false;
@@ -141,9 +141,9 @@ function makeWindowInteractive(windowId, titleBar, resizeHandle) {
   let startX, startY;
   let startW, startH;
   let animationFrameId = null;
-  
+
   let currentSnapType = null; // 'maximize', 'left', 'right'
-  
+
   // Helper to render frame
   const renderLoop = () => {
     if (isDragging) {
@@ -161,64 +161,64 @@ function makeWindowInteractive(windowId, titleBar, resizeHandle) {
   titleBar.addEventListener("pointerdown", (e) => {
     // Ignore if clicked on controls
     if (e.target.closest('.control-btn')) return;
-    
+
     updateZIndex(windowId);
     isDragging = true;
     titleBar.setPointerCapture(e.pointerId);
-    
+
     // If maximized, restore and attach to cursor proportionally
     if (win.isMaximized) {
       const pointerPercent = e.clientX / window.innerWidth;
-      
+
       // Detach and restore width implicitly
       win.isMaximized = false;
       el.classList.remove("maximized");
-      
+
       const targetWidth = win.originalState ? win.originalState.width : 600;
       el.style.width = `${targetWidth}px`;
-      
+
       win.x = e.clientX - (targetWidth * pointerPercent);
       win.y = 0;
       el.style.left = `${win.x}px`;
       el.style.top = `${win.y}px`;
-      
+
       // Save state so snap assist works smoothly
       win.originalState = { width: targetWidth, height: win.originalState ? win.originalState.height : 400 };
     }
-    
+
     startPointerX = e.clientX;
     startPointerY = e.clientY;
     startX = win.x;
     startY = win.y;
-    
+
     if (!animationFrameId) {
       animationFrameId = requestAnimationFrame(renderLoop);
     }
   });
-  
+
   titleBar.addEventListener("pointermove", (e) => {
     if (!isDragging) return;
-    
+
     const deltaX = e.clientX - startPointerX;
     const deltaY = e.clientY - startPointerY;
-    
+
     win.x = startX + deltaX;
     win.y = startY + deltaY;
-    
+
     // Stop dragging above top edge
     if (win.y < 0) win.y = 0;
-    
+
     // Snap Preview Logic
     currentSnapType = checkSnapZones(e.clientX, e.clientY);
   });
-  
+
   titleBar.addEventListener("pointerup", (e) => {
     if (!isDragging) return;
     isDragging = false;
     titleBar.releasePointerCapture(e.pointerId);
     cancelAnimationFrame(animationFrameId);
     animationFrameId = null;
-    
+
     // Apply Snapping if applicable
     if (currentSnapType) {
       applySnap(windowId, currentSnapType);
@@ -238,28 +238,28 @@ function makeWindowInteractive(windowId, titleBar, resizeHandle) {
     updateZIndex(windowId);
     isResizing = true;
     resizeHandle.setPointerCapture(e.pointerId);
-    
+
     startPointerX = e.clientX;
     startPointerY = e.clientY;
-    
+
     startW = el.offsetWidth;
     startH = el.offsetHeight;
-    
+
     if (!animationFrameId) {
       animationFrameId = requestAnimationFrame(renderLoop);
     }
   });
-  
+
   resizeHandle.addEventListener("pointermove", (e) => {
     if (!isResizing) return;
-    
+
     const deltaX = e.clientX - startPointerX;
     const deltaY = e.clientY - startPointerY;
-    
+
     win.width = Math.max(300, startW + deltaX); // Min bounds
     win.height = Math.max(200, startH + deltaY);
   });
-  
+
   resizeHandle.addEventListener("pointerup", (e) => {
     if (!isResizing) return;
     isResizing = false;
@@ -280,7 +280,7 @@ function makeWindowInteractive(windowId, titleBar, resizeHandle) {
 function checkSnapZones(clientX, clientY) {
   const edgeThreshold = 10;
   hideSnapPreview(); // reset
-  
+
   if (clientY <= edgeThreshold) {
     showSnapPreview('maximize');
     return 'maximize';
@@ -291,14 +291,14 @@ function checkSnapZones(clientX, clientY) {
     showSnapPreview('right');
     return 'right';
   }
-  
+
   return null;
 }
 
 function showSnapPreview(type) {
   snapPreview.classList.add("visible");
   const taskbarHeight = 48; // Estimate
-  
+
   if (type === 'maximize') {
     snapPreview.style.top = '0';
     snapPreview.style.left = '0';
@@ -324,7 +324,7 @@ function hideSnapPreview() {
 function applySnap(windowId, type) {
   const win = windows[windowId];
   const el = win.element;
-  
+
   // Save state before snapping
   if (!win.isMaximized) {
     win.originalState = {
@@ -334,36 +334,36 @@ function applySnap(windowId, type) {
       height: el.offsetHeight
     };
   }
-  
+
   el.classList.add("animating"); // Enable layout transitions explicitly
-  
+
   // Force reflow to ensure transition is disabled/enabled properly
   void el.offsetWidth;
-  
+
   if (type === 'maximize') {
     maximizeWindow(windowId, true); // true = force maximize, skipping toggle logic slightly
   } else {
     win.isMaximized = false;
     el.classList.remove("maximized");
-    
+
     // Half screen coordinates
     const taskbarHeight = 48;
     win.y = 0;
     win.width = window.innerWidth / 2;
     win.height = window.innerHeight - taskbarHeight;
-    
+
     if (type === 'left') {
       win.x = 0;
     } else if (type === 'right') {
       win.x = window.innerWidth / 2;
     }
-    
+
     el.style.top = `${win.y}px`;
     el.style.left = `${win.x}px`;
     el.style.width = `${win.width}px`;
     el.style.height = `${win.height}px`;
   }
-  
+
   // Clean up animation class after transition
   setTimeout(() => el.classList.remove("animating"), 300);
 }
@@ -372,9 +372,9 @@ function applySnap(windowId, type) {
 function updateZIndex(windowId) {
   if (activeWindowId === windowId) return;
   activeWindowId = windowId;
-  
+
   let maxZIndex = 1000;
-  
+
   // Remove active class from all windows and find highest z
   Object.keys(windows).forEach(id => {
     windows[id].element.classList.remove("active");
@@ -386,7 +386,7 @@ function updateZIndex(windowId) {
       maxZIndex = zIndex;
     }
   });
-  
+
   // Set new z-index and active class
   const el = windows[windowId].element;
   el.style.zIndex = maxZIndex + 1;
@@ -400,7 +400,7 @@ function updateZIndex(windowId) {
 function switchDesktop(id) {
   if (activeDesktopId === id) return;
   activeDesktopId = id;
-  
+
   Object.keys(windows).forEach(winId => {
     const win = windows[winId];
     if (win.desktopId !== activeDesktopId) {
@@ -426,23 +426,23 @@ function addDesktop() {
 function createTaskbarItem(windowId) {
   const win = windows[windowId];
   const taskbarApps = document.getElementById("taskbarApps");
-  
+
   if (taskbarApps) {
     const taskbarItem = document.createElement("div");
     taskbarItem.classList.add("taskbar-item", "open");
     taskbarItem.dataset.windowId = windowId;
-    
+
     if (win.appIcon) {
       const iconImg = document.createElement("img");
       iconImg.src = win.appIcon;
       iconImg.classList.add("taskbar-icon");
       taskbarItem.appendChild(iconImg);
     }
-    
+
     const indicator = document.createElement("div");
     indicator.classList.add("taskbar-indicator");
     taskbarItem.appendChild(indicator);
-    
+
     taskbarItem.onclick = () => {
       if (activeWindowId === windowId && !win.isMinimized) {
         minimizeWindow(windowId);
@@ -454,7 +454,7 @@ function createTaskbarItem(windowId) {
         }
       }
     };
-    
+
     taskbarApps.appendChild(taskbarItem);
     win.taskbarElement = taskbarItem;
   }
@@ -464,24 +464,24 @@ function createTaskbarItem(windowId) {
 function minimizeWindow(windowId) {
   const win = windows[windowId];
   const el = win.element;
-  
+
   if (win.isMinimized) {
     // Restore
     el.classList.remove("minimizing");
     el.classList.remove("hidden");
     win.isMinimized = false;
-    
+
     updateZIndex(windowId);
   } else {
     // Minimize
     el.classList.add("minimizing");
-    
+
     setTimeout(() => {
-        el.classList.add("hidden");
+      el.classList.add("hidden");
     }, 200); // Wait for animation
-    
+
     win.isMinimized = true;
-    
+
     // Remove focus state visually from taskbar
     if (activeWindowId === windowId) {
       activeWindowId = null;
@@ -496,42 +496,42 @@ function minimizeWindow(windowId) {
 function maximizeWindow(windowId, forceMaximize = false) {
   const win = windows[windowId];
   const el = win.element;
-  
+
   el.classList.add("animating"); // Ensure smooth transition
   void el.offsetWidth; // Force layout
-  
+
   if (win.isMaximized && !forceMaximize) {
     // Restore
     el.classList.remove("maximized");
-    
+
     if (win.originalState) {
-        win.width = win.originalState.width;
-        win.height = win.originalState.height;
-        win.x = win.originalState.x;
-        win.y = win.originalState.y;
+      win.width = win.originalState.width;
+      win.height = win.originalState.height;
+      win.x = win.originalState.x;
+      win.y = win.originalState.y;
     }
-    
+
     el.style.width = `${win.width}px`;
     el.style.height = `${win.height}px`;
     el.style.top = `${win.y}px`;
     el.style.left = `${win.x}px`;
-    
+
     win.isMaximized = false;
   } else {
     // Maximize
     if (!win.isMaximized) {
       win.originalState = { x: win.x, y: win.y, width: el.offsetWidth, height: el.offsetHeight };
     }
-    
+
     el.classList.add("maximized");
     el.style.width = ''; // Handled by CSS class important tags
-    el.style.height = ''; 
-    el.style.top = ''; 
+    el.style.height = '';
+    el.style.top = '';
     el.style.left = '';
-    
+
     win.isMaximized = true;
   }
-  
+
   setTimeout(() => el.classList.remove("animating"), 300);
 }
 
@@ -539,21 +539,21 @@ function maximizeWindow(windowId, forceMaximize = false) {
 function closeWindow(windowId) {
   const el = document.getElementById(windowId);
   const win = windows[windowId];
-  
+
   if (windowId === 'cmd') {
-      // For the Terminal, we just hide it instead of destroying the DOM
-      if (el) el.style.display = 'none';
-      if (win && win.taskbarElement) {
-          win.taskbarElement.remove();
-      }
-      delete windows[windowId];
-      return;
+    // For the Terminal, we just hide it instead of destroying the DOM
+    if (el) el.style.display = 'none';
+    if (win && win.taskbarElement) {
+      win.taskbarElement.remove();
+    }
+    delete windows[windowId];
+    return;
   }
-  
+
   if (win && win.taskbarElement) {
     win.taskbarElement.remove();
   }
-  
+
   // Stamp the current rendered values explicitly so the CSS transition
   // has a concrete starting point (animation-held values don't count).
   el.style.opacity = '1';
@@ -561,7 +561,7 @@ function closeWindow(windowId) {
   // Force a reflow so the browser registers the above values before
   // we switch to the closing state.
   void el.offsetWidth;
-  
+
   el.classList.add("closing");
   setTimeout(() => {
     el.remove();
@@ -572,18 +572,18 @@ function closeWindow(windowId) {
 // Global hook up
 function initializeAppShortcuts() {
   const appShortcuts = document.querySelectorAll(".app-shortcut, .start-app");
-  
+
   appShortcuts.forEach(shortcut => {
     shortcut.style.cursor = "pointer";
     const newShortcut = shortcut.cloneNode(true);
     shortcut.parentNode.replaceChild(newShortcut, shortcut);
-    
+
     newShortcut.addEventListener("click", (e) => {
       e.stopPropagation();
       let appTitle = "Application";
       let appId = null;
       let appIcon = null;
-      
+
       if (newShortcut.classList.contains("app-shortcut")) {
         const appDesktop = newShortcut.closest(".app-desktop");
         appTitle = appDesktop.dataset.title || "Application";
@@ -596,18 +596,18 @@ function initializeAppShortcuts() {
         const iconImg = newShortcut.querySelector("img.app-list");
         if (iconImg) appIcon = iconImg.src;
       }
-      
+
       if (appId === 'cmd') {
-          if (typeof openTerminalWindow === 'function') openTerminalWindow();
+        if (typeof openTerminalWindow === 'function') openTerminalWindow();
       } else if (appTitle.toLowerCase() === 'settings' || appId === 'settings') {
-          if (typeof openSettingsWindow === 'function') openSettingsWindow();
+        if (typeof openSettingsWindow === 'function') openSettingsWindow();
       } else if (appTitle.toLowerCase() === 'microsoft edge' || appId === 'edge') {
-          if (typeof openEdgeWindow === 'function') openEdgeWindow();
+        if (typeof openEdgeWindow === 'function') openEdgeWindow();
       } else {
-          createWindow(appTitle, appId, appIcon);
+        createWindow(appTitle, appId, appIcon);
       }
     });
-    
+
     newShortcut.addEventListener("dblclick", (e) => e.stopPropagation());
   });
 }
@@ -621,11 +621,11 @@ function initializeTaskbarApps() {
       const appTitle = appImg.alt || "Application";
       const appIcon = appImg.src;
       if (appTitle.toLowerCase() === 'microsoft edge' || appImg.src.includes('edge.ico')) {
-          if (typeof openEdgeWindow === 'function') openEdgeWindow();
+        if (typeof openEdgeWindow === 'function') openEdgeWindow();
       } else if (appTitle.toLowerCase() === 'settings') {
-          if (typeof openSettingsWindow === 'function') openSettingsWindow();
+        if (typeof openSettingsWindow === 'function') openSettingsWindow();
       } else {
-          createWindow(appTitle, null, appIcon);
+        createWindow(appTitle, null, appIcon);
       }
     });
   });
@@ -635,69 +635,69 @@ function initializeTaskbarApps() {
 function renderTaskViewDesktops() {
   const taskViewDesktops = document.getElementById("taskViewDesktops");
   if (!taskViewDesktops) return;
-  
+
   taskViewDesktops.innerHTML = "";
-  
+
   desktops.forEach((desk, index) => {
     const dItem = document.createElement("div");
     dItem.className = "desktop-item";
     if (desk.id === activeDesktopId) dItem.classList.add("active");
-    
+
     // Header (name above preview)
     const nameSpan = document.createElement("span");
     nameSpan.className = "desktop-name";
     nameSpan.textContent = desk.name;
-    
+
     // Preview image
     const preview = document.createElement("div");
     preview.className = "desktop-preview";
     preview.style.backgroundImage = "url('wallpaper/windows-11-blue-material-3y-1920x1080.jpg')";
-    
+
     // Optional indicator
     const indicator = document.createElement("div");
     indicator.className = "desktop-indicator";
-    
+
     dItem.appendChild(nameSpan);
     dItem.appendChild(preview);
     dItem.appendChild(indicator);
-    
+
     dItem.onclick = (e) => {
       e.stopPropagation();
       switchDesktop(desk.id);
       document.getElementById("taskViewOverlay").classList.remove("visible");
     };
-    
+
     taskViewDesktops.appendChild(dItem);
   });
-  
+
   // "New desktop" button
   const newBtn = document.createElement("div");
   newBtn.className = "desktop-item new-desktop";
-  
+
   const newName = document.createElement("span");
   newName.className = "desktop-name";
   newName.textContent = "New desktop";
-  
+
   const box = document.createElement("div");
   box.className = "desktop-preview ico-box";
   const plusIcon = document.createElement("span");
   plusIcon.className = "ico";
   plusIcon.textContent = "+";
   box.appendChild(plusIcon);
-  
+
   newBtn.appendChild(newName);
   newBtn.appendChild(box);
-  
+
   // invisible indicator for alignment
   const ghostIndicator = document.createElement("div");
   ghostIndicator.className = "desktop-indicator";
   newBtn.appendChild(ghostIndicator);
-  
+
   newBtn.onclick = (e) => {
     e.stopPropagation();
     addDesktop();
   };
-  
+
   taskViewDesktops.appendChild(newBtn);
 }
 
@@ -705,9 +705,9 @@ function initializeTaskView() {
   const taskViewBtn = document.getElementById("taskViewBtn");
   const taskViewOverlay = document.getElementById("taskViewOverlay");
   const taskViewWindows = document.getElementById("taskViewWindows");
-  
+
   if (!taskViewBtn || !taskViewOverlay || !taskViewWindows) return;
-  
+
   function toggleTaskView() {
     if (taskViewOverlay.classList.contains("visible")) {
       taskViewOverlay.classList.remove("visible");
@@ -716,7 +716,7 @@ function initializeTaskView() {
       taskViewWindows.innerHTML = "";
       // Filter windows for only the active desktop
       const windowIds = Object.keys(windows).filter(id => windows[id].desktopId === activeDesktopId);
-      
+
       if (windowIds.length === 0) {
         taskViewWindows.innerHTML = "<div style='color:white; font-size:14px;'>No open windows</div>";
       } else {
@@ -726,25 +726,25 @@ function initializeTaskView() {
             const card = document.createElement("div");
             card.className = "tv-card";
             card.style.display = "flex";
-            
+
             const header = document.createElement("div");
             header.className = "tv-card-header";
-            
+
             const titleContainer = document.createElement("div");
             titleContainer.className = "tv-card-title-container";
-            
+
             if (win.appIcon) {
               const icon = document.createElement("img");
               icon.src = win.appIcon;
               icon.className = "tv-card-icon";
               titleContainer.appendChild(icon);
             }
-            
+
             const title = document.createElement("div");
             title.className = "tv-card-title";
             title.textContent = win.appTitle || "Window";
             titleContainer.appendChild(title);
-            
+
             const closeBtn = document.createElement("div");
             closeBtn.className = "tv-card-close";
             closeBtn.textContent = "×";
@@ -753,13 +753,13 @@ function initializeTaskView() {
               closeWindow(id);
               card.remove();
               if (Object.keys(windows).filter(wid => windows[wid].desktopId === activeDesktopId).length === 0) {
-                 taskViewWindows.innerHTML = "<div style='color:white; font-size:14px;'>No open windows</div>";
+                taskViewWindows.innerHTML = "<div style='color:white; font-size:14px;'>No open windows</div>";
               }
             };
-            
+
             header.appendChild(titleContainer);
             header.appendChild(closeBtn);
-            
+
             const preview = document.createElement("div");
             preview.className = "tv-card-preview";
             if (win.appIcon) {
@@ -773,30 +773,30 @@ function initializeTaskView() {
               fallback.style.color = "white";
               preview.appendChild(fallback);
             }
-            
+
             card.appendChild(header);
             card.appendChild(preview);
-            
+
             card.onclick = () => {
               if (win.isMinimized) {
-                  minimizeWindow(id);
+                minimizeWindow(id);
               }
               updateZIndex(id);
               taskViewOverlay.classList.remove("visible");
             };
-            
+
             taskViewWindows.appendChild(card);
           }
         });
       }
-      
+
       renderTaskViewDesktops();
       taskViewOverlay.classList.add("visible");
     }
   }
-  
+
   taskViewBtn.addEventListener("click", toggleTaskView);
-  
+
   taskViewOverlay.addEventListener("click", (e) => {
     if (e.target === taskViewOverlay || e.target === taskViewWindows) {
       taskViewOverlay.classList.remove("visible");

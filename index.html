@@ -17,6 +17,14 @@
 </head>
 
 <body>
+  <div class="black-screen" id="bootScreen" style="z-index: 99999;">
+    <img src="icon/logo-windows-11-icon-1024.png" class="booting-logo" alt="Booting" />
+  </div>
+  <script>
+    if (document.cookie.includes("hasBooted=true") || sessionStorage.getItem("hasBooted") === "true") {
+      document.getElementById("bootScreen").style.display = "none";
+    }
+  </script>
   <div class="lock-screen" id="lockScreen">
     <div class="clock-and-dates">
       <span class="clock" id="clock"></span>

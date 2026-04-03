@@ -560,25 +560,17 @@ lockScreenDate();
 setInterval(getDates, 1000);
 
 window.onload = function () {
-  // document.onclick = () => {
-  //   const startUp = new Audio("sound/startup.wav");
-  //   setTimeout(function () {
-  //     startUp.play();
-  //   }, 1000);
-  //   booting();
-  // };
   getDates();
   getTime();
-  // startWindows();
+  
+  const bootScreen = document.getElementById("bootScreen");
+  if (bootScreen && bootScreen.style.display !== "none") {
+    // Hide booting screen once all assets are downloaded
+    bootScreen.style.display = "none";
+    document.cookie = "hasBooted=true; path=/";
+    sessionStorage.setItem("hasBooted", "true");
+  }
 };
-
-// function startWindows() {
-//   const clickMeDiv = document.createElement("div");
-//   body.appendChild(clickMeDiv);
-//   clickMeDiv.classList.add("black-screen");
-//   clickMeDiv.classList.add("start-windows");
-//   clickMeDiv.textContent = "Click me to start.";
-// }
 
 function booting() {
   const blackScreenDiv = document.createElement("div");
