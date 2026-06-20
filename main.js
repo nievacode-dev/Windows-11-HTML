@@ -33,32 +33,40 @@ const body = document.body;
 //   }
 // };
 
-// searchIcon.onclick = function (event) {
-//   if (searchMenu.style.display === "none" || searchMenu.style.display === "") {
-//     searchMenu.style.display = "block";
-//     if (event.target === body && startMenu.style.display === "block") {
-//       startMenu.style.display = "none";
-//       startMenu.classList.add("slidedown-anim");
-//       setTimeout(() => {
-//         startMenu.classList.remove("slidedown-anim");
-//       }, 300);
-//     }
-//   } else {
-//     searchMenu.style.display = "none";
-//     searchMenu.classList.add("slidedown-anim");
-//     setTimeout(() => {
-//       searchMenu.classList.remove("slidedown-anim");
-//     }, 300);
-//   }
-// };
+searchBtn.onclick = function (event) {
+  if (searchMenu.style.display === "none" || searchMenu.style.display === "") {
+    searchMenu.style.display = "block";
+    if (event.target === body && startMenu.style.display === "block") {
+      startMenu.style.display = "none";
+      startMenu.classList.add("slidedown-anim");
+      setTimeout(() => {
+        startMenu.classList.remove("slidedown-anim");
+      }, 300);
+    }
+  } else {
+    searchMenu.style.display = "none";
+    searchMenu.classList.add("slidedown-anim");
+    setTimeout(() => {
+      searchMenu.classList.remove("slidedown-anim");
+    }, 300);
+  }
+};
 
-startLogo.addEventListener("click", function () {
+startLogo.addEventListener("click", function (e) {
+  e.stopPropagation();
   startMenu.classList.toggle("menu-open");
+  if (searchMenu) searchMenu.classList.remove("menu-open");
 });
 
-searchIcon.addEventListener("click", function () {
-  searchMenu.classList.toggle("menu-open");
-});
+// searchIcon click now handled by searchBtn in HTML
+const searchBtnEl = document.getElementById("searchBtn");
+if (searchBtnEl) {
+  searchBtnEl.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (searchMenu) searchMenu.classList.toggle("menu-open");
+    startMenu.classList.remove("menu-open");
+  });
+}
 
 // All apps logic
 document.addEventListener("DOMContentLoaded", () => {
@@ -89,9 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const title = item.dataset.title || "Application";
         const iconImg = item.querySelector("img");
 
-        if (title.toLowerCase() === 'settings') {
-          if (typeof openSettingsWindow === 'function') openSettingsWindow();
-        } else {
+        if (typeof createWindow !== 'undefined') {
           createWindow(title, null, iconImg ? iconImg.src : null);
         }
 
@@ -221,73 +227,74 @@ document.getElementById("closePopup").onclick = function () {
 function retryRun(getTagId) {
   document.getElementById("runProgram").style.display = "block";
   document.getElementById(getTagId).style.display = "none";
-  document.getElementById(getTagId).classList.add("close-anim");
   document.getElementById("runInput").select();
-  setTimeout(() => {
-    document.getElementById(getTagId).classList.remove("close-anim");
-  }, 300);
 }
 
 document.getElementById("refresh").onclick = function () {
-  // window.location.reload();
-  document.getElementById("newApps").style.display = "none";
+  // Refresh desktop icons (re-trigger a paint by briefly hiding/showing them)
+  const desktopApps = document.querySelectorAll(".app-desktop");
+  desktopApps.forEach(el => {
+    el.style.visibility = "hidden";
+  });
   setTimeout(() => {
-    document.getElementById("newApps").style.display = "block";
+    desktopApps.forEach(el => {
+      el.style.visibility = "";
+    });
   }, 50);
 };
 
-const trayBtn = document.getElementById("trayBtn");
-const trayContent = document.getElementById("trayContent");
-const trayIco = document.getElementById("trayIco");
-trayBtn.onclick = function () {
-  if (
-    trayContent.style.display === "" ||
-    trayContent.style.display === "none"
-  ) {
-    trayContent.style.display = "flex";
-    trayBtn.style.backgroundColor = "rgba(80, 80, 80, 0.4)";
-    trayIco.innerHTML = "&#xe972;";
-    trayIco.style.animation = "tray 0.2s reverse";
-    setTimeout(() => {
-      trayIco.style.animation = "";
-      trayContent.style.animation = "";
-    }, 200);
-  } else {
-    document.addEventListener("click", function (e) {
-      if (
-        e.target !== trayBtn &&
-        e.target !== trayContent &&
-        e.target !== trayIco &&
-        trayContent.style.display === "flex"
-      ) {
-        trayContent.style.display = "none";
-        trayIco.innerHTML = "&#xe971;";
-        trayBtn.style.backgroundColor = "";
-        trayIco.style.animation = "trayreverse";
-        trayIco.style.animationDuration = "0.2s";
-        trayIco.style.animationDirection = "reverse";
-        trayContent.style.animation = "trayclose";
-        trayContent.style.animationDuration = "0.2s";
-        setTimeout(() => {
-          trayIco.style.animation = "";
-          trayContent.style.animation = "";
-        }, 200);
-      }
-    });
-    trayContent.style.display = "none";
-    trayContent.style.animation = "trayclose";
-    trayContent.style.animationDuration = "0.2s";
-    trayIco.innerHTML = "&#xe971;";
-    trayBtn.style.backgroundColor = "";
-    trayIco.style.animation = "trayreverse";
-    trayIco.style.animationDuration = "0.2s";
-    trayIco.style.animationDirection = "reverse";
-    setTimeout(() => {
-      trayIco.style.animation = "";
-      trayContent.style.animation = "";
-    }, 250);
-  }
-};
+// const trayBtn = document.getElementById("trayBtn");
+// const trayContent = document.getElementById("trayContent");
+// const trayIco = document.getElementById("trayIco");
+// trayBtn.onclick = function () {
+//   if (
+//     trayContent.style.display === "" ||
+//     trayContent.style.display === "none"
+//   ) {
+//     trayContent.style.display = "flex";
+//     trayBtn.style.backgroundColor = "rgba(80, 80, 80, 0.4)";
+//     trayIco.innerHTML = "&#xe972;";
+//     trayIco.style.animation = "tray 0.2s reverse";
+//     setTimeout(() => {
+//       trayIco.style.animation = "";
+//       trayContent.style.animation = "";
+//     }, 200);
+//   } else {
+//     document.addEventListener("click", function (e) {
+//       if (
+//         e.target !== trayBtn &&
+//         e.target !== trayContent &&
+//         e.target !== trayIco &&
+//         trayContent.style.display === "flex"
+//       ) {
+//         trayContent.style.display = "none";
+//         trayIco.innerHTML = "&#xe971;";
+//         trayBtn.style.backgroundColor = "";
+//         trayIco.style.animation = "trayreverse";
+//         trayIco.style.animationDuration = "0.2s";
+//         trayIco.style.animationDirection = "reverse";
+//         trayContent.style.animation = "trayclose";
+//         trayContent.style.animationDuration = "0.2s";
+//         setTimeout(() => {
+//           trayIco.style.animation = "";
+//           trayContent.style.animation = "";
+//         }, 200);
+//       }
+//     });
+//     trayContent.style.display = "none";
+//     trayContent.style.animation = "trayclose";
+//     trayContent.style.animationDuration = "0.2s";
+//     trayIco.innerHTML = "&#xe971;";
+//     trayBtn.style.backgroundColor = "";
+//     trayIco.style.animation = "trayreverse";
+//     trayIco.style.animationDuration = "0.2s";
+//     trayIco.style.animationDirection = "reverse";
+//     setTimeout(() => {
+//       trayIco.style.animation = "";
+//       trayContent.style.animation = "";
+//     }, 250);
+//   }
+// };
 
 const contextMenu = document.getElementById("contextMenu");
 document.addEventListener("contextmenu", function (e) {
@@ -339,6 +346,24 @@ document.addEventListener("DOMContentLoaded", () => {
         createWindow(appContextMenu.dataset.targetTitle || "Application",
           appContextMenu.dataset.targetId,
           appContextMenu.dataset.targetIcon);
+      }
+    });
+  }
+
+  const displaySettingsBtn = document.getElementById("displaySettingsBtn");
+  if (displaySettingsBtn) {
+    displaySettingsBtn.addEventListener("click", () => {
+      if (typeof createWindow !== 'undefined') {
+        createWindow('Settings', 'settings', 'icon/settings.ico');
+      }
+    });
+  }
+
+  const personalizeBtn = document.getElementById("personalizeBtn");
+  if (personalizeBtn) {
+    personalizeBtn.addEventListener("click", () => {
+      if (typeof createWindow !== 'undefined') {
+        createWindow('Settings', 'settings', 'icon/settings.ico');
       }
     });
   }
@@ -449,23 +474,11 @@ function runWindows() {
   if (runInput.value === "winver") {
     document.getElementById("aboutTab").style.display = "block";
     runProgram.style.display = "none";
-    runProgram.classList.add("close-anim");
-    setTimeout(() => {
-      runProgram.classList.remove("close-anim");
-    }, 300);
   } else if (runInput.value === "binexe") {
     runProgram.style.display = "none";
-    runProgram.classList.add("close-anim");
-    setTimeout(() => {
-      runProgram.classList.remove("close-anim");
-    }, 300);
   } else if (runInput.value === "cmd") {
     document.getElementById("cmd").style.display = "block";
     runProgram.style.display = "none";
-    runProgram.classList.add("close-anim");
-    setTimeout(() => {
-      runProgram.classList.remove("close-anim");
-    }, 300);
   } else {
     const audio = new Audio("sound/foreground.wav");
     audio.play();
@@ -476,10 +489,6 @@ function runWindows() {
     getError.innerHTML = runInput.value;
     errorTitle.innerHTML = runInput.value;
     runProgram.style.display = "none";
-    runProgram.classList.add("close-anim");
-    setTimeout(() => {
-      runProgram.classList.remove("close-anim");
-    }, 300);
   }
 }
 
@@ -562,14 +571,22 @@ setInterval(getDates, 1000);
 window.onload = function () {
   getDates();
   getTime();
-  
-  const bootScreen = document.getElementById("bootScreen");
-  if (bootScreen && bootScreen.style.display !== "none") {
-    // Hide booting screen once all assets are downloaded
-    bootScreen.style.display = "none";
-    document.cookie = "hasBooted=true; path=/";
-    sessionStorage.setItem("hasBooted", "true");
-  }
+
+  // Boot screen disabled — cookie-based boot removed
+  // const bootScreen = document.getElementById("bootScreen");
+  // if (bootScreen && bootScreen.style.display !== "none") {
+  //   bootScreen.style.transition = "opacity 0.6s ease-out";
+  //   setTimeout(() => {
+  //     bootScreen.style.opacity = "0";
+  //     setTimeout(() => {
+  //       bootScreen.style.display = "none";
+  //       bootScreen.style.transition = "";
+  //       bootScreen.style.opacity = "";
+  //       document.cookie = "hasBooted=true; path=/";
+  //       sessionStorage.setItem("hasBooted", "true");
+  //     }, 650);
+  //   }, 800);
+  // }
 };
 
 function booting() {
@@ -696,9 +713,17 @@ document.getElementById("newFolder").addEventListener("click", function () {
 const blackScreenDiv = document.createElement("div");
 const blackScreenTextSpan = document.createElement("span");
 
-function shutdown() {
+function _showBlackScreen() {
+  // Clean up any leftover state from a previous call before reusing the div
+  blackScreenDiv.className = "";
+  blackScreenDiv.style.cssText = "";
+  blackScreenDiv.innerHTML = "";
   body.appendChild(blackScreenDiv);
   blackScreenDiv.classList.add("black-screen");
+}
+
+function shutdown() {
+  _showBlackScreen();
   blackScreenDiv.appendChild(blackScreenTextSpan);
   blackScreenTextSpan.classList.add("black-screen-text");
   blackScreenTextSpan.textContent = "Shutting down";
@@ -708,32 +733,63 @@ function shutdown() {
 }
 
 function sleep() {
-  body.appendChild(blackScreenDiv);
-  blackScreenDiv.classList.add("black-screen");
+  _showBlackScreen();
   blackScreenDiv.style.cursor = "none";
   setTimeout(() => {
-    document.addEventListener("click", () => {
+    document.addEventListener("click", function wakeUp() {
+      blackScreenDiv.style.cssText = "";
+      blackScreenDiv.className = "";
       blackScreenDiv.remove();
+      document.removeEventListener("click", wakeUp);
     });
   }, 100);
 }
 
 function restart() {
-  body.appendChild(blackScreenDiv);
-  blackScreenDiv.classList.add("black-screen");
-  blackScreenDiv.appendChild(blackScreenTextSpan);
-  blackScreenTextSpan.classList.add("black-screen-text");
+  // Phase 1: "Restarting" text on black screen
+  _showBlackScreen();
+  blackScreenTextSpan.className = "black-screen-text";
   blackScreenTextSpan.textContent = "Restarting";
+  blackScreenDiv.appendChild(blackScreenTextSpan);
+
+  // Phase 2: After 4s, switch to Windows logo + spinner (boot screen style)
   setTimeout(() => {
     blackScreenTextSpan.remove();
-  }, 7000);
-  setTimeout(() => {
-    const audio = new Audio("sound/startup.wav");
-    audio.play();
-  }, 12000);
-  setTimeout(() => {
-    blackScreenDiv.remove();
-  }, 14000);
+
+    // Build Windows logo
+    const restartLogo = document.createElement("img");
+    restartLogo.src = "icon/logo-windows-11-icon-1024.png";
+    restartLogo.classList.add("booting-logo");
+    restartLogo.style.position = "static";
+
+    // Build spinner
+    const spinnerDiv = document.createElement("div");
+    spinnerDiv.classList.add("boot-spinner");
+    for (let i = 0; i < 5; i++) {
+      const dot = document.createElement("div");
+      dot.classList.add("boot-dot");
+      spinnerDiv.appendChild(dot);
+    }
+
+    blackScreenDiv.style.flexDirection = "column";
+    blackScreenDiv.style.gap = "60px";
+    blackScreenDiv.appendChild(restartLogo);
+    blackScreenDiv.appendChild(spinnerDiv);
+
+    // Phase 3: Play startup sound then remove overlay
+    setTimeout(() => {
+      const audio = new Audio("sound/startup.wav");
+      audio.play();
+    }, 5000);
+
+    setTimeout(() => {
+      restartLogo.remove();
+      spinnerDiv.remove();
+      blackScreenDiv.className = "";
+      blackScreenDiv.style.cssText = "";
+      blackScreenDiv.remove();
+    }, 7000);
+  }, 4000);
 }
 
 // close, minimize, maximize
@@ -766,3 +822,149 @@ function writePath() {
     display.value = fileInput.files[0].name;
   }
 }
+
+// UAC Functions
+let currentUacApp = null;
+
+function promptUAC(app) {
+  currentUacApp = app;
+  const overlay = document.getElementById("uacOverlay");
+  const appNameEl = document.getElementById("uacAppName");
+  const appIconEl = document.getElementById("uacAppIcon");
+
+  if (app === 'terminal') {
+    appNameEl.innerText = "Windows Terminal";
+    appIconEl.src = "icon/terminal.ico";
+  } else {
+    appNameEl.innerText = "Windows Command Processor";
+    appIconEl.src = "icon/cmd.ico";
+  }
+
+  overlay.style.display = "flex";
+
+  // Close start menu if open
+  const startMenu = document.getElementById("startMenu");
+  if (startMenu) {
+    startMenu.style.bottom = "-100%";
+  }
+}
+
+function uacYes() {
+  const overlay = document.getElementById("uacOverlay");
+  overlay.style.display = "none";
+
+  if (currentUacApp === 'terminal') {
+    if (typeof openTerminalWindow === "function") {
+      openTerminalWindow();
+      setTimeout(() => {
+        if (typeof windows !== "undefined" && windows['cmd'] && windows['cmd'].element) {
+          const titleEls = windows['cmd'].element.querySelectorAll('.terminal-tab.active span');
+          titleEls.forEach(el => {
+            if (!el.innerText.startsWith('Administrator:')) {
+              el.innerText = 'Administrator: ' + el.innerText;
+            }
+          });
+        }
+      }, 100);
+    }
+  }
+}
+
+function uacNo() {
+  const overlay = document.getElementById("uacOverlay");
+  overlay.style.display = "none";
+}
+
+// Dynamic Search Logic
+const searchableApps = [
+  { name: "Command Prompt", icon: "icon/cmd.ico", action: () => { if (typeof openTerminalWindow === "function") openTerminalWindow(); } },
+  { name: "Windows PowerShell", icon: "icon/terminal.ico", action: () => { if (typeof openTerminalWindow === "function") openTerminalWindow(); } },
+  { name: "Run", icon: "icon/run.ico", fallbackIcon: "icon/cmd.ico", action: () => { const rp = document.getElementById("runProgram"); if (rp) rp.style.display = "block"; } },
+  {
+    name: "Shutdown Menu", icon: "icon/shutdown.ico", fallbackIcon: "icon/start2.ico", action: () => {
+      const sm = document.getElementById("shutDownMenu");
+      const startMenu = document.getElementById("startMenu");
+      if (startMenu) startMenu.style.bottom = "-100%"; // Close start menu if open
+      if (sm) sm.style.display = sm.style.display === "block" ? "none" : "block";
+    }
+  },
+  { name: "Task Manager", icon: "icon/taskmgr.ico", fallbackIcon: "icon/cmd.ico", action: () => { if (typeof openTaskManagerWindow === "function") openTaskManagerWindow(); } },
+  { name: "File Explorer", icon: "icon/explorer.ico", action: () => { console.log("Open File Explorer"); } },
+  { name: "Settings", icon: "icon/settings.ico", action: () => { console.log("Open Settings"); } },
+  { name: "Microsoft Edge", icon: "icon/edge.ico", action: () => { console.log("Open Edge"); } },
+];
+
+document.addEventListener("DOMContentLoaded", () => {
+  const searchInput = document.getElementById("searchMenuInput");
+  const searchBody = document.getElementById("searchMenuBody");
+  const searchResults = document.getElementById("searchResultsContainer");
+  const searchMenu = document.getElementById("searchMenu");
+
+  if (searchInput && searchBody && searchResults) {
+    searchInput.addEventListener("input", (e) => {
+      const query = e.target.value.toLowerCase().trim();
+
+      if (query.length > 0) {
+        searchBody.style.display = "none";
+        searchResults.style.display = "flex";
+
+        const filtered = searchableApps.filter(app => app.name.toLowerCase().includes(query));
+
+        searchResults.innerHTML = "";
+
+        if (filtered.length === 0) {
+          searchResults.innerHTML = `<div style="color: #aaa; text-align: center; margin-top: 20px;">No results found for '${query}'</div>`;
+        } else {
+          filtered.forEach(app => {
+            const item = document.createElement("div");
+            item.className = "search-result-item";
+            item.innerHTML = `
+              <img src="${app.icon}" onerror="this.src='${app.fallbackIcon || 'icon/cmd.ico'}'" />
+              <span>${app.name}</span>
+            `;
+            item.addEventListener("click", () => {
+              app.action();
+              searchMenu.classList.remove("menu-open");
+              searchInput.value = "";
+              searchBody.style.display = "flex";
+              searchResults.style.display = "none";
+            });
+            searchResults.appendChild(item);
+          });
+        }
+      } else {
+        searchBody.style.display = "flex";
+        searchResults.style.display = "none";
+      }
+    });
+  }
+});
+
+// Tray and Quick Settings Toggle Logic
+const trayBtn = document.getElementById("trayBtn");
+const trayContent = document.getElementById("trayContent");
+if (trayBtn && trayContent) {
+  trayBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    trayContent.classList.toggle("show");
+  });
+}
+
+const quickSettingsBtn = document.getElementById("quickSettingsBtn");
+const quickSettings = document.getElementById("quickSettings");
+if (quickSettingsBtn && quickSettings) {
+  quickSettingsBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    quickSettings.classList.toggle("show");
+  });
+}
+
+// Close when clicking outside
+document.addEventListener("click", (e) => {
+  if (trayContent && trayContent.classList.contains("show") && !trayBtn.contains(e.target) && !trayContent.contains(e.target)) {
+    trayContent.classList.remove("show");
+  }
+  if (quickSettings && quickSettings.classList.contains("show") && !quickSettingsBtn.contains(e.target) && !quickSettings.contains(e.target)) {
+    quickSettings.classList.remove("show");
+  }
+});

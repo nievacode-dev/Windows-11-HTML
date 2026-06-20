@@ -37,11 +37,15 @@ window.openSettingsWindow = function() {
     const isHidden = !settingsContainer.classList.contains('settings-visible');
 
     if (isHidden) {
-        // Remove any leftover hidden/minimizing state
-        settingsContainer.classList.remove('hidden', 'minimizing');
+        settingsContainer.classList.remove('hidden', 'minimizing', 'closing');
         settingsContainer.style.removeProperty('display');
-        // Show via CSS class (avoids !important inline style that blocks minimize)
         settingsContainer.classList.add('settings-visible');
+
+        // Trigger the open animation
+        requestAnimationFrame(() => {
+            settingsContainer.classList.add('opening');
+            setTimeout(() => settingsContainer.classList.remove('opening'), 250);
+        });
 
         // Register it as a window for interaction engine if it wasn't already
         if (!windows['settings']) {
@@ -56,7 +60,8 @@ window.openSettingsWindow = function() {
                 width: 1000,
                 height: 700,
                 originalState: null,
-                taskbarElement: null
+                taskbarElement: null,
+                desktopId: typeof activeDesktopId !== 'undefined' ? activeDesktopId : 1
             };
 
             const dragHandle = settingsContainer.querySelector(".settings-drag-region");

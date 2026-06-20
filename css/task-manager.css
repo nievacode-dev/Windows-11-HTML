@@ -1,0 +1,510 @@
+/* Task Manager Window Styles */
+
+#taskManagerWindow {
+    display: none; /* Managed by JS via .tm-visible class */
+}
+
+#taskManagerWindow.tm-visible {
+    display: flex !important;
+}
+
+/* Override .hidden to win over .tm-visible */
+#taskManagerWindow.hidden {
+    display: none !important;
+}
+
+.task-manager-window {
+    width: 800px;
+    height: 600px;
+    background-color: rgba(32, 32, 32, 0.9);
+    flex-direction: column;
+}
+
+body.light-mode .task-manager-window {
+    background-color: rgba(243, 243, 243, 0.95);
+}
+
+.tm-header {
+    height: 32px;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+body.light-mode .tm-header {
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.tm-body {
+    display: flex;
+    flex-direction: row;
+    height: calc(100% - 32px);
+    overflow: hidden;
+}
+
+/* Sidebar Navigation */
+.tm-sidebar {
+    width: 48px; /* Collapsed by default, could be expandable but we stick to icons for simplicity */
+    background-color: rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    padding-top: 10px;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    transition: width 0.2s ease;
+}
+
+body.light-mode .tm-sidebar {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-right: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.tm-hamburger {
+    width: 40px;
+    height: 40px;
+    margin: 0 4px 10px 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+}
+
+.tm-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.tm-nav-item {
+    width: 40px;
+    height: 40px;
+    margin: 0 4px;
+    display: flex;
+    align-items: center;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.tm-nav-icon {
+    min-width: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+}
+
+.tm-nav-text {
+    white-space: nowrap;
+    font-size: 14px;
+    opacity: 0;
+    margin-left: 8px;
+}
+
+.tm-nav-item:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.tm-nav-item.active {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.tm-nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 25%;
+    height: 50%;
+    width: 3px;
+    background-color: #60CDFF;
+    border-radius: 2px;
+}
+
+body.light-mode .tm-hamburger,
+body.light-mode .tm-nav-item {
+    color: #1a1a1a;
+}
+
+body.light-mode .tm-nav-item:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+body.light-mode .tm-nav-item.active {
+    background-color: rgba(0, 0, 0, 0.06);
+}
+
+body.light-mode .tm-nav-item.active::before {
+    background-color: #0067c0;
+}
+
+.tm-settings-btn {
+    margin-bottom: 20px;
+}
+
+/* Main Content Area */
+.tm-main-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: transparent;
+    padding: 0;
+    position: relative;
+}
+
+.tm-tab-content {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+
+.tm-tab-content.active {
+    display: flex;
+}
+
+.tm-page-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 20px 24px;
+    color: white;
+}
+
+body.light-mode .tm-page-title {
+    color: #1a1a1a;
+}
+
+/* Processes Table */
+.tm-processes-table-container {
+    flex-grow: 1;
+    overflow-y: auto;
+    margin: 0 24px 24px 24px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+body.light-mode .tm-processes-table-container {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.tm-processes-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: white;
+    font-size: 12px;
+    text-align: left;
+}
+
+body.light-mode .tm-processes-table {
+    color: #1a1a1a;
+}
+
+.tm-processes-table th {
+    padding: 10px 12px;
+    font-weight: 400;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    top: 0;
+    background-color: rgba(30, 30, 30, 0.95);
+    backdrop-filter: blur(10px);
+    cursor: pointer;
+    user-select: none;
+}
+
+body.light-mode .tm-processes-table th {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    background-color: rgba(240, 240, 240, 0.95);
+}
+
+.tm-processes-table th:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+body.light-mode .tm-processes-table th:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.tm-processes-table td {
+    padding: 6px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    white-space: nowrap;
+}
+
+body.light-mode .tm-processes-table td {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.tm-processes-table tr:hover td {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+body.light-mode .tm-processes-table tr:hover td {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.proc-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.proc-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.proc-stat-col {
+    text-align: right;
+    position: relative;
+}
+
+.proc-stat-bg {
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    right: 2px;
+    left: 2px;
+    border-radius: 4px;
+    z-index: -1;
+    opacity: 0.15;
+    transition: background-color 0.5s ease;
+}
+
+body.light-mode .proc-stat-bg {
+    opacity: 0.25;
+}
+
+.usage-low { background-color: transparent; }
+.usage-med { background-color: #ffd700; }
+.usage-high { background-color: #ff8c00; }
+.usage-crit { background-color: #ff0000; }
+
+/* Memory value suffix colors */
+.color-sub { color: rgba(255,255,255,0.5); }
+body.light-mode .color-sub { color: rgba(0,0,0,0.5); }
+
+/* Custom Scrollbar for inner components */
+.tm-processes-table-container::-webkit-scrollbar {
+    width: 14px;
+}
+.tm-processes-table-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 7px;
+    border: 4px solid transparent;
+    background-clip: padding-box;
+}
+
+/* Performance Tab */
+.tm-perf-container {
+    display: flex;
+    flex-grow: 1;
+    margin: 0 24px 24px 24px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    background-color: rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+body.light-mode .tm-perf-container {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.tm-perf-sidebar {
+    width: 250px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+body.light-mode .tm-perf-sidebar {
+    border-right: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.tm-perf-item {
+    padding: 10px 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+body.light-mode .tm-perf-item {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.tm-perf-item.active {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+body.light-mode .tm-perf-item.active {
+    background-color: rgba(0, 0, 0, 0.06);
+}
+
+.tm-perf-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background-color: #60CDFF;
+}
+
+body.light-mode .tm-perf-item.active::before {
+    background-color: #0067c0;
+}
+
+.tm-perf-item-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.tm-perf-title {
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.tm-perf-usage {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+}
+
+body.light-mode .tm-perf-title { color: #1a1a1a; }
+body.light-mode .tm-perf-usage { color: rgba(0, 0, 0, 0.6); }
+
+.tm-perf-chart-mini-container {
+    height: 40px;
+    width: 100%;
+}
+
+.tm-perf-main {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    position: relative;
+}
+
+.tm-perf-view {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+}
+
+.tm-perf-view.active {
+    display: flex;
+}
+
+.tm-perf-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.tm-perf-title-large {
+    color: white;
+    font-size: 24px;
+    font-weight: 400;
+    margin: 0 0 4px 0;
+}
+
+.tm-perf-subtitle {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 13px;
+}
+
+.tm-perf-percent {
+    font-size: 32px;
+    font-weight: 300;
+    color: white;
+}
+
+body.light-mode .tm-perf-title-large, 
+body.light-mode .tm-perf-percent {
+    color: #1a1a1a;
+}
+body.light-mode .tm-perf-subtitle {
+    color: rgba(0, 0, 0, 0.6);
+}
+
+.tm-perf-chart-large-container {
+    position: relative;
+    border: 1px solid rgba(96, 205, 255, 0.5); /* Win11 Accent */
+    border-radius: 4px;
+    height: 200px;
+    margin-bottom: 30px;
+    background-color: rgba(0, 0, 0, 0.2);
+    display: flex;
+}
+
+.tm-perf-y-labels {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 5px 10px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.light-mode .tm-perf-chart-large-container {
+    border: 1px solid rgba(0, 103, 192, 0.5);
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+body.light-mode .tm-perf-y-labels {
+    color: rgba(0, 0, 0, 0.5);
+    border-right: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.tm-perf-chart-large-container canvas {
+    flex-grow: 1;
+}
+
+.tm-perf-grid-overlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 45px; /* offset for labels */
+    pointer-events: none;
+    /* We'll draw the grid with canvas or CSS, canvas is better for sync */
+}
+
+.tm-perf-stats {
+    display: flex;
+    justify-content: space-between;
+    gap: 40px;
+}
+
+.tm-perf-stat-group {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    gap: 15px;
+}
+
+.tm-perf-stat-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.tm-perf-stat-label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 2px;
+}
+
+.tm-perf-stat-value {
+    font-size: 16px;
+    color: white;
+}
+
+body.light-mode .tm-perf-stat-label { color: rgba(0, 0, 0, 0.6); }
+body.light-mode .tm-perf-stat-value { color: #1a1a1a; }

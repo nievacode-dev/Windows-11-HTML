@@ -126,12 +126,17 @@ const commands = {
 
   echo: (args) => args.join(" "),
 
-  clear: () => {
-    document.getElementById("history").innerHTML = "";
+  clear: (args, ctx) => {
+    if (ctx) {
+      ctx.historyElement.innerHTML = "";
+    } else {
+      const hist = document.getElementById("history");
+      if (hist) hist.innerHTML = "";
+    }
     return "";
   },
 
-  color: (args) => {
+  color: (args, ctx) => {
     if (!args.length) return "Usage: color [colorname|hex]";
     const colorInput = args[0].toLowerCase();
     const isValidColor = (color) => {
@@ -140,16 +145,21 @@ const commands = {
       return s.color !== "";
     };
     if (isValidColor(colorInput)) {
-      // document.body.style.color = colorInput;
-      document.getElementById("terminal").style.color = colorInput;
+      if (ctx) {
+        ctx.sessionElement.style.color = colorInput;
+      } else {
+        const term = document.getElementById("terminal");
+        if (term) term.style.color = colorInput;
+      }
       return `Text color changed to ${colorInput}`;
     } else {
       return `'${colorInput}' is not a valid color`;
     }
   },
 
-  dir: async () => {
-    input.disabled = true;
+  dir: async (args, ctx) => {
+    if (ctx) ctx.inputElement.disabled = true;
+    else if (typeof input !== 'undefined') input.disabled = true;
     const lines = [];
     lines.push(` Volume in drive C has no label.`);
     lines.push(` Volume Serial Number is 1234-ABCD`);
@@ -164,12 +174,20 @@ const commands = {
           ? "<DIR>"
           : (Math.floor(Math.random() * 10000) + 1000).toLocaleString();
       lines.push(`${date}    ${size.toString().padEnd(12)} ${item.name}`);
-      // await new Promise((r) => setTimeout(r, 80));
-      addHistoryEntry(lines[lines.length - 1]);
+      if (ctx) {
+        addToSessionHistory(ctx.id, lines[lines.length - 1]);
+      } else if (typeof addHistoryEntry !== 'undefined') {
+        addHistoryEntry(lines[lines.length - 1]);
+      }
     }
 
-    input.disabled = false;
-    input.focus();
+    if (ctx) {
+      ctx.inputElement.disabled = false;
+      ctx.inputElement.focus();
+    } else if (typeof input !== 'undefined') {
+      input.disabled = false;
+      input.focus();
+    }
     return "";
   },
 
@@ -218,7 +236,7 @@ const commands = {
     }
   },
 
-  rm: async (args) => {
+  rm: async (args, ctx) => {
     if (!args.length) return "Usage: rm [-r|-rf] [-i] <name> ...";
 
     // Parse flags and targets
@@ -245,17 +263,18 @@ const commands = {
     for (const name of targets) {
       const target = findChild(currentDir, name);
       if (!target) {
-        addHistoryEntry(
-          `rm: cannot remove '${name}': No such file or directory`
-        );
+        if (ctx) addToSessionHistory(ctx.id, `rm: cannot remove '${name}': No such file or directory`);
+        else if (typeof addHistoryEntry !== 'undefined') addHistoryEntry(`rm: cannot remove '${name}': No such file or directory`);
         continue;
       }
 
       try {
         await rmRecursive(target, { recursive, interactive });
-        addHistoryEntry(`Removed '${name}'`);
+        if (ctx) addToSessionHistory(ctx.id, `Removed '${name}'`);
+        else if (typeof addHistoryEntry !== 'undefined') addHistoryEntry(`Removed '${name}'`);
       } catch (err) {
-        addHistoryEntry(`rm: cannot remove '${name}': ${err.message}`);
+        if (ctx) addToSessionHistory(ctx.id, `rm: cannot remove '${name}': ${err.message}`);
+        else if (typeof addHistoryEntry !== 'undefined') addHistoryEntry(`rm: cannot remove '${name}': ${err.message}`);
       }
     }
 
@@ -407,16 +426,20 @@ function closeTerminalTab(sessionId) {
   }
 }
 
-// Global Terminal Controls
 function openTerminalWindow() {
   if (terminalContainer.style.display !== "flex") {
-    // If no tabs exist (first open), create one
     if (Object.keys(terminalSessions).length === 0) {
       createTerminalTab();
     }
-    
+
     terminalContainer.style.setProperty("display", "flex", "important");
-    
+
+    // Trigger open animation
+    requestAnimationFrame(() => {
+      terminalContainer.classList.add('opening');
+      setTimeout(() => terminalContainer.classList.remove('opening'), 250);
+    });
+
     // Register it as a window for interaction engine if it wasn't already
     if (!windows['cmd']) {
        windows['cmd'] = {
@@ -430,26 +453,24 @@ function openTerminalWindow() {
           width: 900,
           height: 550,
           originalState: null,
-          taskbarElement: null
+          taskbarElement: null,
+          desktopId: typeof activeDesktopId !== 'undefined' ? activeDesktopId : 1
        };
-       
+
        const dragHandle = terminalContainer.querySelector(".terminal-drag-region");
        const resizeHan = terminalContainer.querySelector(".window-resize");
        makeWindowInteractive('cmd', dragHandle, resizeHan);
        createTaskbarItem('cmd');
     } else if (!windows['cmd'].taskbarElement) {
-       // if we reused window but closed taskbar
        createTaskbarItem('cmd');
     }
-    
+
     updateZIndex('cmd');
-    
-    // Focus active tab input
+
     if (activeSessionId && terminalSessions[activeSessionId]) {
       setTimeout(() => terminalSessions[activeSessionId].inputElement.focus(), 50);
     }
   } else {
-     // If minimizing logic applies, it's handled via taskbar item click in window-mode.js
      updateZIndex('cmd');
   }
 }
@@ -536,7 +557,7 @@ async function handleTerminalInput(e, sessionId) {
     if (commands.hasOwnProperty(cmd)) {
       // Execute
       try {
-        const output = await commands[cmd](args);
+        const output = await commands[cmd](args, ctx);
         if (output) addToSessionHistory(sessionId, output);
       } catch (err) {
         addToSessionHistory(sessionId, "Error: " + err.message);

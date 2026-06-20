@@ -6,7 +6,7 @@
     background-color: rgba(32, 32, 32, 0.85);
     backdrop-filter: blur(40px) saturate(150%);
     -webkit-backdrop-filter: blur(40px) saturate(150%);
-    border-radius: 8px; /* Win11 rounded corners */
+    border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.1);
     position: absolute;
@@ -15,33 +15,27 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    /* DO NOT add width, height, top, left to default transition! This causes dragging lag! */
-    transition: border-radius 0.2s ease-out, opacity 0.15s ease-out, transform 0.15s ease-out;
-    will-change: transform, top, left, width, height;
-    
-    /* Default open state */
-    opacity: 0;
-    transform: scale(0.95);
+    /* Base transition — no width/height/top/left to prevent drag lag */
+    transition: border-radius 0.2s ease-out,
+                opacity 0.18s ease-out,
+                transform 0.18s ease-out;
+    will-change: transform, opacity;
+    /* Resting (visible) state */
+    opacity: 1;
+    transform: scale(1);
     z-index: 1000;
-    /* Win11 snappy fade/scale */
-    animation: windowOpen 0.25s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+    animation: none;
 }
 
-.window.animating {
-    /* Only apply layout transitions when explicitly animating (maximize, restore, snap) */
-    transition: width 0.3s cubic-bezier(0.1, 0.9, 0.2, 1), 
-                height 0.3s cubic-bezier(0.1, 0.9, 0.2, 1), 
-                top 0.3s cubic-bezier(0.1, 0.9, 0.2, 1), 
-                left 0.3s cubic-bezier(0.1, 0.9, 0.2, 1), 
-                transform 0.3s cubic-bezier(0.1, 0.9, 0.2, 1),
-                border-radius 0.3s cubic-bezier(0.1, 0.9, 0.2, 1), 
-                opacity 0.2s ease-out;
+/* ── Opening animation ─────────────────────────────────── */
+.window.opening {
+    animation: windowOpen 0.22s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
 }
 
 @keyframes windowOpen {
     from {
         opacity: 0;
-        transform: scale(0.85);
+        transform: scale(0.88);
     }
     to {
         opacity: 1;
@@ -49,23 +43,36 @@
     }
 }
 
+/* ── Layout-transition class (maximize / restore / snap) ── */
+.window.animating {
+    transition: width 0.28s cubic-bezier(0.1, 0.9, 0.2, 1),
+                height 0.28s cubic-bezier(0.1, 0.9, 0.2, 1),
+                top 0.28s cubic-bezier(0.1, 0.9, 0.2, 1),
+                left 0.28s cubic-bezier(0.1, 0.9, 0.2, 1),
+                transform 0.28s cubic-bezier(0.1, 0.9, 0.2, 1),
+                border-radius 0.28s cubic-bezier(0.1, 0.9, 0.2, 1),
+                opacity 0.18s ease-out;
+}
+
+/* ── Closing animation ─────────────────────────────────── */
 .window.closing {
-    opacity: 0;
-    transform: scale(0.9);
-    pointer-events: none; /* Prevents clicks while it is fading out */
-    transition: opacity 0.2s ease-out, transform 0.2s ease-out !important;
-    animation: none;
+    opacity: 0 !important;
+    transform: scale(0.9) !important;
+    pointer-events: none;
+    transition: opacity 0.18s ease-out, transform 0.18s ease-out !important;
+    animation: none !important;
 }
 
 .window.hidden {
-    display: none;
+    display: none !important;
 }
 
 .window.minimizing {
-    opacity: 0;
-    transform: scale(0.8) translateY(100px);
-    transition: opacity 0.2s ease-in, transform 0.2s ease-in !important;
+    opacity: 0 !important;
+    transform: scale(0.85) translateY(60px) !important;
+    transition: opacity 0.18s ease-in, transform 0.18s ease-in !important;
     pointer-events: none;
+    animation: none !important;
 }
 
 /* Fullscreen / Maximized State */
@@ -234,23 +241,15 @@
     color: rgba(255, 255, 255, 0.6);
 }
 
-/* Aero/Acrylic noise texture overlay for authentic glass effect */
-.window::before {
+/* Subtle inner border highlight for depth */
+.window::after {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
-    opacity: 0.03;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
     pointer-events: none;
     z-index: 1;
-    border-radius: 8px;
-}
-
-.window.maximized::before {
-    border-radius: 0;
 }
 
 /* Taskbar integration for opened windows - Windows 11 Style */
@@ -471,6 +470,7 @@
     cursor: pointer;
     transition: background-color 0.15s ease;
     box-sizing: border-box;
+    position: relative;
 }
 
 .desktop-item:hover {
@@ -481,6 +481,32 @@
     color: white;
     font-size: 13px;
     padding-left: 2px;
+}
+
+.desktop-close {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 4px;
+    color: white;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.15s ease, background-color 0.1s ease;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 10;
+}
+
+.desktop-item:hover .desktop-close {
+    opacity: 1;
+}
+
+.desktop-close:hover {
+    background-color: #c42b1c;
 }
 
 .desktop-preview {
@@ -638,6 +664,16 @@ body.light-mode .task-view-desktops {
 
 body.light-mode .desktop-name {
     color: #1a1a1a;
+}
+
+body.light-mode .desktop-close {
+    color: #1a1a1a;
+    background-color: rgba(255, 255, 255, 0.7);
+}
+
+body.light-mode .desktop-close:hover {
+    background-color: #c42b1c;
+    color: white;
 }
 
 body.light-mode .desktop-preview {

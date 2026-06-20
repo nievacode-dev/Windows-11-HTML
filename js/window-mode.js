@@ -98,6 +98,12 @@ function createWindow(appTitle = "Window", appId = null, appIcon = null) {
 
   document.body.appendChild(windowElement);
 
+  // Trigger open animation (class-based so it fires only once on initial insert)
+  requestAnimationFrame(() => {
+    windowElement.classList.add('opening');
+    setTimeout(() => windowElement.classList.remove('opening'), 250);
+  });
+
   // Store window info
   windows[id] = {
     element: windowElement,
@@ -460,34 +466,31 @@ function createTaskbarItem(windowId) {
   }
 }
 
-// Minimize window
 function minimizeWindow(windowId) {
   const win = windows[windowId];
   const el = win.element;
 
   if (win.isMinimized) {
-    // Restore
-    el.classList.remove("minimizing");
-    el.classList.remove("hidden");
+    // Restore: snap back to visible
+    el.classList.remove('minimizing', 'hidden');
+    // Force a repaint so the removal registers before transition kicks in
+    void el.offsetWidth;
     win.isMinimized = false;
-
     updateZIndex(windowId);
   } else {
-    // Minimize
-    el.classList.add("minimizing");
+    // Minimize: animate out then hide
+    el.classList.add('minimizing');
 
     setTimeout(() => {
-      el.classList.add("hidden");
-    }, 200); // Wait for animation
+      el.classList.add('hidden');
+      el.classList.remove('minimizing');
+    }, 200);
 
     win.isMinimized = true;
 
-    // Remove focus state visually from taskbar
     if (activeWindowId === windowId) {
       activeWindowId = null;
-      if (win.taskbarElement) {
-        win.taskbarElement.classList.remove("active");
-      }
+      if (win.taskbarElement) win.taskbarElement.classList.remove('active');
     }
   }
 }
@@ -541,12 +544,26 @@ function closeWindow(windowId) {
   const win = windows[windowId];
 
   if (windowId === 'cmd') {
-    // For the Terminal, we just hide it instead of destroying the DOM
-    if (el) el.style.display = 'none';
+    // For the Terminal, we animate close then hide (don't destroy DOM)
     if (win && win.taskbarElement) {
       win.taskbarElement.remove();
+      win.taskbarElement = null;
     }
-    delete windows[windowId];
+    if (activeWindowId === 'cmd') activeWindowId = null;
+    if (el) {
+      el.style.opacity = '1';
+      el.style.transform = 'scale(1)';
+      void el.offsetWidth;
+      el.classList.add('closing');
+      setTimeout(() => {
+        el.classList.remove('closing');
+        el.style.setProperty('display', 'none', 'important');
+        if (win) win.isMinimized = false;
+        delete windows[windowId];
+      }, 200);
+    } else {
+      delete windows[windowId];
+    }
     return;
   }
 
@@ -566,7 +583,7 @@ function closeWindow(windowId) {
   setTimeout(() => {
     el.remove();
     delete windows[windowId];
-  }, 200); // Matches closing transition time
+  }, 200); // matches 0.18 s CSS transition with a small buffer
 }
 
 // Global hook up
@@ -599,8 +616,6 @@ function initializeAppShortcuts() {
 
       if (appId === 'cmd') {
         if (typeof openTerminalWindow === 'function') openTerminalWindow();
-      } else if (appTitle.toLowerCase() === 'settings' || appId === 'settings') {
-        if (typeof openSettingsWindow === 'function') openSettingsWindow();
       } else if (appTitle.toLowerCase() === 'microsoft edge' || appId === 'edge') {
         if (typeof openEdgeWindow === 'function') openEdgeWindow();
       } else {
@@ -622,13 +637,42 @@ function initializeTaskbarApps() {
       const appIcon = appImg.src;
       if (appTitle.toLowerCase() === 'microsoft edge' || appImg.src.includes('edge.ico')) {
         if (typeof openEdgeWindow === 'function') openEdgeWindow();
-      } else if (appTitle.toLowerCase() === 'settings') {
-        if (typeof openSettingsWindow === 'function') openSettingsWindow();
       } else {
         createWindow(appTitle, null, appIcon);
       }
     });
   });
+}
+
+function removeDesktop(id) {
+  if (desktops.length <= 1) return;
+  const idx = desktops.findIndex(d => d.id === id);
+  if (idx === -1) return;
+
+  const fallbackDeskId = idx > 0 ? desktops[idx - 1].id : desktops[idx + 1].id;
+
+  Object.keys(windows).forEach(winId => {
+    if (windows[winId].desktopId === id) {
+      windows[winId].desktopId = fallbackDeskId;
+    }
+  });
+
+  if (activeDesktopId === id) {
+    switchDesktop(fallbackDeskId);
+  }
+
+  desktops.splice(idx, 1);
+
+  const taskViewOverlay = document.getElementById("taskViewOverlay");
+  const taskViewBtn = document.getElementById("taskViewBtn");
+  if (taskViewOverlay && taskViewOverlay.classList.contains("visible") && taskViewBtn) {
+    taskViewOverlay.classList.remove("visible");
+    setTimeout(() => {
+      taskViewBtn.dispatchEvent(new Event('click'));
+    }, 10);
+  } else {
+    renderTaskViewDesktops();
+  }
 }
 
 // Task View Logic
@@ -660,6 +704,17 @@ function renderTaskViewDesktops() {
     dItem.appendChild(nameSpan);
     dItem.appendChild(preview);
     dItem.appendChild(indicator);
+
+    if (desktops.length > 1) {
+      const closeDeskBtn = document.createElement("div");
+      closeDeskBtn.className = "desktop-close";
+      closeDeskBtn.textContent = "×";
+      closeDeskBtn.onclick = (e) => {
+        e.stopPropagation();
+        removeDesktop(desk.id);
+      };
+      dItem.appendChild(closeDeskBtn);
+    }
 
     dItem.onclick = (e) => {
       e.stopPropagation();
@@ -796,6 +851,19 @@ function initializeTaskView() {
   }
 
   taskViewBtn.addEventListener("click", toggleTaskView);
+
+  // Hover-to-open with a 500ms delay (matches real Windows 11 behaviour)
+  let taskViewHoverTimer = null;
+  taskViewBtn.addEventListener("mouseenter", () => {
+    if (!taskViewOverlay.classList.contains("visible")) {
+      taskViewHoverTimer = setTimeout(() => {
+        toggleTaskView();
+      }, 500);
+    }
+  });
+  taskViewBtn.addEventListener("mouseleave", () => {
+    clearTimeout(taskViewHoverTimer);
+  });
 
   taskViewOverlay.addEventListener("click", (e) => {
     if (e.target === taskViewOverlay || e.target === taskViewWindows) {

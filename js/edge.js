@@ -14,7 +14,12 @@ function openEdgeWindow() {
     }
 
     el.style.display = "flex";
-    
+
+    // Trigger open animation
+    requestAnimationFrame(() => {
+        el.classList.add('opening');
+        setTimeout(() => el.classList.remove('opening'), 250);
+    });
     // Register the window in the global `windows` object
     windows["edge"] = {
         element: el,
@@ -39,9 +44,6 @@ function openEdgeWindow() {
 
     // Make it interactive (drag/resize)
     const titleBar = el.querySelector(".edge-drag-region");
-    // Edge doesn't have a specific resize handle in HTML but relies on window layout,
-    // so we'll grab the window edge naturally if we add a resize element.
-    // Let's inject a resize handle if missing.
     let resizeHandle = el.querySelector(".window-resize");
     if (!resizeHandle) {
         resizeHandle = document.createElement("div");
@@ -52,23 +54,35 @@ function openEdgeWindow() {
     makeWindowInteractive("edge", titleBar, resizeHandle);
     createTaskbarItem("edge");
     updateZIndex("edge");
-    
-    // Play snap/open animation
-    el.style.opacity = '1';
-    el.style.transform = 'scale(1)';
 }
 
 function closeEdgeWindow() {
     const el = document.getElementById("edgeWindow");
     if (!el) return;
 
-    el.style.display = "none";
-    if (windows["edge"]) {
-        if (windows["edge"].taskbarElement) {
-            windows["edge"].taskbarElement.remove();
-        }
-        delete windows["edge"];
+    const win = windows["edge"];
+    if (win && win.taskbarElement) {
+        win.taskbarElement.remove();
+        win.taskbarElement = null;
     }
+
+    if (activeWindowId === 'edge') {
+        activeWindowId = null;
+    }
+
+    // Stamp current rendered values so the CSS closing transition has a concrete starting point
+    el.style.opacity = '1';
+    el.style.transform = 'scale(1)';
+    void el.offsetWidth;
+
+    el.classList.add('closing');
+    setTimeout(() => {
+        el.classList.remove('closing');
+        el.style.display = 'none';
+        el.style.opacity = '';
+        el.style.transform = '';
+        delete windows["edge"];
+    }, 200);
 }
 
 // Edge Navigation Functions

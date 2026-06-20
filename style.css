@@ -37,6 +37,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 10;
 }
 
 .taskbar-middle {
@@ -185,6 +186,12 @@ body {
   transition: bottom 0.3s, display 0.3s allow-discrete;
   position: fixed;
   right: 10px;
+  z-index: 5
+;
+}
+
+.quick-settings.show {
+  display: block;
 }
 
 .quick-settings-main {
@@ -378,13 +385,19 @@ body {
   width: 50px;
   height: 50px;
   position: fixed;
-  bottom: 100%;
+  bottom: 60px;
+  right: 230px;
   border-radius: 6px;
   justify-content: center;
   align-items: center;
   margin-bottom: 10px;
   animation: trayopen 0.2s;
   transition: display 50ms allow-discrete;
+  z-index: 10000;
+}
+
+.tray-content.show {
+  display: flex;
 }
 
 .tray-app {
@@ -1717,8 +1730,59 @@ h2 {
 .booting-logo {
   width: 200px;
   height: 200px;
-  position: fixed;
-  top: 20%;
+  /* Default: works inside the restart flex container */
+  display: block;
+}
+
+/* Windows-style boot / restart spinning dots */
+.boot-spinner {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
+
+.boot-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: white;
+  animation: bootDotPulse 1.4s ease-in-out infinite;
+}
+
+.boot-dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.boot-dot:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.boot-dot:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+.boot-dot:nth-child(4) {
+  animation-delay: 0.54s;
+}
+
+.boot-dot:nth-child(5) {
+  animation-delay: 0.72s;
+}
+
+@keyframes bootDotPulse {
+
+  0%,
+  80%,
+  100% {
+    transform: scale(0.4);
+    opacity: 0.25;
+  }
+
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .start-windows {
@@ -1750,7 +1814,7 @@ h2 {
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
-  z-index: 5;
+  z-index: 100000;
   /* transform: scale(2); */
   /* filter: brightness(0.7); */
   position: fixed;
@@ -1762,8 +1826,8 @@ h2 {
     font-size: 80px;
     text-align: center;
     color: white;
-    display: flex;
-    justify-content: center;
+  display: flex;
+  justify-content: center;
     margin-top: 10%;
     font-weight: 600;
 }
@@ -1771,25 +1835,35 @@ h2 {
 .dates-lock-screen {
     font-size: 20px;
     text-align: center;
-    color: white;
+  color: white;
     font-weight: 600;
     display: flex;
     justify-content: center;
 } */
 
 .clock-and-dates {
-  font-size: 100px;
   font-weight: 600;
   color: white;
   display: flex;
   justify-content: center;
   text-align: center;
   flex-direction: column;
-  margin-top: 5%;
+  margin-top: 10%;
+  align-items: center;
+  gap: 8px;
+}
+
+.clock {
+  font-size: 100px;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -2px;
 }
 
 .clock-and-dates .dates-lock-screen {
   font-size: 20px;
+  font-weight: 400;
+  opacity: 0.95;
 }
 
 @media screen and (max-width: 790px) {
@@ -2029,9 +2103,401 @@ body.light-mode .rb-item-shortcut {
   color: rgba(0, 0, 0, 0.45);
 }
 
-/* App icons on desktop */
 body.light-mode .app-name {
   color: white;
   /* keep white — wallpaper usually provides enough contrast */
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+/* User Account Control (UAC) Overlay - Dark Mode */
+.uac-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  z-index: 100000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.uac-dialog {
+  background-color: #2b2b2b;
+  width: 480px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  font-family: 'Segoe UI Variable', 'Segoe UI', sans-serif;
+  overflow: hidden;
+  border: 1px solid #444;
+}
+
+.uac-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  background-color: #2b2b2b;
+}
+
+.uac-title {
+  color: #cccccc;
+  font-size: 12px;
+}
+
+.uac-close-btn {
+  background: transparent;
+  border: none;
+  color: #cccccc;
+  font-family: 'Segoe Fluent Icons', 'Segoe MDL2 Assets', sans-serif;
+  font-size: 10px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.uac-close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.uac-question {
+  font-size: 20px;
+  color: #ffffff;
+  padding: 0 25px 25px 25px;
+  font-weight: 500;
+  background-color: #2b2b2b;
+}
+
+.uac-body {
+  padding: 25px;
+  background-color: #202020;
+}
+
+.uac-app-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.uac-app-icon {
+  width: 40px;
+  height: 40px;
+}
+
+.uac-app-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.uac-app-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #ffffff;
+}
+
+.uac-publisher,
+.uac-origin {
+  font-size: 12px;
+  color: #cccccc;
+}
+
+.uac-show-more a {
+  font-size: 12px;
+  color: #4cc2ff;
+  text-decoration: none;
+}
+
+.uac-show-more a:hover {
+  text-decoration: underline;
+}
+
+.uac-footer {
+  background-color: #202020;
+  padding: 15px 25px 25px 25px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.uac-footer {
+  justify-content: space-between;
+  /* Based on typical windows 11 UAC where buttons span */
+  gap: 10px;
+}
+
+.uac-btn {
+  padding: 8px 32px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  flex: 1;
+  /* Make buttons equal width */
+}
+
+.uac-btn-yes {
+  background-color: #333333;
+  color: #ffffff;
+  border: 1px solid #555555;
+}
+
+.uac-btn-yes:hover {
+  background-color: #444444;
+}
+
+.uac-btn-no {
+  background-color: #0067c0;
+  color: #ffffff;
+  border: 1px solid #0067c0;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.uac-btn-no:hover {
+  background-color: #005bb5;
+}
+
+/* Search Taskbar Pill */
+.search-taskbar-btn {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 0 12px;
+  height: 32px;
+  margin: 0 4px;
+  cursor: default;
+  transition: background 0.1s, border 0.1s;
+  width: 160px;
+}
+
+.search-taskbar-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.search-taskbar-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+}
+
+.search-taskbar-text {
+  color: #c9c9c9;
+  font-size: 13px;
+  font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif;
+}
+
+/* Search Menu */
+.search-menu {
+  display: none;
+  bottom: -100%;
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 760px;
+  height: 700px;
+  background-color: rgba(42, 42, 42, 0.4);
+  border-radius: 10px;
+  border: 1px solid rgb(50, 50, 50);
+  backdrop-filter: blur(20px);
+  transition: bottom 0.3s cubic-bezier(0, 0, 0, 1), display 0.3s allow-discrete;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  z-index: 9;
+  /* Behind taskbar (z-index: 10) to prevent blocking clicks */
+  flex-direction: column;
+}
+
+.search-menu.menu-open {
+  display: flex;
+  bottom: 60px;
+}
+
+.search-menu-header {
+  padding: 20px 30px;
+}
+
+.search-menu-input-container {
+  display: flex;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 2px solid rgb(75, 75, 196);
+  border-radius: 20px;
+  padding: 0 15px;
+  height: 38px;
+  transition: background-color 0.2s, border-bottom-color 0.2s;
+}
+
+.search-menu-input-container:focus-within {
+  background-color: rgba(0, 0, 0, 0.6);
+  border-bottom-color: #6eb5ff;
+}
+
+.search-icon-input {
+  color: #fff;
+  font-size: 14px;
+  margin-right: 10px;
+}
+
+.search-menu-input {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 14px;
+  flex-grow: 1;
+  outline: none;
+  font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif;
+}
+
+.search-menu-body {
+  display: flex;
+  flex-grow: 1;
+  padding: 0 30px 20px 30px;
+  gap: 20px;
+}
+
+.search-menu-left {
+  width: 200px;
+  border-right: 1px solid #444;
+  padding-right: 20px;
+}
+
+.search-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.search-section-title {
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.search-menu-right .search-section-title {
+  margin-bottom: 0;
+}
+
+.search-recent-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 5px;
+  cursor: default;
+}
+
+.search-recent-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.search-recent-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 12px;
+}
+
+.search-recent-item span {
+  color: white;
+  font-size: 12px;
+}
+
+.search-menu-right {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.quick-searches-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.quick-search-pill {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 6px 16px;
+  color: white;
+  font-size: 12px;
+  cursor: default;
+}
+
+.quick-search-pill:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.top-apps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.top-app-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  cursor: default;
+  text-align: center;
+}
+
+.top-app-item:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.top-app-item img {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 10px;
+}
+
+.top-app-item span {
+  color: white;
+  font-size: 11px;
+}
+
+.search-results-container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  padding: 0 30px 20px 30px;
+  overflow-y: auto;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.1s;
+}
+
+.search-result-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.search-result-item img {
+  width: 32px;
+  height: 32px;
+  margin-right: 15px;
+}
+
+.search-result-item span {
+  color: white;
+  font-size: 14px;
 }

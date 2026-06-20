@@ -10,22 +10,20 @@
   <link rel="stylesheet" href="css/cmd.css" />
   <link rel="stylesheet" href="css/keyframes.css" />
   <link rel="stylesheet" href="css/window-mode.css">
-  <link rel="stylesheet" href="css/settings.css">
   <link rel="stylesheet" href="css/edge.css">
+  <link rel="stylesheet" href="css/task-manager.css">
   <title>Microsoft Windows 11 24H2</title>
   <link rel="shortcut icon" href="icon/favicon.ico" type="image/x-icon" />
 </head>
 
 <body>
-  <div class="black-screen" id="bootScreen" style="z-index: 99999;">
+  <!-- Boot screen disabled for debugging clickability -->
+  <div class="black-screen" id="bootScreen" style="z-index: 99999; display: none;">
     <img src="icon/logo-windows-11-icon-1024.png" class="booting-logo" alt="Booting" />
-  </div>
-  <script>
-    if (document.cookie.includes("hasBooted=true") || sessionStorage.getItem("hasBooted") === "true") {
-      document.getElementById("bootScreen").style.display = "none";
-    }
-  </script>
-  <div class="lock-screen" id="lockScreen">
+    </div>
+  <!-- Cookie-based boot skip removed -->
+  <!-- Lock screen disabled for debugging clickability -->
+  <div class="lock-screen" id="lockScreen" style="display: none;">
     <div class="clock-and-dates">
       <span class="clock" id="clock"></span>
       <span class="dates-lock-screen" id="datesLockScreen"></span>
@@ -145,8 +143,8 @@
         <div class="new-item">Compressed (zipped) Folder</div>
       </div>
     </div>
-    <div class="context-item">Display settings</div>
-    <div class="context-item">
+    <div class="context-item" id="displaySettingsBtn">Display settings</div>
+    <div class="context-item" id="personalizeBtn">
       <span class="ico context-item-icon" id="personalize">&#xe771;</span>Personalize
     </div>
     <div class="context-item">Show more options</div>
@@ -496,8 +494,70 @@
     <!-- <div class="test-bg"></div> -->
   </div>
   <div class="search-menu" id="searchMenu">
-    <input type="text" class="search-bar" placeholder="Type here to search" />
-    <span>All</span>
+    <div class="search-menu-header">
+      <div class="search-menu-input-container">
+        <span class="ico search-icon-input">&#xe721;</span>
+        <input type="text" class="search-menu-input" id="searchMenuInput" placeholder="Type here to search" />
+      </div>
+    </div>
+    
+    <div class="search-results-container" id="searchResultsContainer" style="display: none;">
+      <!-- Dynamic results will be injected here -->
+    </div>
+
+    <div class="search-menu-body" id="searchMenuBody">
+      <div class="search-menu-left">
+        <div class="search-section-title">Recent</div>
+        <div class="search-recent-item">
+          <img src="icon/terminal.ico" class="search-recent-icon" />
+          <span>Command Prompt</span>
+        </div>
+      </div>
+      <div class="search-menu-right">
+        <div class="search-section-header">
+          <div class="search-section-title">Quick searches</div>
+          <span class="ico">&#xe712;</span>
+        </div>
+        <div class="quick-searches-grid">
+          <div class="quick-search-pill">Focus settings</div>
+          <div class="quick-search-pill">Sound settings</div>
+          <div class="quick-search-pill">Bluetooth & devices</div>
+          <div class="quick-search-pill">Display settings</div>
+          <div class="quick-search-pill">Color settings</div>
+          <div class="quick-search-pill">Search settings</div>
+        </div>
+        
+        <div class="search-section-header" style="margin-top: 25px;">
+          <div class="search-section-title">Top apps</div>
+        </div>
+        <div class="top-apps-grid">
+          <div class="top-app-item">
+            <img src="icon/explorer.ico" />
+            <span>File Explorer</span>
+          </div>
+          <div class="top-app-item">
+            <img src="icon/settings.ico" />
+            <span>Settings</span>
+          </div>
+          <div class="top-app-item">
+            <img src="icon/edge.ico" />
+            <span>Microsoft Edge</span>
+          </div>
+          <div class="top-app-item">
+            <img src="icon/edge.ico" />
+            <span>Microsoft Edge Dev</span>
+          </div>
+          <div class="top-app-item">
+            <img src="icon/terminal.ico" />
+            <span>Command Prompt</span>
+          </div>
+          <div class="top-app-item">
+            <img src="icon/outlook.ico" />
+            <span>Outlook</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
   <div class="run-failed" id="runFailed">
     <div class="run-failed-titlebar">
@@ -617,7 +677,7 @@
       <span class="setting ico">&#xe713;</span>
     </div>
   </div>
-  
+
   <!-- Task View Overlay -->
   <div class="task-view-overlay" id="taskViewOverlay">
     <div class="task-view-windows" id="taskViewWindows"></div>
@@ -626,6 +686,7 @@
 
   <div class="taskbar">
     <div class="taskbar-middle" id="taskbarApps">
+      <img src="icon/start2.ico" alt="Start" class="taskbar-app" id="startLogo" />
       <div class="start-quick-link">
         <div class="quick-link-menu" id="quickLink">
           <div class="quick-link-item">Apps and Features</div>
@@ -637,8 +698,8 @@
           <div class="quick-link-item">Disk Management</div>
           <div class="quick-link-item">Computer Management</div>
           <div class="quick-link-item" onclick="openTerminalWindow()">Windows Terminal</div>
-          <div class="quick-link-item" onclick="openTerminalWindow()">Windows Terminal (Admin)</div>
-          <div class="quick-link-item">Task Manager</div>
+          <div class="quick-link-item" onclick="promptUAC('terminal')">Windows Terminal (Admin)</div>
+          <div class="quick-link-item" onclick="openTaskManagerWindow()">Task Manager</div>
           <div class="quick-link-item">Settings</div>
           <div class="quick-link-item">File Explorer</div>
           <div class="quick-link-item" onclick="searchMenu.classList.toggle('menu-open');">Search</div>
@@ -657,9 +718,12 @@
           </div>
           <div class="quick-link-item">Desktop</div>
         </div>
-        <img src="icon/start2.ico" alt="Start" class="taskbar-app" id="startLogo" />
       </div>
-      <img src="icon/search2.ico" alt="Search" class="taskbar-app search-icon" id="searchIcon" />
+      <!-- <div class="search-taskbar-btn" id="searchBtn" onclick="document.getElementById('searchMenu').classList.toggle('menu-open')"> -->
+      <div class="search-taskbar-btn" id="searchBtn" onclick="document.getElementById('searchMenu').classList.toggle('menu-open')">
+        <img src="icon/search2.ico" alt="Search" class="search-taskbar-icon" />
+        <span class="search-taskbar-text">Search</span>
+      </div>
       <img src="icon/taskview2.ico" alt="Task View" class="taskbar-app" id="taskViewBtn" />
       <img src="icon/widgets.ico" alt="Widgets" class="taskbar-app" id="widgetsIcon" />
       <!-- <img src="icon/Microsoft_365_Copilot_Icon.svg_.png" alt="Microsoft Copilot" class="taskbar-app"> -->
@@ -687,324 +751,35 @@
       <span class="dates" id="dates">DD/MM/YYYY</span>
     </div>
   </div>
-  <input type="file" id="fileInput" style="display: none" />
-
-  <!-- Settings App -->
-  <div class="settings-window window" id="settingsWindow" data-app-id="settings">
-    <div class="settings-header title-bar">
-      <!-- App Title -->
-      <span class="settings-title-text ico" style="font-size:14px;">&#xe713;</span>
-      <span class="settings-title-text">Settings</span>
-      <!-- Drag Handle -->
-      <div class="settings-drag-region title"></div>
-      <!-- Window Controls -->
-      <div class="window-controls">
-        <button class="control-btn minimize" onpointerdown="event.stopPropagation()"
-          onclick="minimizeWindow('settings')">−</button>
-        <button class="control-btn maximize" onpointerdown="event.stopPropagation()"
-          onclick="maximizeWindow('settings')">□</button>
-        <button class="control-btn close" onpointerdown="event.stopPropagation()"
-          onclick="closeSettingsWindow()">×</button>
+  <div class="uac-overlay" id="uacOverlay" style="display: none;">
+    <div class="uac-dialog">
+      <div class="uac-header">
+        <span class="uac-title">User Account Control</span>
+        <button class="uac-close-btn" onclick="uacNo()">&#xE8BB;</button>
+      </div>
+      <div class="uac-question">Do you want to allow this app to make changes to your device?</div>
+      <div class="uac-body">
+        <div class="uac-app-info">
+          <img src="icon/terminal.ico" class="uac-app-icon" id="uacAppIcon" onerror="this.src='icon/cmd.ico'" />
+          <div class="uac-app-details">
+            <div class="uac-app-name" id="uacAppName">Windows Terminal</div>
+            <div class="uac-publisher">Verified publisher: Microsoft Corporation</div>
+            <div class="uac-origin">File origin: Hard drive on this computer</div>
+          </div>
+        </div>
+        <div class="uac-show-more">
+          <span class="ico" style="font-size: 10px; color: #4cc2ff;">&#xe70d;</span> <a href="#">Show more details</a>
+        </div>
+      </div>
+      <div class="uac-footer">
+        <button class="uac-btn uac-btn-yes" onclick="uacYes()">Yes</button>
+        <button class="uac-btn uac-btn-no" onclick="uacNo()">No</button>
       </div>
     </div>
-
-    <div class="settings-body" id="settingsBody">
-      <!-- ========= SIDEBAR ========= -->
-      <div class="settings-sidebar">
-        <div class="settings-user-profile">
-          <img src="icon/icon-7797704_640.png" alt="User Avatar" class="settings-avatar" />
-          <div class="settings-user-info">
-            <span class="settings-user-name">nievacode-dev</span>
-            <span class="settings-user-email">GitHub Account</span>
-          </div>
-        </div>
-
-        <div class="settings-search-container">
-          <span class="ico settings-search-icon">&#xe721;</span>
-          <input type="text" class="settings-search" placeholder="Find a setting" />
-        </div>
-
-        <div class="settings-nav">
-          <div class="settings-nav-item active">
-            <span class="ico nav-icon" style="color:#60CDFF;">&#xe80f;</span>
-            <span class="nav-text">Home</span>
-          </div>
-          <div class="settings-nav-item">
-            <span class="ico nav-icon">&#xe770;</span>
-            <span class="nav-text">System</span>
-          </div>
-          <div class="settings-nav-item">
-            <span class="ico nav-icon">&#xe702;</span>
-            <span class="nav-text">Bluetooth &amp; devices</span>
-          </div>
-          <div class="settings-nav-item">
-            <span class="ico nav-icon">&#xe701;</span>
-            <span class="nav-text">Network &amp; internet</span>
-          </div>
-          <div class="settings-nav-item">
-            <span class="ico nav-icon">&#xe771;</span>
-            <span class="nav-text">Personalization</span>
-          </div>
-          <div class="settings-nav-item">
-            <span class="ico nav-icon">&#xe71d;</span>
-            <span class="nav-text">Apps</span>
-          </div>
-          <div class="settings-nav-item">
-            <span class="ico nav-icon">&#xe77b;</span>
-            <span class="nav-text">Accounts</span>
-          </div>
-          <div class="settings-nav-item">
-            <span class="ico nav-icon">&#xe775;</span>
-            <span class="nav-text">Time &amp; language</span>
-          </div>
-          <div class="settings-nav-item">
-            <span class="ico nav-icon">&#xe7fc;</span>
-            <span class="nav-text">Gaming</span>
-          </div>
-          <div class="settings-nav-item">
-            <span class="ico nav-icon">&#xe776;</span>
-            <span class="nav-text">Accessibility</span>
-          </div>
-          <div class="settings-nav-item">
-            <span class="ico nav-icon">&#xe72e;</span>
-            <span class="nav-text">Privacy &amp; security</span>
-          </div>
-          <div class="settings-nav-item">
-            <span class="ico nav-icon" style="color:#60CDFF;">&#xe895;</span>
-            <span class="nav-text">Windows Update</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- ========= MAIN CONTENT ========= -->
-      <div class="settings-main-content">
-        <h1 class="settings-page-title">Home</h1>
-
-        <!-- Hero PC Card -->
-        <div class="hero-pc-card">
-          <img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg" alt="Wallpaper" class="hero-wallpaper" />
-          <div class="hero-info">
-            <h2 class="hero-pc-name">DESKTOP-5SNQPC2</h2>
-            <span class="hero-pc-model">VMware7,1</span>
-            <a href="#" class="hero-link">Rename</a>
-          </div>
-          <div class="hero-status">
-            <div class="status-item">
-              <span class="ico status-ico">&#xe839;</span>
-              <div class="status-text">
-                <span class="status-title">Ethernet0</span>
-                <span class="status-sub">Connected, secured</span>
-              </div>
-            </div>
-            <div class="status-item">
-              <span class="ico status-ico" style="color:#60CDFF;">&#xe895;</span>
-              <div class="status-text">
-                <span class="status-title">Windows Update</span>
-                <span class="status-sub">Last checked: 10 minutes ago</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Two Column Grid -->
-        <div class="settings-dashboard-grid">
-
-          <!-- ---- Column 1 ---- -->
-          <div class="settings-column">
-
-            <!-- Recommended Settings -->
-            <div class="settings-card">
-              <div class="card-header">
-                <h3>Recommended settings</h3>
-                <p>Recent and commonly used settings</p>
-              </div>
-              <div class="card-list">
-                <div class="list-item">
-                  <span class="ico list-ico">&#xe7e8;</span>
-                  <span class="list-text">Increase security</span>
-                  <span class="list-badge">Apply</span>
-                  <span class="ico list-chevron">&#xe76c;</span>
-                </div>
-                <div class="list-item">
-                  <span class="ico list-ico">&#xe896;</span>
-                  <span class="list-text">Installed apps</span>
-                  <span class="ico list-chevron">&#xe76c;</span>
-                </div>
-                <div class="list-item">
-                  <span class="ico list-ico">&#xe701;</span>
-                  <span class="list-text">Wi-Fi</span>
-                  <span class="list-subtext">Active</span>
-                  <div class="toggle-switch" onclick="this.querySelector('.switch-track').classList.toggle('on')">
-                    <div class="switch-track on">
-                      <div class="switch-thumb"></div>
-                    </div>
-                  </div>
-                  <span class="ico list-chevron">&#xe76c;</span>
-                </div>
-                <div class="list-item">
-                  <span class="ico list-ico">&#xe7e8;</span>
-                  <span class="list-text">Power &amp; battery</span>
-                  <span class="ico list-chevron">&#xe76c;</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Bluetooth Devices -->
-            <div class="settings-card">
-              <div class="card-header">
-                <h3>Bluetooth devices</h3>
-                <p>Manage, add, and remove devices</p>
-              </div>
-              <!-- Bluetooth toggle row -->
-              <div class="list-item" style="border-top:1px solid rgba(255,255,255,0.04);">
-                <span class="ico list-ico">&#xe702;</span>
-                <div style="display:flex;flex-direction:column;flex-grow:1;">
-                  <span class="list-text">Bluetooth</span>
-                  <span style="font-size:11px;color:rgba(255,255,255,0.5);">Bluetooth disabled</span>
-                </div>
-                <span class="list-subtext">Not active</span>
-                <div class="toggle-switch" onclick="this.querySelector('.switch-track').classList.toggle('on')">
-                  <div class="switch-track">
-                    <div class="switch-thumb"></div>
-                  </div>
-                </div>
-              </div>
-              <!-- Device list -->
-              <div class="bt-device-list">
-                <div class="bt-device">
-                  <span class="ico bt-device-ico">&#xe702;</span>
-                  <div class="bt-device-info">
-                    <span class="bt-device-name">thinkplus A5</span>
-                    <span class="bt-device-status">Bluetooth disabled</span>
-                  </div>
-                  <button class="bt-connect-btn">Connect</button>
-                  <button class="bt-more-btn">•••</button>
-                </div>
-                <div class="bt-device">
-                  <span class="ico bt-device-ico" style="color:#60CDFF;">&#xe8ba;</span>
-                  <div class="bt-device-info">
-                    <span class="bt-device-name">POCO X7 Pro</span>
-                    <span class="bt-device-status">Bluetooth disabled</span>
-                  </div>
-                  <button class="bt-more-btn">•••</button>
-                </div>
-                <div class="bt-device">
-                  <span class="ico bt-device-ico">&#xe702;</span>
-                  <div class="bt-device-info">
-                    <span class="bt-device-name">IWS</span>
-                    <span class="bt-device-status">Bluetooth disabled</span>
-                  </div>
-                  <button class="bt-connect-btn">Connect</button>
-                  <button class="bt-more-btn">•••</button>
-                </div>
-              </div>
-              <div class="card-footer">
-                <a href="#" class="footer-link">Show all devices</a>
-                <button class="footer-btn">Add a device <span class="ico">&#xe76c;</span></button>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- ---- Column 2 ---- -->
-          <div class="settings-column">
-
-            <!-- Cloud Storage -->
-            <div class="settings-card">
-              <div class="card-header-row">
-                <span class="ico card-header-icon" style="color:#60CDFF;">&#xe753;</span>
-                <div class="card-header-texts">
-                  <h3>Cloud storage</h3>
-                  <p>With available storage, you can back up files and send and receive email on Outlook.</p>
-                </div>
-              </div>
-              <div class="storage-bar-container">
-                <span class="storage-text"><strong>1.1 GB</strong> used of 5 GB (22%)</span>
-                <div class="storage-bar">
-                  <div class="storage-fill" style="width:22%;"></div>
-                </div>
-              </div>
-              <div class="card-footer left">
-                <button class="footer-btn action-btn">Get more storage</button>
-              </div>
-              <div class="card-list">
-                <div class="list-item">
-                  <span class="ico list-ico">&#xe753;</span>
-                  <span class="list-text">PC backup</span>
-                  <span class="list-subtext">Backed up <span class="ico">&#xe8a7;</span></span>
-                </div>
-                <div class="list-item">
-                  <span class="ico list-ico">&#xe713;</span>
-                  <span class="list-text">Manage cloud storage</span>
-                  <span class="ico list-chevron">&#xe76c;</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Account Security -->
-            <div class="settings-card">
-              <div class="card-header-row">
-                <span class="ico card-header-icon" style="color:#60CDFF;">&#xe73e;</span>
-                <div class="card-header-texts">
-                  <h3>Never lose access to your account</h3>
-                  <p>Add a recovery phone number to make sure you can always sign in to your account.</p>
-                </div>
-              </div>
-              <div style="padding:0 18px 14px 18px;">
-                <button class="footer-btn">Add now</button>
-              </div>
-            </div>
-
-            <!-- Personalize -->
-            <div class="settings-card">
-              <div class="card-header">
-                <h3>Personalize your device</h3>
-              </div>
-              <div class="theme-grid">
-                <div class="theme-item active"><img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg" /></div>
-                <div class="theme-item"><img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg"
-                    style="filter:hue-rotate(60deg);" /></div>
-                <div class="theme-item"><img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg"
-                    style="filter:hue-rotate(140deg);" /></div>
-                <div class="theme-item"><img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg"
-                    style="filter:hue-rotate(220deg);" /></div>
-                <div class="theme-item"><img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg"
-                    style="filter:saturate(40%) brightness(0.8);" /></div>
-                <div class="theme-item"><img src="wallpaper/windows-11-blue-material-3y-1920x1080.jpg"
-                    style="filter:hue-rotate(300deg);" /></div>
-              </div>
-              <div class="color-mode-row">
-                <span class="ico list-ico" style="font-size:14px;">&#xe793;</span>
-                <span class="color-mode-label">Color mode</span>
-                <select class="color-mode-select">
-                  <option>Dark</option>
-                  <option>Light</option>
-                  <option>Custom</option>
-                </select>
-              </div>
-              <div class="theme-browse-row">
-                <span class="theme-browse-text">Browse backgrounds, colors, and themes</span>
-                <span class="ico list-chevron">&#xe76c;</span>
-              </div>
-            </div>
-
-            <!-- Help links -->
-            <div class="settings-help-row">
-              <a href="#" class="settings-help-link"><span class="ico" style="font-size:14px;">&#xe897;</span> Get
-                help</a>
-              <a href="#" class="settings-help-link"><span class="ico" style="font-size:14px;">&#xe939;</span> Give
-                feedback</a>
-            </div>
-
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="window-resize"></div>
   </div>
 
+  <input type="file" id="fileInput" style="display: none" />
 
-  <script src="js/settings.js"></script>
   <script src="main.js"></script>
   <!-- Microsoft Edge App -->
   <div class="edge-window window" id="edgeWindow" data-app-id="edge" style="display: none;">
@@ -1026,11 +801,10 @@
           onclick="minimizeWindow('edge')">−</button>
         <button class="control-btn maximize" onpointerdown="event.stopPropagation()"
           onclick="maximizeWindow('edge')">□</button>
-        <button class="control-btn close" onpointerdown="event.stopPropagation()"
-          onclick="closeEdgeWindow()">×</button>
+        <button class="control-btn close" onpointerdown="event.stopPropagation()" onclick="closeEdgeWindow()">×</button>
       </div>
     </div>
-    
+
     <div class="edge-toolbar">
       <div class="edge-nav-btns">
         <button class="edge-btn back" title="Back">&#xe72b;</button>
@@ -1040,7 +814,8 @@
       </div>
       <div class="edge-address-bar">
         <span class="edge-security-icon ico">&#xe72e;</span>
-        <input type="text" id="edgeUrlInput" class="edge-url-input" value="https://en.wikipedia.org" placeholder="Search or enter web address" />
+        <input type="text" id="edgeUrlInput" class="edge-url-input" value="https://en.wikipedia.org"
+          placeholder="Search or enter web address" />
       </div>
       <div class="edge-action-btns">
         <button class="edge-btn" title="Extensions">&#xe840;</button>
@@ -1048,9 +823,297 @@
       </div>
     </div>
 
-    <div class="edge-body" id="edgeBody">
+    <!-- <div class="edge-body" id="edgeBody">
       <iframe src="https://en.wikipedia.org" id="edgeIframe" class="edge-iframe" frameborder="0"></iframe>
+    </div> -->
+  </div>
+  <!-- Task Manager App -->
+  <div class="task-manager-window window" id="taskManagerWindow" data-app-id="taskmgr">
+    <div class="tm-header title-bar">
+      <!-- App Title -->
+      <span class="tm-title-icon ico" style="font-size: 14px; margin-left: 5px;">&#xe9f3;</span>
+      <span class="tm-title-text" style="font-size: 12px; margin-left: 8px;">Task Manager</span>
+      <!-- Drag Handle -->
+      <div class="tm-drag-region title" style="flex-grow: 1;"></div>
+      <!-- Window Controls -->
+      <div class="window-controls">
+        <button class="control-btn minimize" onpointerdown="event.stopPropagation()"
+          onclick="minimizeWindow('taskManager')">−</button>
+        <button class="control-btn maximize" onpointerdown="event.stopPropagation()"
+          onclick="maximizeWindow('taskManager')">□</button>
+        <button class="control-btn close" onpointerdown="event.stopPropagation()"
+          onclick="closeTaskManagerWindow()">×</button>
+      </div>
     </div>
+
+    <div class="tm-body" id="tmBody">
+      <!-- SIDEBAR -->
+      <div class="tm-sidebar">
+        <div class="tm-hamburger ico">&#xe700;</div>
+        <div class="tm-nav">
+          <div class="tm-nav-item active" onclick="switchTmTab('processes')" title="Processes">
+            <span class="ico tm-nav-icon">&#xe9f3;</span>
+            <span class="tm-nav-text">Processes</span>
+          </div>
+          <div class="tm-nav-item" onclick="switchTmTab('performance')" title="Performance">
+            <span class="ico tm-nav-icon">&#xec4a;</span>
+            <span class="tm-nav-text">Performance</span>
+          </div>
+          <div class="tm-nav-item" title="App history">
+            <span class="ico tm-nav-icon">&#xe81c;</span>
+            <span class="tm-nav-text">App history</span>
+          </div>
+          <div class="tm-nav-item" title="Startup apps">
+            <span class="ico tm-nav-icon">&#xe3ee;</span>
+            <span class="tm-nav-text">Startup apps</span>
+          </div>
+          <div class="tm-nav-item" title="Users">
+            <span class="ico tm-nav-icon">&#xe716;</span>
+            <span class="tm-nav-text">Users</span>
+          </div>
+          <div class="tm-nav-item" title="Details">
+            <span class="ico tm-nav-icon">&#xe179;</span>
+            <span class="tm-nav-text">Details</span>
+          </div>
+          <div class="tm-nav-item" title="Services">
+            <span class="ico tm-nav-icon">&#xe953;</span>
+            <span class="tm-nav-text">Services</span>
+          </div>
+        </div>
+        <div style="flex-grow: 1;"></div>
+        <div class="tm-nav-item tm-settings-btn" title="Settings">
+          <span class="ico tm-nav-icon">&#xe713;</span>
+          <span class="tm-nav-text">Settings</span>
+        </div>
+      </div>
+
+      <!-- MAIN CONTENT -->
+      <div class="tm-main-content">
+        <!-- PROCESSES TAB -->
+        <div class="tm-tab-content active" id="tmProcessesTab">
+          <h1 class="tm-page-title">Processes</h1>
+          <div class="tm-processes-table-container">
+            <table class="tm-processes-table">
+              <thead>
+                <tr>
+                  <th class="tm-col-name">Name</th>
+                  <th class="tm-col-status">Status</th>
+                  <th class="tm-col-cpu" onclick="sortTmProcesses('cpu')">CPU</th>
+                  <th class="tm-col-mem" onclick="sortTmProcesses('mem')">Memory</th>
+                  <th class="tm-col-disk" onclick="sortTmProcesses('disk')">Disk</th>
+                  <th class="tm-col-net" onclick="sortTmProcesses('net')">Network</th>
+                  <th class="tm-col-gpu" onclick="sortTmProcesses('gpu')">GPU</th>
+                </tr>
+              </thead>
+              <tbody id="tmProcessesBody">
+                <!-- Dynamically generated processes go here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- PERFORMANCE TAB -->
+        <div class="tm-tab-content" id="tmPerformanceTab">
+          <h1 class="tm-page-title">Performance</h1>
+          <div class="tm-perf-container">
+            <div class="tm-perf-sidebar" id="tmPerfSidebar">
+              <div class="tm-perf-item active" onclick="switchPerfView('cpu')" id="perfItemCpu">
+                <div class="tm-perf-item-header">
+                  <span class="tm-perf-title">CPU</span>
+                  <span class="tm-perf-usage" id="tmPerfCpuUsageMini">10%</span>
+                </div>
+                <div class="tm-perf-chart-mini-container">
+                  <canvas id="tmCpuMiniChart" width="160" height="40"></canvas>
+                </div>
+              </div>
+              <div class="tm-perf-item" onclick="switchPerfView('memory')" id="perfItemMemory">
+                <div class="tm-perf-item-header">
+                  <span class="tm-perf-title">Memory</span>
+                  <span class="tm-perf-usage" id="tmPerfMemUsageMini">4.2/16.0 GB</span>
+                </div>
+                <div class="tm-perf-chart-mini-container">
+                  <canvas id="tmMemMiniChart" width="160" height="40"></canvas>
+                </div>
+              </div>
+              <div class="tm-perf-item" onclick="switchPerfView('disk')" id="perfItemDisk">
+                <div class="tm-perf-item-header">
+                  <span class="tm-perf-title">Disk 0 (C:)</span>
+                  <span class="tm-perf-usage" id="tmPerfDiskUsageMini">0%</span>
+                </div>
+                <div class="tm-perf-chart-mini-container">
+                  <canvas id="tmDiskMiniChart" width="160" height="40"></canvas>
+                </div>
+              </div>
+              <div class="tm-perf-item" onclick="switchPerfView('wifi')" id="perfItemWifi">
+                <div class="tm-perf-item-header">
+                  <span class="tm-perf-title">Wi-Fi</span>
+                  <span class="tm-perf-usage" id="tmPerfWifiUsageMini">0 Kbps</span>
+                </div>
+                <div class="tm-perf-chart-mini-container">
+                  <canvas id="tmWifiMiniChart" width="160" height="40"></canvas>
+                </div>
+              </div>
+              <div class="tm-perf-item" onclick="switchPerfView('gpu')" id="perfItemGpu">
+                <div class="tm-perf-item-header">
+                  <span class="tm-perf-title">GPU 0</span>
+                  <span class="tm-perf-usage" id="tmPerfGpuUsageMini">0%</span>
+                </div>
+                <div class="tm-perf-chart-mini-container">
+                  <canvas id="tmGpuMiniChart" width="160" height="40"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <div class="tm-perf-main">
+              <!-- CPU View -->
+              <div class="tm-perf-view active" id="tmCpuView">
+                <div class="tm-perf-header">
+                  <div>
+                    <h2 class="tm-perf-title-large">CPU</h2>
+                    <span class="tm-perf-subtitle">Intel Core i9-14900K</span>
+                  </div>
+                  <span class="tm-perf-percent" id="tmCpuPercentLarge">10%</span>
+                </div>
+                <div class="tm-perf-chart-large-container">
+                  <div class="tm-perf-y-labels">
+                    <span>100%</span>
+                    <span>0%</span>
+                  </div>
+                  <canvas id="tmCpuLargeChart" width="550" height="200"></canvas>
+                  <div class="tm-perf-grid-overlay"></div>
+                </div>
+                <div class="tm-perf-stats">
+                  <div class="tm-perf-stat-group">
+                    <div class="tm-perf-stat-item">
+                      <span class="tm-perf-stat-label">Utilization</span>
+                      <span class="tm-perf-stat-value" id="tmCpuUtilStat">10%</span>
+                    </div>
+                    <div class="tm-perf-stat-item">
+                      <span class="tm-perf-stat-label">Speed</span>
+                      <span class="tm-perf-stat-value" id="tmCpuSpeedStat">4.12 GHz</span>
+                    </div>
+                    <div class="tm-perf-stat-item">
+                      <span class="tm-perf-stat-label">Processes</span>
+                      <span class="tm-perf-stat-value">224</span>
+                    </div>
+                  </div>
+                  <div class="tm-perf-stat-group">
+                    <div class="tm-perf-stat-item">
+                      <span class="tm-perf-stat-label">Threads</span>
+                      <span class="tm-perf-stat-value">3412</span>
+                    </div>
+                    <div class="tm-perf-stat-item">
+                      <span class="tm-perf-stat-label">Handles</span>
+                      <span class="tm-perf-stat-value">124803</span>
+                    </div>
+                    <div class="tm-perf-stat-item">
+                      <span class="tm-perf-stat-label">Up time</span>
+                      <span class="tm-perf-stat-value">0:01:23:45</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Memory View -->
+              <div class="tm-perf-view" id="tmMemView">
+                <div class="tm-perf-header">
+                  <div>
+                    <h2 class="tm-perf-title-large">Memory</h2>
+                    <span class="tm-perf-subtitle">16.0 GB DDR5</span>
+                  </div>
+                </div>
+                <div class="tm-perf-chart-large-container">
+                  <div class="tm-perf-y-labels">
+                    <span>16.0 GB</span>
+                    <span>0</span>
+                  </div>
+                  <canvas id="tmMemLargeChart" width="550" height="200"></canvas>
+                  <div class="tm-perf-grid-overlay"></div>
+                </div>
+                <div class="tm-perf-stats">
+                  <div class="tm-perf-stat-group">
+                    <div class="tm-perf-stat-item">
+                      <span class="tm-perf-stat-label">In use (Compressed)</span>
+                      <span class="tm-perf-stat-value" id="tmMemUseStat">4.2 GB (120 MB)</span>
+                    </div>
+                    <div class="tm-perf-stat-item">
+                      <span class="tm-perf-stat-label">Available</span>
+                      <span class="tm-perf-stat-value" id="tmMemAvailStat">11.8 GB</span>
+                    </div>
+                  </div>
+                  <div class="tm-perf-stat-group">
+                    <div class="tm-perf-stat-item">
+                      <span class="tm-perf-stat-label">Committed</span>
+                      <span class="tm-perf-stat-value">5.1/18.4 GB</span>
+                    </div>
+                    <div class="tm-perf-stat-item">
+                      <span class="tm-perf-stat-label">Cached</span>
+                      <span class="tm-perf-stat-value">3.2 GB</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Disk View -->
+              <div class="tm-perf-view" id="tmDiskView">
+                <div class="tm-perf-header">
+                  <div>
+                    <h2 class="tm-perf-title-large">Disk 0 (C:)</h2>
+                    <span class="tm-perf-subtitle">NVMe Samsung 980 PRO 2TB</span>
+                  </div>
+                </div>
+                <div class="tm-perf-chart-large-container">
+                  <div class="tm-perf-y-labels">
+                    <span>100%</span>
+                    <span>0%</span>
+                  </div>
+                  <canvas id="tmDiskLargeChart" width="550" height="200"></canvas>
+                  <div class="tm-perf-grid-overlay"></div>
+                </div>
+              </div>
+
+              <!-- Wi-Fi View -->
+              <div class="tm-perf-view" id="tmWifiView">
+                <div class="tm-perf-header">
+                  <div>
+                    <h2 class="tm-perf-title-large">Wi-Fi</h2>
+                    <span class="tm-perf-subtitle">Intel Wi-Fi 6 AX201</span>
+                  </div>
+                </div>
+                <div class="tm-perf-chart-large-container">
+                  <div class="tm-perf-y-labels">
+                    <span>100 Mbps</span>
+                    <span>0</span>
+                  </div>
+                  <canvas id="tmWifiLargeChart" width="550" height="200"></canvas>
+                  <div class="tm-perf-grid-overlay"></div>
+                </div>
+              </div>
+
+              <!-- GPU View -->
+              <div class="tm-perf-view" id="tmGpuView">
+                <div class="tm-perf-header">
+                  <div>
+                    <h2 class="tm-perf-title-large">GPU 0</h2>
+                    <span class="tm-perf-subtitle">NVIDIA GeForce RTX 5090</span>
+                  </div>
+                </div>
+                <div class="tm-perf-chart-large-container">
+                  <div class="tm-perf-y-labels">
+                    <span>100%</span>
+                    <span>0%</span>
+                  </div>
+                  <canvas id="tmGpuLargeChart" width="550" height="200"></canvas>
+                  <div class="tm-perf-grid-overlay"></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="window-resize"></div>
   </div>
 
   <script src="js/app_runtime.js"></script>
@@ -1059,6 +1122,7 @@
   <script src="js/copy-and-paste.js"></script>
   <script src="js/window-mode.js"></script>
   <script src="js/edge.js"></script>
+  <script src="js/task-manager.js"></script>
 </body>
 
 </html>

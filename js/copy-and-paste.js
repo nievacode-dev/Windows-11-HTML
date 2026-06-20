@@ -43,10 +43,10 @@ let startY = 0;
 
 // Mouse swipe up detection
 lockScreen.addEventListener('mousedown', (e) => {
-  isDragging = true;
-  startY = e.clientY;
-  lockScreen.style.transition = 'none';
-  lockScreen.style.cursor = 'grabbing';
+    isDragging = true;
+    startY = e.clientY;
+    lockScreen.style.transition = 'none';
+    lockScreen.style.cursor = 'grabbing';
 });
 
 // document.addEventListener('mousemove', (e) => {
@@ -58,18 +58,18 @@ lockScreen.addEventListener('mousedown', (e) => {
 // });
 
 document.addEventListener('mouseup', (e) => {
-  if (!isDragging) return;
-  isDragging = false;
-  lockScreen.style.transition = 'transform 0.5s ease';
-  let deltaY = e.clientY - startY;
-  if (deltaY < -50) { // threshold for swipe up
-    lockScreen.classList.add('active');
-    lockScreen.style.transform = 'translateY(0)';
-  } else {
-    lockScreen.classList.remove('active');
-    lockScreen.style.transform = 'translateY(-100%)';
-  }
-  lockScreen.style.cursor = 'grab';
+    if (!isDragging) return;
+    isDragging = false;
+    lockScreen.style.transition = 'transform 0.5s ease';
+    let deltaY = e.clientY - startY;
+    if (deltaY < -50) { // threshold for swipe up
+        lockScreen.classList.add('active');
+        lockScreen.style.transform = 'translateY(0)';
+    } else {
+        lockScreen.classList.remove('active');
+        lockScreen.style.transform = 'translateY(-100%)';
+    }
+    lockScreen.style.cursor = 'grab';
 });
 
 // Keyboard spacebar detection
