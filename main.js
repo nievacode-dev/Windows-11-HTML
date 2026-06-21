@@ -697,21 +697,49 @@ document.addEventListener("mousedown", function (e) {
 });
 
 document.getElementById("newFolder").addEventListener("click", function () {
-  const newApps = document.getElementById("newApps");
-  let folderNew = document.createElement("img");
   let divApp = document.createElement("div");
-  let appName = document.createElement("span");
-  folderNew.src = "/Windows_11_24H2/icon/folder.ico";
   divApp.classList.add("app-desktop");
-  divApp.classList.add("app");
-  divApp.appendChild(folderNew);
-  appName.classList.add("app-name");
-  appName.innerHTML = "New Folder";
-  folderNew.classList.add("application");
-  folderNew.classList.add("app");
-  folderNew.id = "emptyFolder";
-  newApps.appendChild(divApp);
+  divApp.dataset.id = "folder" + Date.now();
+  divApp.dataset.title = "New Folder";
+  
+  let appShortcut = document.createElement("div");
+  appShortcut.className = "app-shortcut";
+
+  let folderNew = document.createElement("img");
+  folderNew.src = "icon/folder.ico";
+  folderNew.alt = "New Folder";
+  folderNew.className = "app application";
+  folderNew.id = "emptyFolder" + Date.now();
+
+  let appName = document.createElement("span");
+  appName.className = "app-name";
+  appName.textContent = "New Folder";
+
+  appShortcut.appendChild(folderNew);
+  divApp.appendChild(appShortcut);
   divApp.appendChild(appName);
+
+  // Append to the body alongside other desktop items (before shutdownTab so it stays behind overlays)
+  const shutdownTab = document.getElementById("shutdownTab");
+  if (shutdownTab) {
+    document.body.insertBefore(divApp, shutdownTab);
+  } else {
+    document.body.appendChild(divApp);
+  }
+
+  // Double click opens the File Explorer
+  divApp.addEventListener("dblclick", () => {
+    if (typeof createWindow === 'function') {
+      createWindow("New Folder", "explorer", "icon/folder.ico");
+    }
+  });
+
+  // Make it selectable like other desktop apps
+  divApp.addEventListener("click", (e) => {
+    e.stopPropagation();
+    document.querySelectorAll(".app-desktop").forEach(app => app.classList.remove("active"));
+    divApp.classList.add("active");
+  });
 });
 
 // shutdown, sleep, and restart
@@ -851,7 +879,8 @@ function promptUAC(app) {
   // Close start menu if open
   const startMenu = document.getElementById("startMenu");
   if (startMenu) {
-    startMenu.style.bottom = "-100%";
+    startMenu.classList.remove("menu-open");
+    startMenu.style.bottom = "";
   }
 }
 
@@ -890,7 +919,10 @@ const searchableApps = [
     name: "Shutdown Menu", icon: "icon/shutdown.ico", fallbackIcon: "icon/start2.ico", action: () => {
       const sm = document.getElementById("shutDownMenu");
       const startMenu = document.getElementById("startMenu");
-      if (startMenu) startMenu.style.bottom = "-100%"; // Close start menu if open
+      if (startMenu) {
+          startMenu.classList.remove("menu-open");
+          startMenu.style.bottom = "";
+      }
       if (sm) sm.style.display = sm.style.display === "block" ? "none" : "block";
     }
   },

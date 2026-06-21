@@ -1695,6 +1695,19 @@ h2 {
   flex-direction: column;
   align-items: center;
   border-radius: 4px;
+  position: absolute; /* Needed for dragging/grid positioning */
+  transition: background-color 0.1s ease;
+  z-index: 1;
+}
+
+.app-desktop.grid-aligned {
+  transition: background-color 0.1s ease, left 0.2s ease, top 0.2s ease;
+}
+
+.app-desktop.dragging {
+  z-index: 9999;
+  opacity: 0.8;
+  transition: none; /* No transition while dragging for instant response */
 }
 
 .app-desktop .app {

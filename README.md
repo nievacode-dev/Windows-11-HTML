@@ -1,5 +1,7 @@
 # Windows 11 24H2 Web Experience
 
+**Version 24H2 (OS Build 26100.1150)**
+
 Welcome to a fully interactive, online recreation of **Windows 11 (24H2)**! This project brings the modern desktop experience straight to your browser, built entirely with vanilla **HTML, CSS, and JavaScript**. 
 
 <div align="center">
