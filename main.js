@@ -55,7 +55,10 @@ searchBtn.onclick = function (event) {
 startLogo.addEventListener("click", function (e) {
   e.stopPropagation();
   startMenu.classList.toggle("menu-open");
-  if (searchMenu) searchMenu.classList.remove("menu-open");
+  if (searchMenu) {
+    searchMenu.classList.remove("menu-open");
+    searchMenu.style.display = "none";
+  }
 });
 
 // searchIcon click now handled by searchBtn in HTML
@@ -971,6 +974,7 @@ document.addEventListener("DOMContentLoaded", () => {
             item.addEventListener("click", () => {
               app.action();
               searchMenu.classList.remove("menu-open");
+              searchMenu.style.display = "none";
               searchInput.value = "";
               searchBody.style.display = "flex";
               searchResults.style.display = "none";
