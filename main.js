@@ -304,6 +304,10 @@ document.addEventListener("contextmenu", function (e) {
   document.getElementById("quickLink").style.display = "none";
   const recycleBinMenu = document.getElementById("recycleBinMenu");
   if (recycleBinMenu) recycleBinMenu.style.display = "none";
+  const taskbarContextMenu = document.getElementById("taskbarContextMenu");
+  if (taskbarContextMenu) taskbarContextMenu.style.display = "none";
+  const startAppContextMenu = document.getElementById("startAppContextMenu");
+  if (startAppContextMenu) startAppContextMenu.style.display = "none";
 
   const appDesktop = e.target.closest(".app-desktop");
   const appContextMenu = document.getElementById("appContextMenu");
@@ -423,6 +427,10 @@ document.addEventListener("click", function () {
   document.getElementById("contextMenu").style.display = "none";
   const appContextMenu = document.getElementById("appContextMenu");
   if (appContextMenu) appContextMenu.style.display = "none";
+  const taskbarContextMenu = document.getElementById("taskbarContextMenu");
+  if (taskbarContextMenu) taskbarContextMenu.style.display = "none";
+  const startAppContextMenu = document.getElementById("startAppContextMenu");
+  if (startAppContextMenu) startAppContextMenu.style.display = "none";
 });
 
 startLogo.addEventListener("contextmenu", function (e) {

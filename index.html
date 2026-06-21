@@ -235,6 +235,35 @@
       <span>Show more options</span>
     </div>
   </div>
+  <div class="context-menu" id="taskbarContextMenu" style="display: none; position: fixed; z-index: 10001; padding: 5px;">
+    <div class="tb-context-header" style="display: flex; align-items: center; padding: 8px 12px; gap: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 4px; border-radius: 4px; background: rgba(50, 50, 50, 0.4);">
+      <img src="" id="tbContextIcon" style="width: 16px; height: 16px;" />
+      <span id="tbContextName" style="font-size: 13px; font-weight: 500; color: white;">App Name</span>
+    </div>
+    <div class="context-item tb-context-action" id="tbContextPinAction">
+      <span><span class="ico context-item-icon" id="tbContextPinIcon" style="font-size: 14px;">&#xe840;</span><span id="tbContextPinText" style="font-size: 13px;">Unpin from taskbar</span></span>
+    </div>
+  </div>
+  <div class="context-menu" id="startAppContextMenu" style="display: none; position: fixed; z-index: 10001; padding: 5px;">
+    <div class="context-item">
+      <span><span class="ico context-item-icon">&#xe74b;</span>Move to top</span>
+    </div>
+    <div class="context-item">
+      <span><span class="ico context-item-icon">&#xe77a;</span>Unpin from Start</span>
+    </div>
+    <div class="context-item">
+      <span><span class="ico context-item-icon">&#xe7ee;</span>Run as administrator</span>
+    </div>
+    <div class="context-item" id="startAppPinAction">
+      <span><span class="ico context-item-icon" id="startAppPinIcon">&#xe840;</span><span id="startAppPinText">Pin to taskbar</span></span>
+    </div>
+    <div class="context-item">
+      <span><span class="ico context-item-icon">&#xe713;</span>App settings</span>
+    </div>
+    <div class="context-item" style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 4px; padding-top: 4px;">
+      <span><span class="ico context-item-icon">&#xe74d;</span>Uninstall</span>
+    </div>
+  </div>
   <div class="gray-bg" id="grayBg"></div>
   <div class="popup" id="popup">
     <span class="close-popup" id="closePopup">&times;</span>

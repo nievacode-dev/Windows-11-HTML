@@ -232,13 +232,14 @@ body {
 }
 
 .quick-settings-main {
+  position: relative;
   height: 200px;
   width: 100%;
   border-bottom: 1px solid rgb(59, 59, 59);
 }
 
 .quick-settings-grid {
-  position: fixed;
+  position: absolute;
   top: 20px;
   left: 50%;
   transform: translateX(-50%);
@@ -341,14 +342,14 @@ body {
   height: 60px;
   width: 100%;
   border-top: 1px solid rgb(59, 59, 59);
-  position: fixed;
+  position: absolute;
   bottom: 0;
   display: flex;
   align-items: center;
 }
 
 .battery-info {
-  position: fixed;
+  position: absolute;
   left: 15px;
   color: white;
   display: flex;
@@ -369,7 +370,7 @@ body {
 }
 
 .setting {
-  position: fixed;
+  position: absolute;
   right: 15px;
   padding: 15px 15px;
   border-radius: 4px;
