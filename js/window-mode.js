@@ -429,14 +429,183 @@ function addDesktop() {
 }
 
 // Taskbar Logic
+let taskbarRegistry = {}; // mapping appId -> { element: DOM, windows: [id1, id2], isPinned: true/false }
+
+let previewHoverTimeout = null;
+let previewHideTimeout = null;
+
+document.addEventListener("DOMContentLoaded", () => {
+  const menu = document.getElementById("taskbarPreviewMenu");
+  if (menu) {
+    menu.addEventListener("mouseenter", () => clearTimeout(previewHideTimeout));
+    menu.addEventListener("mouseleave", () => hideTaskbarPreview());
+  }
+});
+
+function showTaskbarPreview(appId, taskbarElement) {
+  const reg = taskbarRegistry[appId];
+  if (!reg || reg.windows.length === 0) return;
+
+  const menu = document.getElementById("taskbarPreviewMenu");
+  if (!menu) return;
+
+  menu.innerHTML = "";
+
+  reg.windows.forEach(windowId => {
+    const win = windows[windowId];
+    if (!win) return;
+
+    const card = document.createElement("div");
+    card.className = "tv-card";
+    
+    // Header
+    const header = document.createElement("div");
+    header.className = "tv-card-header";
+    
+    const titleContainer = document.createElement("div");
+    titleContainer.className = "tv-card-title-container";
+    
+    if (win.appIcon) {
+      const icon = document.createElement("img");
+      icon.src = win.appIcon;
+      icon.className = "tv-card-icon";
+      titleContainer.appendChild(icon);
+    }
+    
+    const title = document.createElement("div");
+    title.className = "tv-card-title";
+    title.textContent = win.appTitle || "Window";
+    titleContainer.appendChild(title);
+    
+    const closeBtn = document.createElement("div");
+    closeBtn.className = "tv-card-close";
+    closeBtn.textContent = "×";
+    closeBtn.onclick = (e) => {
+      e.stopPropagation();
+      closeWindow(windowId);
+      card.remove();
+      if (menu.children.length === 0) hideTaskbarPreview(true);
+    };
+    
+    header.appendChild(titleContainer);
+    header.appendChild(closeBtn);
+    
+    // Fake window preview block
+    const preview = document.createElement("div");
+    preview.className = "tv-card-preview";
+    if (win.appIcon) {
+      const pIcon = document.createElement("img");
+      pIcon.src = win.appIcon;
+      pIcon.style.width = "48px";
+      pIcon.style.height = "48px";
+      pIcon.style.filter = "drop-shadow(0 4px 12px rgba(0,0,0,0.5))";
+      preview.appendChild(pIcon);
+    }
+    
+    card.appendChild(header);
+    card.appendChild(preview);
+    
+    card.onclick = (e) => {
+      e.stopPropagation();
+      if (win.isMinimized) minimizeWindow(windowId);
+      updateZIndex(windowId);
+      hideTaskbarPreview(true);
+    };
+    
+    menu.appendChild(card);
+  });
+
+  const rect = taskbarElement.getBoundingClientRect();
+  const taskbarCenter = rect.left + (rect.width / 2);
+  menu.style.left = `${taskbarCenter}px`;
+
+  menu.classList.add("visible");
+}
+
+function hideTaskbarPreview(instant = false) {
+  const menu = document.getElementById("taskbarPreviewMenu");
+  if (!menu) return;
+  if (instant) {
+    menu.classList.remove("visible");
+  } else {
+    previewHideTimeout = setTimeout(() => {
+      menu.classList.remove("visible");
+    }, 150);
+  }
+}
+
+function detachTaskbarItem(windowId, win) {
+  if (win && win.appId && taskbarRegistry[win.appId]) {
+    const reg = taskbarRegistry[win.appId];
+    reg.windows = reg.windows.filter(id => id !== windowId);
+    
+    if (reg.windows.length === 0) {
+      reg.element.classList.remove("open", "stacked", "active");
+      if (!reg.isPinned) {
+        reg.element.remove();
+        delete taskbarRegistry[win.appId];
+      }
+    } else {
+      if (reg.windows.length === 1) reg.element.classList.remove("stacked");
+      if (activeWindowId === windowId) {
+        updateZIndex(reg.windows[0]);
+      }
+    }
+    // Update preview if it's currently showing this app
+    const menu = document.getElementById("taskbarPreviewMenu");
+    if (menu && menu.classList.contains("visible") && reg.windows.length > 0) {
+      showTaskbarPreview(win.appId, reg.element);
+    }
+  }
+}
+
+function handleTaskbarClick(appId, appTitle, appIcon) {
+  const reg = taskbarRegistry[appId];
+  if (!reg || reg.windows.length === 0) {
+    if (appTitle.toLowerCase() === 'microsoft edge' || (appIcon && appIcon.includes('edge.ico'))) {
+      if (typeof openEdgeWindow === 'function') openEdgeWindow();
+    } else if (appId === 'cmd') {
+      if (typeof openTerminalWindow === 'function') openTerminalWindow();
+    } else {
+      createWindow(appTitle, appId, appIcon);
+    }
+  } else if (reg.windows.length === 1) {
+    const windowId = reg.windows[0];
+    const win = windows[windowId];
+    if (activeWindowId === windowId && !win.isMinimized) {
+      minimizeWindow(windowId);
+    } else {
+      if (win.isMinimized) minimizeWindow(windowId); // restores
+      else updateZIndex(windowId);
+    }
+  } else {
+    // Show thumbnail preview instantly instead of cycling
+    const menu = document.getElementById("taskbarPreviewMenu");
+    if (menu && menu.classList.contains("visible")) {
+      hideTaskbarPreview(true);
+    } else {
+      showTaskbarPreview(appId, reg.element);
+    }
+  }
+}
+
 function createTaskbarItem(windowId) {
   const win = windows[windowId];
   const taskbarApps = document.getElementById("taskbarApps");
+  
+  let appId = win.element && win.element.dataset.appId && win.element.dataset.appId !== "null" 
+    ? win.element.dataset.appId 
+    : win.appTitle.toLowerCase().replace(/\s+/g, '-');
+  if (windowId === 'edge') appId = 'edge';
+  if (windowId === 'cmd') appId = 'cmd';
+  
+  win.appId = appId;
+  if (win.element) win.element.dataset.appId = appId;
 
-  if (taskbarApps) {
+  if (!taskbarRegistry[appId]) {
     const taskbarItem = document.createElement("div");
-    taskbarItem.classList.add("taskbar-item", "open");
-    taskbarItem.dataset.windowId = windowId;
+    taskbarItem.classList.add("taskbar-item");
+    taskbarItem.dataset.appId = appId;
 
     if (win.appIcon) {
       const iconImg = document.createElement("img");
@@ -449,20 +618,43 @@ function createTaskbarItem(windowId) {
     indicator.classList.add("taskbar-indicator");
     taskbarItem.appendChild(indicator);
 
-    taskbarItem.onclick = () => {
-      if (activeWindowId === windowId && !win.isMinimized) {
-        minimizeWindow(windowId);
-      } else {
-        if (win.isMinimized) {
-          minimizeWindow(windowId); // Restores it
-        } else {
-          updateZIndex(windowId);
-        }
-      }
+    taskbarItem.onclick = (e) => {
+      e.stopPropagation();
+      handleTaskbarClick(appId, win.appTitle, win.appIcon);
     };
 
-    taskbarApps.appendChild(taskbarItem);
-    win.taskbarElement = taskbarItem;
+    taskbarItem.addEventListener("mouseenter", () => {
+      clearTimeout(previewHideTimeout);
+      previewHoverTimeout = setTimeout(() => {
+        showTaskbarPreview(appId, taskbarItem);
+      }, 300);
+    });
+
+    taskbarItem.addEventListener("mouseleave", () => {
+      clearTimeout(previewHoverTimeout);
+      hideTaskbarPreview();
+    });
+
+    if (taskbarApps) taskbarApps.appendChild(taskbarItem);
+    
+    taskbarRegistry[appId] = {
+      element: taskbarItem,
+      windows: [],
+      isPinned: false
+    };
+  }
+
+  const reg = taskbarRegistry[appId];
+  if (!reg.windows.includes(windowId)) {
+    reg.windows.push(windowId);
+  }
+  win.taskbarElement = reg.element;
+
+  reg.element.classList.add("open");
+  if (reg.windows.length > 1) {
+    reg.element.classList.add("stacked");
+  } else {
+    reg.element.classList.remove("stacked");
   }
 }
 
@@ -545,10 +737,8 @@ function closeWindow(windowId) {
 
   if (windowId === 'cmd') {
     // For the Terminal, we animate close then hide (don't destroy DOM)
-    if (win && win.taskbarElement) {
-      win.taskbarElement.remove();
-      win.taskbarElement = null;
-    }
+    detachTaskbarItem(windowId, win);
+    if (win) win.taskbarElement = null;
     if (activeWindowId === 'cmd') activeWindowId = null;
     if (el) {
       el.style.opacity = '1';
@@ -567,23 +757,26 @@ function closeWindow(windowId) {
     return;
   }
 
-  if (win && win.taskbarElement) {
-    win.taskbarElement.remove();
-  }
+  detachTaskbarItem(windowId, win);
+  if (win) win.taskbarElement = null;
 
   // Stamp the current rendered values explicitly so the CSS transition
   // has a concrete starting point (animation-held values don't count).
-  el.style.opacity = '1';
-  el.style.transform = 'scale(1)';
-  // Force a reflow so the browser registers the above values before
-  // we switch to the closing state.
-  void el.offsetWidth;
+  if (el) {
+    el.style.opacity = '1';
+    el.style.transform = 'scale(1)';
+    // Force a reflow so the browser registers the above values before
+    // we switch to the closing state.
+    void el.offsetWidth;
 
-  el.classList.add("closing");
-  setTimeout(() => {
-    el.remove();
+    el.classList.add("closing");
+    setTimeout(() => {
+      el.remove();
+      delete windows[windowId];
+    }, 200); // matches 0.18 s CSS transition with a small buffer
+  } else {
     delete windows[windowId];
-  }, 200); // matches 0.18 s CSS transition with a small buffer
+  }
 }
 
 // Global hook up
@@ -616,7 +809,7 @@ function initializeAppShortcuts() {
 
       if (appId === 'cmd') {
         if (typeof openTerminalWindow === 'function') openTerminalWindow();
-      } else if (appTitle.toLowerCase() === 'microsoft edge' || appId === 'edge') {
+      } else if (appTitle.toLowerCase() === 'microsoft edge' || appTitle.toLowerCase() === 'edge' || appId === 'edge' || appId === 'browser') {
         if (typeof openEdgeWindow === 'function') openEdgeWindow();
       } else {
         createWindow(appTitle, appId, appIcon);
@@ -628,18 +821,34 @@ function initializeAppShortcuts() {
 }
 
 function initializeTaskbarApps() {
-  const taskbarApps = document.querySelectorAll(".app-tb");
-  taskbarApps.forEach(appImg => {
-    appImg.style.cursor = "pointer";
-    appImg.addEventListener("click", (e) => {
+  const pinnedApps = document.querySelectorAll(".taskbar-item.pinned");
+  pinnedApps.forEach(appEl => {
+    const appId = appEl.dataset.appId;
+    const imgEl = appEl.querySelector("img");
+    const appTitle = imgEl ? imgEl.alt : "Application";
+    const appIcon = imgEl ? imgEl.src : null;
+    
+    taskbarRegistry[appId] = {
+      element: appEl,
+      windows: [],
+      isPinned: true
+    };
+    
+    appEl.addEventListener("click", (e) => {
       e.stopPropagation();
-      const appTitle = appImg.alt || "Application";
-      const appIcon = appImg.src;
-      if (appTitle.toLowerCase() === 'microsoft edge' || appImg.src.includes('edge.ico')) {
-        if (typeof openEdgeWindow === 'function') openEdgeWindow();
-      } else {
-        createWindow(appTitle, null, appIcon);
-      }
+      handleTaskbarClick(appId, appTitle, appIcon);
+    });
+    
+    appEl.addEventListener("mouseenter", () => {
+      clearTimeout(previewHideTimeout);
+      previewHoverTimeout = setTimeout(() => {
+        showTaskbarPreview(appId, appEl);
+      }, 300);
+    });
+
+    appEl.addEventListener("mouseleave", () => {
+      clearTimeout(previewHoverTimeout);
+      hideTaskbarPreview();
     });
   });
 }

@@ -472,7 +472,13 @@ function runWindows() {
   const runInput = document.getElementById("runInput");
   const runProgram = document.getElementById("runProgram");
   if (runInput.value === "winver") {
-    document.getElementById("aboutTab").style.display = "block";
+    const aboutEl = document.getElementById("aboutTab");
+    aboutEl.style.left = "80px";
+    aboutEl.style.top = "60px";
+    aboutEl.style.animation = "none";
+    aboutEl.offsetHeight; // force reflow to restart animation
+    aboutEl.style.animation = "";
+    aboutEl.style.display = "block";
     runProgram.style.display = "none";
   } else if (runInput.value === "binexe") {
     runProgram.style.display = "none";
@@ -891,7 +897,7 @@ const searchableApps = [
   { name: "Task Manager", icon: "icon/taskmgr.ico", fallbackIcon: "icon/cmd.ico", action: () => { if (typeof openTaskManagerWindow === "function") openTaskManagerWindow(); } },
   { name: "File Explorer", icon: "icon/explorer.ico", action: () => { console.log("Open File Explorer"); } },
   { name: "Settings", icon: "icon/settings.ico", action: () => { console.log("Open Settings"); } },
-  { name: "Microsoft Edge", icon: "icon/edge.ico", action: () => { console.log("Open Edge"); } },
+  { name: "Microsoft Edge", icon: "icon/edge.ico", action: () => { if (typeof openEdgeWindow === "function") openEdgeWindow(); } },
 ];
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -968,3 +974,4 @@ document.addEventListener("click", (e) => {
     quickSettings.classList.remove("show");
   }
 });
+

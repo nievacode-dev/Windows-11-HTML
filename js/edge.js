@@ -61,10 +61,12 @@ function closeEdgeWindow() {
     if (!el) return;
 
     const win = windows["edge"];
-    if (win && win.taskbarElement) {
+    if (typeof detachTaskbarItem === 'function') {
+        detachTaskbarItem("edge", win);
+    } else if (win && win.taskbarElement) {
         win.taskbarElement.remove();
-        win.taskbarElement = null;
     }
+    if (win) win.taskbarElement = null;
 
     if (activeWindowId === 'edge') {
         activeWindowId = null;

@@ -26,7 +26,7 @@ const baseProcesses = [
     { name: "Windows Explorer", icon: "icon/explorer.ico", cpu: 0.5, mem: 85, disk: 0, net: 0, gpu: 0.1 },
     { name: "Microsoft Edge", icon: "icon/edge.ico", cpu: 2.5, mem: 450, disk: 0, net: 1.2, gpu: 1.5 },
     { name: "Settings", icon: "icon/settings.ico", cpu: 0, mem: 45, disk: 0, net: 0, gpu: 0 },
-    { name: "Windows Terminal", icon: "icon/cmd.png", cpu: 0.1, mem: 60, disk: 0, net: 0, gpu: 0.2 },
+    { name: "Windows Terminal", icon: "icon/terminal.ico", cpu: 0.1, mem: 60, disk: 0, net: 0, gpu: 0.2 },
     { name: "Antimalware Service Executable", icon: "icon/defender.ico", cpu: 1.5, mem: 150, disk: 2.5, net: 0, gpu: 0 },
     { name: "Task Manager", icon: "icon/taskview2.ico", cpu: 2.1, mem: 60, disk: 0.1, net: 0, gpu: 0.5 },
     { name: "Registry", icon: "icon/explorer.ico", cpu: 0, mem: 35, disk: 0, net: 0, gpu: 0 },
@@ -341,9 +341,9 @@ function drawLineChart(canvasId, dataArray, colorStroke, colorFill) {
     if (!canvas) return;
 
     // Handle responsive sizing implicitly (the container scales)
-    // For crispness, set internal canvas size to match layout size
-    canvas.width = canvas.parentElement.clientWidth || 300;
-    canvas.height = canvas.parentElement.clientHeight || 100;
+    // For crispness, set internal canvas size to match its own layout size
+    canvas.width = canvas.clientWidth || 300;
+    canvas.height = canvas.clientHeight || 100;
     
     const ctx = canvas.getContext('2d');
     const width = canvas.width;

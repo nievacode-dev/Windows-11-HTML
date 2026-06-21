@@ -310,6 +310,12 @@
     background-color: rgba(150, 150, 150, 0.8);
 }
 
+/* Stacked but inactive app */
+.taskbar-item.open.stacked .taskbar-indicator {
+    width: 10px;
+    border-radius: 2px;
+}
+
 /* Active and focused app */
 .taskbar-item.active .taskbar-indicator {
     width: 16px; 
@@ -700,4 +706,70 @@ body.light-mode .desktop-item.new-desktop .ico-box .ico {
 
 body.light-mode .desktop-item.active .desktop-indicator {
     background-color: #0067c0;
+}
+
+/* ============================================================
+   Taskbar Hover Preview Menu
+   ============================================================ */
+
+.taskbar-preview-menu {
+    position: fixed;
+    bottom: 60px; /* Right above taskbar */
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background-color: rgba(35, 35, 35, 0.85);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    gap: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+
+.taskbar-preview-menu.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+}
+
+body.light-mode .taskbar-preview-menu {
+    background-color: rgba(243, 243, 243, 0.85);
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* We reuse .tv-card inside the preview menu, but scale it down a bit */
+.taskbar-preview-menu .tv-card {
+    width: 220px;
+    height: 140px;
+    border-radius: 6px;
+}
+
+.taskbar-preview-menu .tv-card-header {
+    height: 28px;
+    background-color: transparent;
+    border-bottom: none;
+    padding: 0 8px;
+}
+
+.taskbar-preview-menu .tv-card-title {
+    font-size: 11px;
+}
+
+.taskbar-preview-menu .tv-card-preview {
+    background-color: rgba(0, 0, 0, 0.4);
+    margin: 0 8px 8px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+body.light-mode .taskbar-preview-menu .tv-card-preview {
+    background-color: rgba(255, 255, 255, 0.6);
+    border-color: rgba(0, 0, 0, 0.05);
 }
