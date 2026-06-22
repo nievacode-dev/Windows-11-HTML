@@ -605,6 +605,7 @@ function createTaskbarItem(windowId) {
   if (!taskbarRegistry[appId]) {
     const taskbarItem = document.createElement("div");
     taskbarItem.classList.add("taskbar-item");
+    taskbarItem.setAttribute("draggable", "true");
     taskbarItem.dataset.appId = appId;
 
     if (win.appIcon) {
@@ -885,6 +886,7 @@ function initializeAppShortcuts() {
 function initializeTaskbarApps() {
   const pinnedApps = document.querySelectorAll(".taskbar-item.pinned");
   pinnedApps.forEach(appEl => {
+    appEl.setAttribute("draggable", "true");
     const appId = appEl.dataset.appId;
     const imgEl = appEl.querySelector("img");
     const appTitle = imgEl ? imgEl.alt : "Application";
@@ -1223,6 +1225,7 @@ function togglePinTaskbarItem(appId, appTitle, appIcon) {
     // Need to pin a currently non-existent taskbar item
     const taskbarItem = document.createElement("div");
     taskbarItem.classList.add("taskbar-item", "pinned");
+    taskbarItem.setAttribute("draggable", "true");
     taskbarItem.dataset.appId = appId;
     
     if (appIcon) {
@@ -1276,26 +1279,69 @@ function togglePinTaskbarItem(appId, appTitle, appIcon) {
   }
 }
 
+let draggedTaskbarItem = null;
+
 function initializeTaskbarDragDrop() {
   const taskbarApps = document.getElementById("taskbarApps");
   if (!taskbarApps) return;
 
-  taskbarApps.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "copy";
-    taskbarApps.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
+  taskbarApps.addEventListener("dragstart", (e) => {
+    const item = e.target.closest(".taskbar-item");
+    if (!item) return;
+    draggedTaskbarItem = item;
+    // Set some data to make drag valid in Firefox/others
+    e.dataTransfer.setData("text/plain", JSON.stringify({ isSort: true }));
+    e.dataTransfer.effectAllowed = "move";
+    setTimeout(() => { item.style.opacity = '0.4'; }, 0);
   });
 
-  taskbarApps.addEventListener("dragleave", () => {
+  taskbarApps.addEventListener("dragend", (e) => {
+    if (draggedTaskbarItem) {
+      draggedTaskbarItem.style.opacity = '1';
+      draggedTaskbarItem = null;
+    }
     taskbarApps.style.backgroundColor = "";
+  });
+
+  taskbarApps.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    if (draggedTaskbarItem) {
+      // Sorting
+      const targetItem = e.target.closest(".taskbar-item");
+      if (targetItem && targetItem !== draggedTaskbarItem) {
+        const rect = targetItem.getBoundingClientRect();
+        const midPoint = rect.left + rect.width / 2;
+        if (e.clientX < midPoint) {
+          taskbarApps.insertBefore(draggedTaskbarItem, targetItem);
+        } else {
+          taskbarApps.insertBefore(draggedTaskbarItem, targetItem.nextSibling);
+        }
+      }
+    } else {
+      // Pinning
+      e.dataTransfer.dropEffect = "copy";
+      taskbarApps.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
+    }
+  });
+
+  taskbarApps.addEventListener("dragleave", (e) => {
+    if (!draggedTaskbarItem) {
+      taskbarApps.style.backgroundColor = "";
+    }
   });
 
   taskbarApps.addEventListener("drop", (e) => {
     e.preventDefault();
     taskbarApps.style.backgroundColor = "";
+    if (draggedTaskbarItem) {
+      return; // Handled by dragover
+    }
+    
     try {
-      const data = JSON.parse(e.dataTransfer.getData("text/plain"));
-      if (data && data.appId) {
+      const dataStr = e.dataTransfer.getData("text/plain");
+      if (!dataStr) return;
+      const data = JSON.parse(dataStr);
+      if (data && data.appId && !data.isSort) {
         const reg = taskbarRegistry[data.appId];
         if (!reg || !reg.isPinned) {
           togglePinTaskbarItem(data.appId, data.appTitle, data.appIcon);

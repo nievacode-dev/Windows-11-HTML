@@ -20,7 +20,7 @@ class UniversalDraggable {
             if (!handle) return;
             
             // Ignore if we clicked a button or interactive element
-            if (e.target.closest('button, input, select, textarea, .close-x, .run-close, a, .control-btn')) return;
+            if (e.target.closest('button, input, select, textarea, .close-x, .run-close, a, .control-btn, .edge-tab, .edge-tab-add')) return;
 
             // Find the parent window
             const win = handle.closest('[data-drag-window="true"]');
