@@ -33,43 +33,13 @@ const body = document.body;
 //   }
 // };
 
-searchBtn.onclick = function (event) {
-  if (searchMenu.style.display === "none" || searchMenu.style.display === "") {
-    searchMenu.style.display = "block";
-    if (event.target === body && startMenu.style.display === "block") {
-      startMenu.style.display = "none";
-      startMenu.classList.add("slidedown-anim");
-      setTimeout(() => {
-        startMenu.classList.remove("slidedown-anim");
-      }, 300);
-    }
-  } else {
-    searchMenu.style.display = "none";
-    searchMenu.classList.add("slidedown-anim");
-    setTimeout(() => {
-      searchMenu.classList.remove("slidedown-anim");
-    }, 300);
-  }
-};
-
 startLogo.addEventListener("click", function (e) {
   e.stopPropagation();
   startMenu.classList.toggle("menu-open");
   if (searchMenu) {
     searchMenu.classList.remove("menu-open");
-    searchMenu.style.display = "none";
   }
 });
-
-// searchIcon click now handled by searchBtn in HTML
-const searchBtnEl = document.getElementById("searchBtn");
-if (searchBtnEl) {
-  searchBtnEl.addEventListener("click", function (e) {
-    e.stopPropagation();
-    if (searchMenu) searchMenu.classList.toggle("menu-open");
-    startMenu.classList.remove("menu-open");
-  });
-}
 
 // All apps logic
 document.addEventListener("DOMContentLoaded", () => {
@@ -198,7 +168,7 @@ recycleBin.addEventListener("contextmenu", function (event) {
 
 const emptyBin = document.getElementById("emptyBin");
 emptyBin.onclick = function () {
-  recycleBin.src = "/Windows_11_24H2/icon/recyclebinempty.ico";
+  recycleBin.src = "icon/recyclebinempty.ico";
 };
 
 // Open Recycle Bin on double-click
@@ -334,6 +304,7 @@ document.addEventListener("contextmenu", function (e) {
       appContextMenu.dataset.targetTitle = appDesktop.dataset.title;
       const img = appDesktop.querySelector("img.app");
       appContextMenu.dataset.targetIcon = img ? img.src : "";
+      window.currentContextApp = appDesktop;
     }
   } else {
     if (appContextMenu) appContextMenu.style.display = "none";
@@ -353,6 +324,46 @@ document.addEventListener("DOMContentLoaded", () => {
         createWindow(appContextMenu.dataset.targetTitle || "Application",
           appContextMenu.dataset.targetId,
           appContextMenu.dataset.targetIcon);
+      }
+    });
+  }
+
+  const appRenameBtn = document.getElementById("appRenameBtn");
+  if (appRenameBtn) {
+    appRenameBtn.addEventListener("click", () => {
+      const appContextMenu = document.getElementById("appContextMenu");
+      if (appContextMenu) appContextMenu.style.display = "none";
+      
+      const appDesktop = window.currentContextApp;
+      if (appDesktop) {
+        const nameSpan = appDesktop.querySelector('.app-name');
+        if (nameSpan) {
+          nameSpan.contentEditable = "true";
+          nameSpan.focus();
+          
+          const range = document.createRange();
+          range.selectNodeContents(nameSpan);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+          
+          const stopEditing = () => {
+            nameSpan.contentEditable = "false";
+            appDesktop.dataset.title = nameSpan.textContent;
+            nameSpan.removeEventListener("blur", stopEditing);
+            nameSpan.removeEventListener("keydown", keyHandler);
+          };
+          
+          const keyHandler = (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              nameSpan.blur();
+            }
+          };
+          
+          nameSpan.addEventListener("blur", stopEditing);
+          nameSpan.addEventListener("keydown", keyHandler);
+        }
       }
     });
   }
@@ -463,7 +474,7 @@ document.addEventListener("keydown", function (e) {
   } else if (e.key === "r") {
     document.getElementById("runProgram").style.display = "block";
   } else if (e.key === "d") {
-    recycleBin.src = "/Windows_11_24H2/icon/recyclebinfull.ico";
+    recycleBin.src = "icon/recyclebinfull.ico";
   } else if (e.key === "x") {
     document.getElementById("quickLink").style.display = "block";
   } else if (e.key === "z") {
@@ -712,7 +723,7 @@ document.getElementById("newFolder").addEventListener("click", function () {
   divApp.classList.add("app-desktop");
   divApp.dataset.id = "folder" + Date.now();
   divApp.dataset.title = "New Folder";
-  
+
   let appShortcut = document.createElement("div");
   appShortcut.className = "app-shortcut";
 
@@ -840,11 +851,12 @@ function restart() {
 // close, minimize, maximize
 
 function closeTab(getElId) {
-  document.getElementById(getElId).style.display = "none";
-  document.getElementById(getElId).classList.add("close-anim");
+  const el = document.getElementById(getElId);
+  el.classList.add("close-anim");
   setTimeout(() => {
-    document.getElementById(getElId).classList.remove("close-anim");
-  }, 300);
+    el.style.display = "none";
+    el.classList.remove("close-anim");
+  }, 200);
 }
 
 function minimizeTab(getElId) {
@@ -931,8 +943,8 @@ const searchableApps = [
       const sm = document.getElementById("shutDownMenu");
       const startMenu = document.getElementById("startMenu");
       if (startMenu) {
-          startMenu.classList.remove("menu-open");
-          startMenu.style.bottom = "";
+        startMenu.classList.remove("menu-open");
+        startMenu.style.bottom = "";
       }
       if (sm) sm.style.display = sm.style.display === "block" ? "none" : "block";
     }
@@ -956,16 +968,16 @@ document.addEventListener("DOMContentLoaded", () => {
   function loadRecentSearches() {
     const recentList = document.querySelector(".search-menu-left");
     if (!recentList) return;
-    
+
     let recents = [];
     try {
       recents = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY)) || ["Command Prompt"];
-    } catch(e) {
+    } catch (e) {
       recents = ["Command Prompt"];
     }
-    
+
     recentList.innerHTML = `<div class="search-section-title">Recent</div>`;
-    
+
     recents.forEach(recentName => {
       const app = searchableApps.find(a => a.name === recentName);
       if (app) {
@@ -993,14 +1005,14 @@ document.addEventListener("DOMContentLoaded", () => {
     let recents = [];
     try {
       recents = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY)) || ["Command Prompt"];
-    } catch(e) {
+    } catch (e) {
       recents = ["Command Prompt"];
     }
-    
+
     recents = recents.filter(name => name !== appName);
     recents.unshift(appName);
     if (recents.length > 5) recents.pop();
-    
+
     localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(recents));
     loadRecentSearches();
   }
@@ -1009,20 +1021,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (searchBtn && searchMenu) {
     searchBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      
+      if (typeof startMenu !== 'undefined' && startMenu) {
+        startMenu.classList.remove("menu-open");
+      }
+
       if (searchMenu.classList.contains("menu-open")) {
         if (document.body.classList.contains("search-logo-only")) {
-          searchMenu.classList.remove("menu-open");
+          if (typeof searchInput !== 'undefined' && searchInput) searchInput.focus();
         } else {
-          if (taskbarSearchInput) taskbarSearchInput.focus();
+          if (typeof taskbarSearchInput !== 'undefined' && taskbarSearchInput) taskbarSearchInput.focus();
         }
         return;
       }
-      
+
       searchMenu.classList.add("menu-open");
       if (document.body.classList.contains("search-logo-only")) {
-        if (searchInput) searchInput.focus();
+        if (typeof searchInput !== 'undefined' && searchInput) searchInput.focus();
       } else {
-        if (taskbarSearchInput) taskbarSearchInput.focus();
+        if (typeof taskbarSearchInput !== 'undefined' && taskbarSearchInput) taskbarSearchInput.focus();
       }
     });
   }

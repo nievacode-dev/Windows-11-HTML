@@ -846,6 +846,12 @@ function initializeAppShortcuts() {
 
     newShortcut.addEventListener("click", (e) => {
       e.stopPropagation();
+      
+      const startMenu = document.getElementById("startMenu");
+      if (startMenu && startMenu.classList.contains("menu-open")) {
+        startMenu.classList.remove("menu-open");
+      }
+      
       let appTitle = "Application";
       let appId = null;
       let appIcon = null;
