@@ -2485,10 +2485,32 @@ body.light-mode .app-name {
   margin-right: 8px;
 }
 
-.search-taskbar-text {
+.search-taskbar-input {
+  background: transparent;
+  border: none;
   color: #c9c9c9;
   font-size: 13px;
   font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif;
+  outline: none;
+  width: 100%;
+}
+
+.search-taskbar-input::placeholder {
+  color: #c9c9c9;
+}
+
+/* Search Logo Only Mode */
+body.search-logo-only .search-taskbar-btn {
+  width: auto;
+  padding: 0 8px;
+}
+
+body.search-logo-only .search-taskbar-icon {
+  margin-right: 0;
+}
+
+body.search-logo-only .search-taskbar-input {
+  display: none;
 }
 
 /* Search Menu */
@@ -2518,6 +2540,11 @@ body.light-mode .app-name {
 
 .search-menu-header {
   padding: 20px 30px;
+  display: none; /* Hidden by default, input is in taskbar */
+}
+
+body.search-logo-only .search-menu-header {
+  display: block;
 }
 
 .search-menu-input-container {
@@ -2556,8 +2583,12 @@ body.light-mode .app-name {
 .search-menu-body {
   display: flex;
   flex-grow: 1;
-  padding: 0 30px 20px 30px;
+  padding: 20px 30px 20px 30px;
   gap: 20px;
+}
+
+body.search-logo-only .search-menu-body {
+  padding-top: 0;
 }
 
 .search-menu-left {
@@ -2673,8 +2704,12 @@ body.light-mode .app-name {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  padding: 0 30px 20px 30px;
+  padding: 20px 30px 20px 30px;
   overflow-y: auto;
+}
+
+body.search-logo-only .search-results-container {
+  padding-top: 0;
 }
 
 .search-result-item {

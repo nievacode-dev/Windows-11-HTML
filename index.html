@@ -586,7 +586,7 @@
     <!-- <div class="test-bg"></div> -->
   </div>
   <div class="search-menu" id="searchMenu">
-    <div class="search-menu-header">
+    <div class="search-menu-header" id="searchMenuHeader">
       <div class="search-menu-input-container">
         <span class="ico search-icon-input">&#xe721;</span>
         <input type="text" class="search-menu-input" id="searchMenuInput" placeholder="Type here to search" />
@@ -812,10 +812,9 @@
           <div class="quick-link-item">Desktop</div>
         </div>
       </div>
-      <!-- <div class="search-taskbar-btn" id="searchBtn" onclick="document.getElementById('searchMenu').classList.toggle('menu-open')"> -->
-      <div class="search-taskbar-btn" id="searchBtn" onclick="document.getElementById('searchMenu').classList.toggle('menu-open')">
+      <div class="search-taskbar-btn" id="searchBtn">
         <img src="icon/search2.ico" alt="Search" class="search-taskbar-icon" />
-        <span class="search-taskbar-text">Search</span>
+        <input type="text" class="search-taskbar-input" id="taskbarSearchInput" placeholder="Search" autocomplete="off" />
       </div>
       <img src="icon/taskview2.ico" alt="Task View" class="taskbar-app" id="taskViewBtn" />
       <img src="icon/widgets.ico" alt="Widgets" class="taskbar-app" id="widgetsIcon" />
