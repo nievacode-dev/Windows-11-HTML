@@ -126,7 +126,8 @@ function createWindow(appTitle = "Window", appId = null, appIcon = null) {
     height: 400,
     originalState: null,
     taskbarElement: null,
-    desktopId: activeDesktopId
+    desktopId: activeDesktopId,
+    isSnapped: false
   };
 
   // Create taskbar icon
@@ -180,6 +181,7 @@ function makeWindowInteractive(windowId, titleBar, resizeHandle) {
     updateZIndex(windowId);
     isDragging = true;
     titleBar.setPointerCapture(e.pointerId);
+    win.isSnapped = false;
 
     // If maximized, restore and attach to cursor proportionally
     if (win.isMaximized) {
@@ -281,7 +283,11 @@ function makeWindowInteractive(windowId, titleBar, resizeHandle) {
     if (!overSnapMenuRegion) {
       newSnapType = checkSnapZones(e.clientX, e.clientY);
     } else {
-      hideSnapPreview();
+      if (newSnapType) {
+        showSnapPreview(newSnapType);
+      } else {
+        hideSnapPreview();
+      }
     }
     
     currentSnapType = newSnapType;
@@ -308,8 +314,13 @@ function makeWindowInteractive(windowId, titleBar, resizeHandle) {
     // Apply Snapping if applicable
     if (currentSnapType) {
       applySnap(windowId, currentSnapType);
+      const snappedType = currentSnapType;
       currentSnapType = null;
       hideSnapPreview();
+      
+      if (snappedType !== 'maximize') {
+        setTimeout(() => showSnapAssist(snappedType), 300);
+      }
     }
   });
 
@@ -390,15 +401,75 @@ function showSnapPreview(type) {
     snapPreview.style.left = '0';
     snapPreview.style.width = '100%';
     snapPreview.style.height = `calc(100% - ${taskbarHeight}px)`;
-  } else if (type === 'left') {
+  } else if (type === 'left' || type === 'left-half') {
     snapPreview.style.top = '0';
     snapPreview.style.left = '0';
     snapPreview.style.width = '50%';
     snapPreview.style.height = `calc(100% - ${taskbarHeight}px)`;
-  } else if (type === 'right') {
+  } else if (type === 'right' || type === 'right-half') {
     snapPreview.style.top = '0';
     snapPreview.style.left = '50%';
     snapPreview.style.width = '50%';
+    snapPreview.style.height = `calc(100% - ${taskbarHeight}px)`;
+  } else if (type === 'left-large') {
+    snapPreview.style.top = '0';
+    snapPreview.style.left = '0';
+    snapPreview.style.width = '60%';
+    snapPreview.style.height = `calc(100% - ${taskbarHeight}px)`;
+  } else if (type === 'right-small') {
+    snapPreview.style.top = '0';
+    snapPreview.style.left = '60%';
+    snapPreview.style.width = '40%';
+    snapPreview.style.height = `calc(100% - ${taskbarHeight}px)`;
+  } else if (type === 'left-third') {
+    snapPreview.style.top = '0';
+    snapPreview.style.left = '0';
+    snapPreview.style.width = '33.33%';
+    snapPreview.style.height = `calc(100% - ${taskbarHeight}px)`;
+  } else if (type === 'mid-third') {
+    snapPreview.style.top = '0';
+    snapPreview.style.left = '33.33%';
+    snapPreview.style.width = '33.33%';
+    snapPreview.style.height = `calc(100% - ${taskbarHeight}px)`;
+  } else if (type === 'right-third') {
+    snapPreview.style.top = '0';
+    snapPreview.style.left = '66.66%';
+    snapPreview.style.width = '33.33%';
+    snapPreview.style.height = `calc(100% - ${taskbarHeight}px)`;
+  } else if (type === 'top-left-quarter') {
+    snapPreview.style.top = '0';
+    snapPreview.style.left = '0';
+    snapPreview.style.width = '50%';
+    snapPreview.style.height = `calc(50% - ${taskbarHeight / 2}px)`;
+  } else if (type === 'top-right-quarter') {
+    snapPreview.style.top = '0';
+    snapPreview.style.left = '50%';
+    snapPreview.style.width = '50%';
+    snapPreview.style.height = `calc(50% - ${taskbarHeight / 2}px)`;
+  } else if (type === 'bottom-left-quarter') {
+    snapPreview.style.top = `calc(50% - ${taskbarHeight / 2}px)`;
+    snapPreview.style.left = '0';
+    snapPreview.style.width = '50%';
+    snapPreview.style.height = `calc(50% - ${taskbarHeight / 2}px)`;
+  } else if (type === 'bottom-right-quarter') {
+    snapPreview.style.top = `calc(50% - ${taskbarHeight / 2}px)`;
+    snapPreview.style.left = '50%';
+    snapPreview.style.width = '50%';
+    snapPreview.style.height = `calc(50% - ${taskbarHeight / 2}px)`;
+  } else if (type === 'left-quarter') {
+    snapPreview.style.top = '0';
+    snapPreview.style.left = '0';
+    snapPreview.style.width = '25%';
+    snapPreview.style.height = `calc(100% - ${taskbarHeight}px)`;
+  } else if (type === 'mid-half') {
+    snapPreview.style.top = '0';
+    snapPreview.style.left = '25%';
+    snapPreview.style.width = '50%';
+    snapPreview.style.height = `calc(100% - ${taskbarHeight}px)`;
+  } else if (type === 'right-quarter') {
+    snapPreview.style.top = '0';
+    snapPreview.style.left = '75%';
+    snapPreview.style.width = '25%';
     snapPreview.style.height = `calc(100% - ${taskbarHeight}px)`;
   }
 }
@@ -502,6 +573,8 @@ function applySnap(windowId, type) {
     el.style.left = `${win.x}px`;
     el.style.width = `${win.width}px`;
     el.style.height = `${win.height}px`;
+    
+    win.isSnapped = type;
   }
 
   // Clean up animation class after transition
@@ -847,6 +920,7 @@ function maximizeWindow(windowId, forceMaximize = false) {
     el.style.left = `${win.x}px`;
 
     win.isMaximized = false;
+    win.isSnapped = false;
   } else {
     // Maximize
     if (!win.isMaximized) {
@@ -860,6 +934,7 @@ function maximizeWindow(windowId, forceMaximize = false) {
     el.style.left = '';
 
     win.isMaximized = true;
+    win.isSnapped = false;
   }
 
   setTimeout(() => el.classList.remove("animating"), 300);
@@ -1322,9 +1397,13 @@ function showSnapAssist(snappedType) {
   taskViewOverlay.style.position = 'fixed';
   taskViewOverlay.style.height = `${window.innerHeight - taskbarHeight}px`;
 
-  // Remove the currently snapped window from the picker
-  const snappedCard = taskViewOverlay.querySelector(`.tv-card[data-window-id="${currentSnapWindowId}"]`);
-  if (snappedCard) snappedCard.remove();
+  // Remove ALL snapped windows from the picker
+  Object.keys(windows).forEach(id => {
+    if (windows[id].isSnapped || id === currentSnapWindowId) {
+      const snappedCard = taskViewOverlay.querySelector(`.tv-card[data-window-id="${id}"]`);
+      if (snappedCard) snappedCard.remove();
+    }
+  });
   
   // Position the picker in the empty space
   if (snappedType === 'left' || snappedType === 'left-half') {
