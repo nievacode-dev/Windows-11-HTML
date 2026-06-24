@@ -66,6 +66,15 @@ function createWindow(appTitle = "Window", appId = null, appIcon = null) {
     e.stopPropagation();
     maximizeWindow(id);
   };
+  let snapHoverTimer = null;
+  maximizeBtn.addEventListener("mouseenter", () => {
+    snapHoverTimer = setTimeout(() => {
+      showSnapLayoutMenu(id, maximizeBtn);
+    }, 500);
+  });
+  maximizeBtn.addEventListener("mouseleave", () => {
+    clearTimeout(snapHoverTimer);
+  });
 
   // Close button
   const closeBtn = document.createElement("button");
@@ -214,8 +223,68 @@ function makeWindowInteractive(windowId, titleBar, resizeHandle) {
     // Stop dragging above top edge
     if (win.y < 0) win.y = 0;
 
-    // Snap Preview Logic
-    currentSnapType = checkSnapZones(e.clientX, e.clientY);
+    // Windows 11 style top snap menu logic
+    let newSnapType = null;
+    let overSnapMenuRegion = false;
+    const menu = document.getElementById("snapLayoutMenu");
+    
+    let isOverMenu = false;
+    if (menu && menu.dataset.visibleTop === "true") {
+      const rect = menu.getBoundingClientRect();
+      if (e.clientX >= rect.left - 20 && e.clientX <= rect.right + 20 &&
+          e.clientY >= 0 && e.clientY <= rect.bottom + 20) {
+        isOverMenu = true;
+      }
+    }
+
+    if (e.clientY <= 20 || isOverMenu) {
+      if (menu && !menu.dataset.visibleTop) {
+        menu.classList.add("visible");
+        menu.dataset.visibleTop = "true";
+        menu.style.top = '10px';
+        menu.style.left = '50%';
+        menu.style.transform = 'translateX(-50%)';
+      }
+      
+      const elementsUnderCursor = document.elementsFromPoint(e.clientX, e.clientY);
+      const menuEl = elementsUnderCursor.find(el => el.id === 'snapLayoutMenu');
+      const snapGrid = elementsUnderCursor.find(el => el.classList.contains('snap-grid'));
+      const snapRegion = elementsUnderCursor.find(el => el.classList.contains('snap-region'));
+      
+      document.querySelectorAll('.snap-region').forEach(r => r.classList.remove('hovered'));
+      document.querySelectorAll('.snap-grid').forEach(g => g.classList.remove('hovered'));
+      
+      if (snapGrid) {
+        snapGrid.classList.add('hovered');
+        overSnapMenuRegion = true;
+      }
+
+      if (snapRegion) {
+        snapRegion.classList.add('hovered');
+        newSnapType = snapRegion.dataset.snap;
+        overSnapMenuRegion = true;
+      } else if (menuEl) {
+        overSnapMenuRegion = true;
+      }
+    } else {
+      if (menu && menu.dataset.visibleTop) {
+        menu.classList.remove("visible");
+        delete menu.dataset.visibleTop;
+        menu.style.transform = '';
+        menu.style.left = '';
+        menu.style.top = '';
+        document.querySelectorAll('.snap-region').forEach(r => r.classList.remove('hovered'));
+        document.querySelectorAll('.snap-grid').forEach(g => g.classList.remove('hovered'));
+      }
+    }
+
+    if (!overSnapMenuRegion) {
+      newSnapType = checkSnapZones(e.clientX, e.clientY);
+    } else {
+      hideSnapPreview();
+    }
+    
+    currentSnapType = newSnapType;
   });
 
   titleBar.addEventListener("pointerup", (e) => {
@@ -224,6 +293,17 @@ function makeWindowInteractive(windowId, titleBar, resizeHandle) {
     titleBar.releasePointerCapture(e.pointerId);
     cancelAnimationFrame(animationFrameId);
     animationFrameId = null;
+
+    const menu = document.getElementById("snapLayoutMenu");
+    if (menu && menu.dataset.visibleTop) {
+      menu.classList.remove("visible");
+      delete menu.dataset.visibleTop;
+      menu.style.transform = '';
+      menu.style.left = '';
+      menu.style.top = '';
+      document.querySelectorAll('.snap-region').forEach(r => r.classList.remove('hovered'));
+      document.querySelectorAll('.snap-grid').forEach(g => g.classList.remove('hovered'));
+    }
 
     // Apply Snapping if applicable
     if (currentSnapType) {
@@ -352,16 +432,70 @@ function applySnap(windowId, type) {
     win.isMaximized = false;
     el.classList.remove("maximized");
 
-    // Half screen coordinates
+    // Handle all snap regions
     const taskbarHeight = 48;
     win.y = 0;
-    win.width = window.innerWidth / 2;
-    win.height = window.innerHeight - taskbarHeight;
 
-    if (type === 'left') {
+    if (type === 'left' || type === 'left-half') {
       win.x = 0;
-    } else if (type === 'right') {
+      win.width = window.innerWidth / 2;
+      win.height = window.innerHeight - taskbarHeight;
+    } else if (type === 'right' || type === 'right-half') {
       win.x = window.innerWidth / 2;
+      win.width = window.innerWidth / 2;
+      win.height = window.innerHeight - taskbarHeight;
+    } else if (type === 'left-large') {
+      win.x = 0;
+      win.width = window.innerWidth * 0.6;
+      win.height = window.innerHeight - taskbarHeight;
+    } else if (type === 'right-small') {
+      win.x = window.innerWidth * 0.6;
+      win.width = window.innerWidth * 0.4;
+      win.height = window.innerHeight - taskbarHeight;
+    } else if (type === 'left-third') {
+      win.x = 0;
+      win.width = window.innerWidth / 3;
+      win.height = window.innerHeight - taskbarHeight;
+    } else if (type === 'mid-third') {
+      win.x = window.innerWidth / 3;
+      win.width = window.innerWidth / 3;
+      win.height = window.innerHeight - taskbarHeight;
+    } else if (type === 'right-third') {
+      win.x = (window.innerWidth / 3) * 2;
+      win.width = window.innerWidth / 3;
+      win.height = window.innerHeight - taskbarHeight;
+    } else if (type === 'top-left-quarter') {
+      win.x = 0;
+      win.y = 0;
+      win.width = window.innerWidth / 2;
+      win.height = (window.innerHeight - taskbarHeight) / 2;
+    } else if (type === 'top-right-quarter') {
+      win.x = window.innerWidth / 2;
+      win.y = 0;
+      win.width = window.innerWidth / 2;
+      win.height = (window.innerHeight - taskbarHeight) / 2;
+    } else if (type === 'bottom-left-quarter') {
+      win.x = 0;
+      win.y = (window.innerHeight - taskbarHeight) / 2;
+      win.width = window.innerWidth / 2;
+      win.height = (window.innerHeight - taskbarHeight) / 2;
+    } else if (type === 'bottom-right-quarter') {
+      win.x = window.innerWidth / 2;
+      win.y = (window.innerHeight - taskbarHeight) / 2;
+      win.width = window.innerWidth / 2;
+      win.height = (window.innerHeight - taskbarHeight) / 2;
+    } else if (type === 'left-quarter') {
+      win.x = 0;
+      win.width = window.innerWidth / 4;
+      win.height = window.innerHeight - taskbarHeight;
+    } else if (type === 'mid-half') {
+      win.x = window.innerWidth / 4;
+      win.width = window.innerWidth / 2;
+      win.height = window.innerHeight - taskbarHeight;
+    } else if (type === 'right-quarter') {
+      win.x = (window.innerWidth / 4) * 3;
+      win.width = window.innerWidth / 4;
+      win.height = window.innerHeight - taskbarHeight;
     }
 
     el.style.top = `${win.y}px`;
@@ -562,9 +696,7 @@ function detachTaskbarItem(windowId, win) {
 function handleTaskbarClick(appId, appTitle, appIcon) {
   const reg = taskbarRegistry[appId];
   if (!reg || reg.windows.length === 0) {
-    if (appTitle.toLowerCase() === 'microsoft edge' || (appIcon && appIcon.includes('edge.ico'))) {
-      if (typeof openEdgeWindow === 'function') openEdgeWindow();
-    } else if (appId === 'cmd') {
+    if (appId === 'cmd') {
       if (typeof openTerminalWindow === 'function') openTerminalWindow();
     } else {
       createWindow(appTitle, appId, appIcon);
@@ -872,8 +1004,6 @@ function initializeAppShortcuts() {
 
       if (appId === 'cmd') {
         if (typeof openTerminalWindow === 'function') openTerminalWindow();
-      } else if (appTitle.toLowerCase() === 'microsoft edge' || appTitle.toLowerCase() === 'edge' || appId === 'edge' || appId === 'browser') {
-        if (typeof openEdgeWindow === 'function') openEdgeWindow();
       } else {
         createWindow(appTitle, appId, appIcon);
       }
@@ -1055,6 +1185,7 @@ function initializeTaskView() {
           if (win.element && win.element.style.display !== 'none' || win.isMinimized) {
             const card = document.createElement("div");
             card.className = "tv-card";
+            card.dataset.windowId = id;
             card.style.display = "flex";
 
             const header = document.createElement("div");
@@ -1143,15 +1274,186 @@ function initializeTaskView() {
   taskViewOverlay.addEventListener("click", (e) => {
     if (e.target === taskViewOverlay || e.target === taskViewWindows) {
       taskViewOverlay.classList.remove("visible");
+      taskViewOverlay.classList.remove("snap-assist");
+      taskViewOverlay.style.cssText = '';
     }
   });
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && taskViewOverlay.classList.contains("visible")) {
       taskViewOverlay.classList.remove("visible");
+      taskViewOverlay.classList.remove("snap-assist");
+      taskViewOverlay.style.cssText = '';
     }
   });
 }
+
+// Snap Assist logic
+let currentSnapWindowId = null;
+
+function showSnapLayoutMenu(windowId, btnElement) {
+  currentSnapWindowId = windowId;
+  const menu = document.getElementById("snapLayoutMenu");
+  if (!menu) return;
+  const rect = btnElement.getBoundingClientRect();
+  menu.style.top = `${rect.bottom + 10}px`;
+  let leftPos = rect.left + rect.width / 2 - 125;
+  if (leftPos + 250 > window.innerWidth) leftPos = window.innerWidth - 260;
+  if (leftPos < 10) leftPos = 10;
+  menu.style.left = `${leftPos}px`;
+  menu.classList.add("visible");
+}
+
+function showSnapAssist(snappedType) {
+  const desktopWindows = Object.keys(windows).filter(id => windows[id].desktopId === activeDesktopId);
+  if (desktopWindows.length <= 1) return;
+
+  const taskViewBtn = document.getElementById("taskViewBtn");
+  if (!taskViewBtn) return;
+  const taskViewOverlay = document.getElementById("taskViewOverlay");
+  
+  // Open task view
+  taskViewBtn.dispatchEvent(new Event('click'));
+  
+  // Convert it into snap assist picker
+  taskViewOverlay.classList.add("snap-assist");
+  
+  const taskbarHeight = 48;
+  taskViewOverlay.style.position = 'fixed';
+  taskViewOverlay.style.height = `${window.innerHeight - taskbarHeight}px`;
+
+  // Remove the currently snapped window from the picker
+  const snappedCard = taskViewOverlay.querySelector(`.tv-card[data-window-id="${currentSnapWindowId}"]`);
+  if (snappedCard) snappedCard.remove();
+  
+  // Position the picker in the empty space
+  if (snappedType === 'left' || snappedType === 'left-half') {
+    taskViewOverlay.style.left = '50%';
+    taskViewOverlay.style.width = '50%';
+    taskViewOverlay.style.top = '0';
+  } else if (snappedType === 'right' || snappedType === 'right-half') {
+    taskViewOverlay.style.left = '0';
+    taskViewOverlay.style.width = '50%';
+    taskViewOverlay.style.top = '0';
+  } else if (snappedType === 'left-large') {
+    taskViewOverlay.style.left = '60%';
+    taskViewOverlay.style.width = '40%';
+    taskViewOverlay.style.top = '0';
+  } else if (snappedType === 'right-small') {
+    taskViewOverlay.style.left = '0';
+    taskViewOverlay.style.width = '60%';
+    taskViewOverlay.style.top = '0';
+  } else if (snappedType === 'left-third') {
+    taskViewOverlay.style.left = '33.33%';
+    taskViewOverlay.style.width = '66.66%';
+    taskViewOverlay.style.top = '0';
+  } else if (snappedType === 'mid-third') {
+    taskViewOverlay.style.left = '66.66%';
+    taskViewOverlay.style.width = '33.33%';
+    taskViewOverlay.style.top = '0';
+  } else if (snappedType === 'right-third') {
+    taskViewOverlay.style.left = '0';
+    taskViewOverlay.style.width = '66.66%';
+    taskViewOverlay.style.top = '0';
+  } else if (snappedType === 'left-quarter') {
+    taskViewOverlay.style.left = '25%';
+    taskViewOverlay.style.width = '75%';
+    taskViewOverlay.style.top = '0';
+  } else if (snappedType === 'mid-half') {
+    taskViewOverlay.style.left = '75%';
+    taskViewOverlay.style.width = '25%';
+    taskViewOverlay.style.top = '0';
+  } else if (snappedType === 'right-quarter') {
+    taskViewOverlay.style.left = '0';
+    taskViewOverlay.style.width = '75%';
+    taskViewOverlay.style.top = '0';
+  } else if (snappedType.includes('quarter')) {
+    // Fill the other half horizontally for simplicity in snap assist
+    if (snappedType.includes('left')) {
+      taskViewOverlay.style.left = '50%';
+      taskViewOverlay.style.width = '50%';
+    } else {
+      taskViewOverlay.style.left = '0';
+      taskViewOverlay.style.width = '50%';
+    }
+  }
+
+  // Hook card clicks to snap them into the remaining spot
+  setTimeout(() => {
+    const cards = document.querySelectorAll('.tv-card');
+    cards.forEach(card => {
+      // Overwrite the click behavior to snap the new window
+      const oldClick = card.onclick;
+      card.onclick = (e) => {
+        const clickedWindowId = card.dataset.windowId;
+        oldClick.call(card, e);
+        
+        // Let the window restore first, then snap
+        setTimeout(() => {
+          let oppositeSnap = 'right-half';
+          if (snappedType === 'left' || snappedType === 'left-half') oppositeSnap = 'right-half';
+          else if (snappedType === 'right' || snappedType === 'right-half') oppositeSnap = 'left-half';
+          else if (snappedType === 'left-large') oppositeSnap = 'right-small';
+          else if (snappedType === 'right-small') oppositeSnap = 'left-large';
+          else if (snappedType === 'left-third') oppositeSnap = 'mid-third';
+          else if (snappedType === 'mid-third') oppositeSnap = 'right-third';
+          else if (snappedType === 'right-third') oppositeSnap = 'mid-third';
+          else if (snappedType === 'left-quarter') oppositeSnap = 'mid-half';
+          else if (snappedType === 'mid-half') oppositeSnap = 'right-quarter';
+          else if (snappedType === 'right-quarter') oppositeSnap = 'mid-half';
+          
+          if (clickedWindowId) {
+            applySnap(clickedWindowId, oppositeSnap);
+            // Re-invoke snap assist if we have 3-region layouts and there's another window to snap?
+            // Windows 11 does this, but for simplicity we can just let it end after one snap or re-trigger
+            // Let's re-trigger if it was a 3-part layout and more windows exist
+            const layout3 = ['left-third', 'mid-third', 'left-quarter', 'mid-half'];
+            if (layout3.includes(snappedType)) {
+              setTimeout(() => {
+                currentSnapWindowId = clickedWindowId;
+                showSnapAssist(oppositeSnap);
+              }, 300);
+            }
+          }
+          // Reset overlay styling
+          taskViewOverlay.classList.remove("snap-assist");
+          taskViewOverlay.style.cssText = '';
+        }, 50);
+      };
+    });
+  }, 100);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const menu = document.getElementById("snapLayoutMenu");
+  if (!menu) return;
+
+  menu.addEventListener("mouseenter", () => {
+    menu.classList.add("visible");
+  });
+  
+  menu.addEventListener("mouseleave", () => {
+    menu.classList.remove("visible");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!menu.contains(e.target) && !e.target.closest('.maximize')) {
+      menu.classList.remove("visible");
+    }
+  });
+
+  menu.querySelectorAll(".snap-region").forEach(region => {
+    region.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const snapType = region.dataset.snap;
+      if (currentSnapWindowId && snapType) {
+        applySnap(currentSnapWindowId, snapType);
+        menu.classList.remove("visible");
+        setTimeout(() => showSnapAssist(snapType), 300);
+      }
+    });
+  });
+});
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", () => {

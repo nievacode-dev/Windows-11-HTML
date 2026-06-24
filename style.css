@@ -229,6 +229,7 @@ body {
 
 .quick-settings.show {
   display: block;
+  animation: startmenu 0.3s;
 }
 
 .quick-settings-main {
@@ -1021,6 +1022,7 @@ body {
   cursor: default;
   box-shadow: 0px 5px 10px rgba(15, 15, 15, 0.8);
   isolation: isolate;
+  z-index: 100001;
 }
 
 .context-menu::before {
@@ -1716,7 +1718,8 @@ h2 {
   height: 55px;
 }
 
-.app-desktop:hover {
+.app-desktop:hover,
+.app-desktop.active {
   background-color: rgba(50, 50, 50, 0.4);
 }
 
@@ -1889,7 +1892,8 @@ h2 {
   /* background-color: rgba(29, 115, 254, 0.22); */
   /* border: 1px solid rgb(29, 117, 254); */
   border: 1px solid #0078d4;
-  z-index: -1;
+  z-index: 2;
+  pointer-events: none;
 }
 
 .black-screen {
@@ -2734,4 +2738,17 @@ body.search-logo-only .search-results-container {
 .search-result-item span {
   color: white;
   font-size: 14px;
+}
+.search-menu-redirect {
+  width: 650px !important;
+}
+
+.instant-transition {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Force Menus to stay on top of everything */
+#startMenu, #searchMenu, #quickSettings, #widgetsMenu, #trayContent, #taskbarPreviewMenu, #snapLayoutMenu, .taskbar {
+    z-index: 2147483647 !important;
 }

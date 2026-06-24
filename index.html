@@ -20,7 +20,7 @@
   <!-- Boot screen disabled for debugging clickability -->
   <div class="black-screen" id="bootScreen" style="z-index: 99999; display: none;">
     <img src="icon/logo-windows-11-icon-1024.png" class="booting-logo" alt="Booting" />
-    </div>
+  </div>
   <!-- Cookie-based boot skip removed -->
   <!-- Lock screen disabled for debugging clickability -->
   <div class="lock-screen" id="lockScreen" style="display: none;">
@@ -209,7 +209,8 @@
     <div class="context-item">
       <span class="ico context-item-icon">&#xe712;</span>
       <span style="flex-grow: 1;">Show more options</span>
-      <span class="context-item-shortcut" style="color: rgba(255,255,255,0.6); font-size: 12px; margin-right: 15px;">Shift+F10</span>
+      <span class="context-item-shortcut"
+        style="color: rgba(255,255,255,0.6); font-size: 12px; margin-right: 15px;">Shift+F10</span>
     </div>
   </div>
   <div class="context-menu" id="appContextMenu">
@@ -238,16 +239,20 @@
       <span>Show more options</span>
     </div>
   </div>
-  <div class="context-menu" id="taskbarContextMenu" style="display: none; position: fixed; z-index: 10001; padding: 5px;">
-    <div class="tb-context-header" style="display: flex; align-items: center; padding: 8px 12px; gap: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 4px; border-radius: 4px; background: rgba(50, 50, 50, 0.4);">
+  <div class="context-menu" id="taskbarContextMenu"
+    style="display: none; position: fixed; z-index: 10001; padding: 5px;">
+    <div class="tb-context-header"
+      style="display: flex; align-items: center; padding: 8px 12px; gap: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 4px; border-radius: 4px; background: rgba(50, 50, 50, 0.4);">
       <img src="" id="tbContextIcon" style="width: 16px; height: 16px;" />
       <span id="tbContextName" style="font-size: 13px; font-weight: 500; color: white;">App Name</span>
     </div>
     <div class="context-item tb-context-action" id="tbContextPinAction">
-      <span><span class="ico context-item-icon" id="tbContextPinIcon" style="font-size: 14px;">&#xe840;</span><span id="tbContextPinText" style="font-size: 13px;">Unpin from taskbar</span></span>
+      <span><span class="ico context-item-icon" id="tbContextPinIcon" style="font-size: 14px;">&#xe840;</span><span
+          id="tbContextPinText" style="font-size: 13px;">Unpin from taskbar</span></span>
     </div>
   </div>
-  <div class="context-menu" id="startAppContextMenu" style="display: none; position: fixed; z-index: 10001; padding: 5px;">
+  <div class="context-menu" id="startAppContextMenu"
+    style="display: none; position: fixed; z-index: 10001; padding: 5px;">
     <div class="context-item">
       <span><span class="ico context-item-icon">&#xe74b;</span>Move to top</span>
     </div>
@@ -258,7 +263,8 @@
       <span><span class="ico context-item-icon">&#xe7ee;</span>Run as administrator</span>
     </div>
     <div class="context-item" id="startAppPinAction">
-      <span><span class="ico context-item-icon" id="startAppPinIcon">&#xe840;</span><span id="startAppPinText">Pin to taskbar</span></span>
+      <span><span class="ico context-item-icon" id="startAppPinIcon">&#xe840;</span><span id="startAppPinText">Pin to
+          taskbar</span></span>
     </div>
     <div class="context-item">
       <span><span class="ico context-item-icon">&#xe713;</span>App settings</span>
@@ -359,7 +365,7 @@
   <div class="start-menu" id="startMenu">
     <div class="search-bar-container">
       <span class="ico search-icon">&#xe721;</span>
-      <input type="text" class="search-bar" placeholder="Type here to search" />
+      <input type="text" class="search-bar" id="startMenuSearchInput" placeholder="Type here to search" />
     </div>
     <div class="start-menu-viewport" id="startMenuViewport">
       <div class="start-content">
@@ -595,7 +601,13 @@
         <input type="text" class="search-menu-input" id="searchMenuInput" placeholder="Type here to search" />
       </div>
     </div>
-    
+
+    <!-- Redirect Search Bar (looks like Start Menu search bar) -->
+    <div class="search-bar-container" id="searchMenuRedirectBarContainer" style="display: none;">
+      <span class="ico search-icon">&#xe721;</span>
+      <input type="text" class="search-bar" id="searchMenuRedirectInput" placeholder="Type here to search" />
+    </div>
+
     <div class="search-results-container" id="searchResultsContainer" style="display: none;">
       <!-- Dynamic results will be injected here -->
     </div>
@@ -621,7 +633,7 @@
           <div class="quick-search-pill">Color settings</div>
           <div class="quick-search-pill">Search settings</div>
         </div>
-        
+
         <div class="search-section-header" style="margin-top: 25px;">
           <div class="search-section-title">Top apps</div>
         </div>
@@ -780,6 +792,45 @@
   </div>
   <div class="taskbar-preview-menu" id="taskbarPreviewMenu"></div>
 
+  <!-- Snap Layouts Menu -->
+  <div class="snap-layout-menu" id="snapLayoutMenu">
+    <!-- Layout 1: Two Halves -->
+    <div class="snap-grid layout-1">
+      <div class="snap-region" data-snap="left-half"></div>
+      <div class="snap-region" data-snap="right-half"></div>
+    </div>
+    <!-- Layout 2: 60/40 -->
+    <div class="snap-grid layout-2">
+      <div class="snap-region" data-snap="left-large"></div>
+      <div class="snap-region" data-snap="right-small"></div>
+    </div>
+    <!-- Layout 3: Three Columns -->
+    <div class="snap-grid layout-3">
+      <div class="snap-region" data-snap="left-third"></div>
+      <div class="snap-region" data-snap="mid-third"></div>
+      <div class="snap-region" data-snap="right-third"></div>
+    </div>
+    <!-- Layout 4: Halves and Quarters -->
+    <div class="snap-grid layout-4">
+      <div class="snap-region" data-snap="left-half"></div>
+      <div class="snap-region top-right" data-snap="top-right-quarter"></div>
+      <div class="snap-region bottom-right" data-snap="bottom-right-quarter"></div>
+    </div>
+    <!-- Layout 5: Four Quarters -->
+    <div class="snap-grid layout-5">
+      <div class="snap-region" data-snap="top-left-quarter"></div>
+      <div class="snap-region" data-snap="top-right-quarter"></div>
+      <div class="snap-region" data-snap="bottom-left-quarter"></div>
+      <div class="snap-region" data-snap="bottom-right-quarter"></div>
+    </div>
+    <!-- Layout 6: 25 / 50 / 25 -->
+    <div class="snap-grid layout-6">
+      <div class="snap-region" data-snap="left-quarter"></div>
+      <div class="snap-region" data-snap="mid-half"></div>
+      <div class="snap-region" data-snap="right-quarter"></div>
+    </div>
+  </div>
+
   <div class="taskbar">
     <div class="taskbar-middle" id="taskbarApps">
       <img src="icon/start2.ico" alt="Start" class="taskbar-app" id="startLogo" />
@@ -817,7 +868,8 @@
       </div>
       <div class="search-taskbar-btn" id="searchBtn">
         <img src="icon/search2.ico" alt="Search" class="search-taskbar-icon" />
-        <input type="text" class="search-taskbar-input" id="taskbarSearchInput" placeholder="Search" autocomplete="off" />
+        <input type="text" class="search-taskbar-input" id="taskbarSearchInput" placeholder="Search"
+          autocomplete="off" />
       </div>
       <img src="icon/taskview2.ico" alt="Task View" class="taskbar-app" id="taskViewBtn" />
       <img src="icon/widgets.ico" alt="Widgets" class="taskbar-app" id="widgetsIcon" />
@@ -888,57 +940,12 @@
   <input type="file" id="fileInput" style="display: none" />
 
   <script src="main.js"></script>
-  <!-- Microsoft Edge App -->
-  <div class="edge-window window" id="edgeWindow" data-app-id="edge" style="display: none;" data-drag-window="true">
-    <div class="edge-header title-bar" data-drag-handle="true">
-      <!-- Edge Tabs Area -->
-      <div class="edge-tabs">
-        <div class="edge-tab active">
-          <img src="icon/edge.ico" alt="Edge" class="edge-tab-icon" />
-          <span class="edge-tab-title">New Tab</span>
-          <span class="edge-tab-close">×</span>
-        </div>
-        <div class="edge-tab-add">+</div>
-      </div>
-      <!-- Drag Handle -->
-      <div class="edge-drag-region title"></div>
-      <!-- Window Controls -->
-      <div class="window-controls">
-        <button class="control-btn minimize" onpointerdown="event.stopPropagation()"
-          onclick="minimizeWindow('edge')">−</button>
-        <button class="control-btn maximize" onpointerdown="event.stopPropagation()"
-          onclick="maximizeWindow('edge')">□</button>
-        <button class="control-btn close" onpointerdown="event.stopPropagation()" onclick="closeEdgeWindow()">×</button>
-      </div>
-    </div>
-
-    <div class="edge-toolbar">
-      <div class="edge-nav-btns">
-        <button class="edge-btn back" title="Back">&#xe72b;</button>
-        <button class="edge-btn forward" title="Forward">&#xe72a;</button>
-        <button class="edge-btn refresh" title="Refresh" onclick="refreshEdge()">&#xe72c;</button>
-        <button class="edge-btn home" title="Home" onclick="goEdgeHome()">&#xe80f;</button>
-      </div>
-      <div class="edge-address-bar">
-        <span class="edge-security-icon ico">&#xe72e;</span>
-        <input type="text" id="edgeUrlInput" class="edge-url-input" value="https://en.wikipedia.org"
-          placeholder="Search or enter web address" />
-      </div>
-      <div class="edge-action-btns">
-        <button class="edge-btn" title="Extensions">&#xe840;</button>
-        <button class="edge-btn" title="Settings and more">&#xe712;</button>
-      </div>
-    </div>
-
-    <!-- <div class="edge-body" id="edgeBody">
-      <iframe src="https://en.wikipedia.org" id="edgeIframe" class="edge-iframe" frameborder="0"></iframe>
-    </div> -->
-  </div>
+  <!-- Edge app logic removed to use standard window -->
   <!-- Task Manager App -->
   <div class="task-manager-window window" id="taskManagerWindow" data-app-id="taskmgr" data-drag-window="true">
     <div class="tm-header title-bar" data-drag-handle="true">
       <!-- App Title -->
-      <span class="tm-title-icon ico" style="font-size: 14px; margin-left: 5px;">&#xe9f3;</span>
+      <img src="icon/taskmanager.ico" class="tm-title-icon" style="width: 16px; height: 16px; margin-left: 10px;" />
       <span class="tm-title-text" style="font-size: 12px; margin-left: 8px;">Task Manager</span>
       <!-- Drag Handle -->
       <div class="tm-drag-region title" style="flex-grow: 1;"></div>
@@ -1228,7 +1235,6 @@
   <!-- <script src="js/experiment.js"></script> -->
   <script src="js/copy-and-paste.js"></script>
   <script src="js/window-mode.js"></script>
-  <script src="js/edge.js"></script>
   <script src="js/task-manager.js"></script>
   <script src="js/universal-drag.js"></script>
   <script src="js/desktop-icons.js"></script>

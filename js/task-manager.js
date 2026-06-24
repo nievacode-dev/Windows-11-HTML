@@ -28,7 +28,7 @@ const baseProcesses = [
     { name: "Settings", icon: "icon/settings.ico", cpu: 0, mem: 45, disk: 0, net: 0, gpu: 0 },
     { name: "Windows Terminal", icon: "icon/terminal.ico", cpu: 0.1, mem: 60, disk: 0, net: 0, gpu: 0.2 },
     { name: "Antimalware Service Executable", icon: "icon/defender.ico", cpu: 1.5, mem: 150, disk: 2.5, net: 0, gpu: 0 },
-    { name: "Task Manager", icon: "icon/taskview2.ico", cpu: 2.1, mem: 60, disk: 0.1, net: 0, gpu: 0.5 },
+    { name: "Task Manager", icon: "icon/taskmanager.ico", cpu: 2.1, mem: 60, disk: 0.1, net: 0, gpu: 0.5 },
     { name: "Registry", icon: "icon/explorer.ico", cpu: 0, mem: 35, disk: 0, net: 0, gpu: 0 },
     { name: "WMI Provider Host", icon: "icon/explorer.ico", cpu: 0.1, mem: 15, disk: 0, net: 0, gpu: 0 },
     { name: "Service Host: Local System", icon: "icon/explorer.ico", cpu: 0.2, mem: 80, disk: 0.1, net: 0.1, gpu: 0 }
@@ -51,7 +51,7 @@ window.openTaskManagerWindow = function() {
                 isMaximized: false,
                 isMinimized: false,
                 appTitle: "Task Manager",
-                appIcon: "icon/taskview2.ico",
+                appIcon: "icon/taskmanager.ico",
                 x: parseInt(tmWindow.style.left) || 150,
                 y: parseInt(tmWindow.style.top) || 80,
                 width: 800,

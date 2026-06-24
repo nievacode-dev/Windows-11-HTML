@@ -35,7 +35,33 @@ const body = document.body;
 
 startLogo.addEventListener("click", function (e) {
   e.stopPropagation();
-  startMenu.classList.toggle("menu-open");
+  const isOpen = startMenu.classList.toggle("menu-open");
+  if (isOpen) {
+    // Reset any previous search query for a fresh start
+    const searchInput = document.getElementById("searchMenuInput");
+    const taskbarSearchInput = document.getElementById("taskbarSearchInput");
+    const redirectSearchInput = document.getElementById("searchMenuRedirectInput");
+    if (searchInput) searchInput.value = "";
+    if (taskbarSearchInput) taskbarSearchInput.value = "";
+    if (redirectSearchInput) redirectSearchInput.value = "";
+    if (searchInput) searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+    if (taskbarSearchInput) taskbarSearchInput.dispatchEvent(new Event("input", { bubbles: true }));
+    if (redirectSearchInput) redirectSearchInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+    const redirectContainer = document.getElementById("searchMenuRedirectBarContainer");
+    if (redirectContainer) redirectContainer.style.display = "none";
+
+    const startMenuInput = document.getElementById("startMenuSearchInput");
+    if (startMenuInput) {
+      startMenuInput.value = "";
+      startMenuInput.focus();
+    }
+  } else {
+    const startMenuInput = document.getElementById("startMenuSearchInput");
+    if (startMenuInput) {
+      startMenuInput.value = "";
+    }
+  }
   if (searchMenu) {
     searchMenu.classList.remove("menu-open");
   }
@@ -89,6 +115,14 @@ document.addEventListener("DOMContentLoaded", () => {
         // delay removal to reset after it's hidden
         setTimeout(() => startMenuViewport.classList.remove("show-all-apps"), 200);
       }
+    }
+    
+    // Close search menu if clicked outside
+    const searchBtnEl = document.getElementById("searchBtn");
+    const taskbarSearchEl = document.getElementById("taskbarSearchInput");
+    if (searchMenu && !searchMenu.contains(e.target) && e.target !== searchBtnEl && e.target !== taskbarSearchEl) {
+      searchMenu.classList.remove("menu-open");
+      setTimeout(() => searchMenu.classList.remove("search-menu-redirect"), 300);
     }
   });
 });
@@ -333,34 +367,34 @@ document.addEventListener("DOMContentLoaded", () => {
     appRenameBtn.addEventListener("click", () => {
       const appContextMenu = document.getElementById("appContextMenu");
       if (appContextMenu) appContextMenu.style.display = "none";
-      
+
       const appDesktop = window.currentContextApp;
       if (appDesktop) {
         const nameSpan = appDesktop.querySelector('.app-name');
         if (nameSpan) {
           nameSpan.contentEditable = "true";
           nameSpan.focus();
-          
+
           const range = document.createRange();
           range.selectNodeContents(nameSpan);
           const sel = window.getSelection();
           sel.removeAllRanges();
           sel.addRange(range);
-          
+
           const stopEditing = () => {
             nameSpan.contentEditable = "false";
             appDesktop.dataset.title = nameSpan.textContent;
             nameSpan.removeEventListener("blur", stopEditing);
             nameSpan.removeEventListener("keydown", keyHandler);
           };
-          
+
           const keyHandler = (e) => {
             if (e.key === "Enter") {
               e.preventDefault();
               nameSpan.blur();
             }
           };
-          
+
           nameSpan.addEventListener("blur", stopEditing);
           nameSpan.addEventListener("keydown", keyHandler);
         }
@@ -449,6 +483,7 @@ document.addEventListener("click", function () {
 
 startLogo.addEventListener("contextmenu", function (e) {
   e.preventDefault();
+  e.stopPropagation();
 
   document.getElementById("quickLink").style.display = "block";
 });
@@ -630,26 +665,7 @@ function booting() {
   }, 7000);
 }
 
-const qsBtn = document.getElementById("quickSettingsBtn");
-qsBtn.onclick = () => {
-  const quickSettings = document.getElementById("quickSettings");
-  if (
-    quickSettings.style.display === "none" ||
-    quickSettings.style.display === ""
-  ) {
-    quickSettings.style.display = "block";
-    quickSettings.style.animation = "startmenu 0.3s";
-    setTimeout(() => {
-      quickSettings.style.animation = "";
-    }, 300);
-  } else {
-    quickSettings.style.display = "none";
-    quickSettings.style.animation = "startmenudown 0.3s";
-    setTimeout(() => {
-      quickSettings.style.animation = "";
-    }, 300);
-  }
-};
+// Old quick settings logic removed to avoid conflict
 
 let taskbarApp = document.getElementsByClassName("taskbar-app");
 for (let a = 0; a < taskbarApp.length; a++) {
@@ -703,6 +719,20 @@ document.addEventListener("mousedown", function (e) {
     selectionDiv.style.top = `${y}px`;
     selectionDiv.style.width = `${w}px`;
     selectionDiv.style.height = `${h}px`;
+
+    const selRect = { left: x, top: y, right: x + w, bottom: y + h };
+    document.querySelectorAll(".app-desktop").forEach(app => {
+      const appRect = app.getBoundingClientRect();
+      const overlap = !(appRect.right < selRect.left ||
+        appRect.left > selRect.right ||
+        appRect.bottom < selRect.top ||
+        appRect.top > selRect.bottom);
+      if (overlap) {
+        app.classList.add("active");
+      } else {
+        app.classList.remove("active");
+      }
+    });
   }
 
   function onMouseUp() {
@@ -952,12 +982,31 @@ const searchableApps = [
   { name: "Task Manager", icon: "icon/taskmanager.ico", fallbackIcon: "icon/terminal.ico", action: () => { if (typeof openTaskManagerWindow === "function") openTaskManagerWindow(); } },
   { name: "File Explorer", icon: "icon/explorer.ico", action: () => { console.log("Open File Explorer"); } },
   { name: "Settings", icon: "icon/settings.ico", action: () => { console.log("Open Settings"); } },
-  { name: "Microsoft Edge", icon: "icon/edge.ico", action: () => { if (typeof openEdgeWindow === "function") openEdgeWindow(); } },
+  { name: "Microsoft Edge", icon: "icon/edge.ico", action: () => { if (typeof createWindow === "function") createWindow("Microsoft Edge", "edge", "icon/edge.ico"); } },
 ];
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Dynamically populate searchableApps with all Start Menu applications
+  document.querySelectorAll(".start-app").forEach(appEl => {
+    const nameEl = appEl.querySelector(".start-app-name");
+    const imgEl = appEl.querySelector("img");
+    if (nameEl && imgEl) {
+      const appName = nameEl.innerText.trim();
+      const iconSrc = imgEl.getAttribute("src");
+
+      if (!searchableApps.find(a => a.name.toLowerCase() === appName.toLowerCase())) {
+        searchableApps.push({
+          name: appName,
+          icon: iconSrc,
+          action: () => appEl.click()
+        });
+      }
+    }
+  });
+
   const searchInput = document.getElementById("searchMenuInput");
   const taskbarSearchInput = document.getElementById("taskbarSearchInput");
+  const redirectSearchInput = document.getElementById("searchMenuRedirectInput");
   const searchBody = document.getElementById("searchMenuBody");
   const searchResults = document.getElementById("searchResultsContainer");
   const searchMenu = document.getElementById("searchMenu");
@@ -994,6 +1043,9 @@ document.addEventListener("DOMContentLoaded", () => {
             searchMenu.classList.remove("menu-open");
             searchMenu.style.display = "none";
             setTimeout(() => searchMenu.style.display = "", 300);
+            const redirectContainer = document.getElementById("searchMenuRedirectBarContainer");
+            if (redirectContainer) redirectContainer.style.display = "none";
+            if (redirectSearchInput) redirectSearchInput.value = "";
           }
         });
         recentList.appendChild(item);
@@ -1022,7 +1074,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (searchBtn && searchMenu) {
     searchBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      
+
+      const redirectContainer = document.getElementById("searchMenuRedirectBarContainer");
+      if (redirectContainer) redirectContainer.style.display = "none";
+
       if (typeof startMenu !== 'undefined' && startMenu) {
         startMenu.classList.remove("menu-open");
       }
@@ -1036,6 +1091,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      searchMenu.classList.remove("search-menu-redirect");
       searchMenu.classList.add("menu-open");
       if (document.body.classList.contains("search-logo-only")) {
         if (typeof searchInput !== 'undefined' && searchInput) searchInput.focus();
@@ -1049,8 +1105,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const query = e.target.value.toLowerCase().trim();
 
     // Sync inputs
-    if (e.target === searchInput && taskbarSearchInput) taskbarSearchInput.value = searchInput.value;
-    if (e.target === taskbarSearchInput && searchInput) searchInput.value = taskbarSearchInput.value;
+    if (e.target === searchInput) {
+      if (taskbarSearchInput) taskbarSearchInput.value = searchInput.value;
+      if (redirectSearchInput) redirectSearchInput.value = searchInput.value;
+    }
+    if (e.target === taskbarSearchInput) {
+      if (searchInput) searchInput.value = taskbarSearchInput.value;
+      if (redirectSearchInput) redirectSearchInput.value = taskbarSearchInput.value;
+    }
+    if (e.target === redirectSearchInput) {
+      if (searchInput) searchInput.value = redirectSearchInput.value;
+      if (taskbarSearchInput) taskbarSearchInput.value = redirectSearchInput.value;
+    }
 
     if (query.length > 0) {
       if (searchBody) searchBody.style.display = "none";
@@ -1077,9 +1143,12 @@ document.addEventListener("DOMContentLoaded", () => {
               searchMenu.classList.remove("menu-open");
               searchMenu.style.display = "none";
               setTimeout(() => searchMenu.style.display = "", 300); // Reset inline display after anim
+              const redirectContainer = document.getElementById("searchMenuRedirectBarContainer");
+              if (redirectContainer) redirectContainer.style.display = "none";
             }
             if (searchInput) searchInput.value = "";
             if (taskbarSearchInput) taskbarSearchInput.value = "";
+            if (redirectSearchInput) redirectSearchInput.value = "";
             if (searchBody) searchBody.style.display = "flex";
             if (searchResults) searchResults.style.display = "none";
           });
@@ -1094,6 +1163,97 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (searchInput) searchInput.addEventListener("input", handleSearchInput);
   if (taskbarSearchInput) taskbarSearchInput.addEventListener("input", handleSearchInput);
+  if (redirectSearchInput) redirectSearchInput.addEventListener("input", handleSearchInput);
+
+  // Redirect start menu search bar typing to search menu
+  const startMenuInput = document.getElementById("startMenuSearchInput");
+  if (startMenuInput) {
+    startMenuInput.addEventListener("input", (e) => {
+      const val = e.target.value;
+      if (val.length > 0) {
+        // Clear start menu input
+        e.target.value = "";
+
+        // Hide start menu
+        if (startMenu) {
+          startMenu.classList.add("instant-transition");
+          startMenu.classList.remove("menu-open");
+          setTimeout(() => startMenu.classList.remove("instant-transition"), 50);
+        }
+
+        // Open search menu
+        if (searchMenu) {
+          searchMenu.classList.add("search-menu-redirect");
+          searchMenu.classList.add("instant-transition");
+          searchMenu.classList.add("menu-open");
+          setTimeout(() => searchMenu.classList.remove("instant-transition"), 50);
+        }
+
+        // Show the redirect search bar container in the search menu
+        const redirectContainer = document.getElementById("searchMenuRedirectBarContainer");
+        if (redirectContainer) {
+          redirectContainer.style.display = "block";
+        }
+
+        // Target redirect search input
+        const targetInput = redirectSearchInput;
+
+        if (targetInput) {
+          targetInput.value = val;
+          targetInput.focus();
+          // Position cursor at the end of the text
+          targetInput.setSelectionRange(val.length, val.length);
+          // Trigger the search logic in main.js
+          targetInput.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+      }
+    });
+  }
+
+  // Redirect any keypress on start menu to search menu (for keyboard-only starting of search)
+  document.addEventListener("keydown", (e) => {
+    if (startMenu && startMenu.classList.contains("menu-open")) {
+      const tag = e.target.tagName;
+      const isInput = tag === "INPUT" || tag === "TEXTAREA" || e.target.isContentEditable;
+      if (isInput) return;
+
+      // Ignore modifier keys and function keys
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+
+        // Hide start menu
+        if (startMenu) {
+          startMenu.classList.add("instant-transition");
+          startMenu.classList.remove("menu-open");
+          setTimeout(() => startMenu.classList.remove("instant-transition"), 50);
+        }
+
+        // Open search menu
+        if (searchMenu) {
+          searchMenu.classList.add("search-menu-redirect");
+          searchMenu.classList.add("instant-transition");
+          searchMenu.classList.add("menu-open");
+          setTimeout(() => searchMenu.classList.remove("instant-transition"), 50);
+        }
+
+        // Show the redirect search bar container in the search menu
+        const redirectContainer = document.getElementById("searchMenuRedirectBarContainer");
+        if (redirectContainer) {
+          redirectContainer.style.display = "block";
+        }
+
+        // Target redirect search input
+        const targetInput = redirectSearchInput;
+
+        if (targetInput) {
+          targetInput.value = e.key;
+          targetInput.focus();
+          targetInput.setSelectionRange(1, 1);
+          targetInput.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+      }
+    }
+  });
 });
 
 // Tray and Quick Settings Toggle Logic
@@ -1127,6 +1287,8 @@ document.addEventListener("click", (e) => {
   const searchBtn = document.getElementById("searchBtn");
   if (searchMenu && searchMenu.classList.contains("menu-open") && searchBtn && !searchBtn.contains(e.target) && !searchMenu.contains(e.target)) {
     searchMenu.classList.remove("menu-open");
+    const redirectContainer = document.getElementById("searchMenuRedirectBarContainer");
+    if (redirectContainer) redirectContainer.style.display = "none";
   }
 });
 

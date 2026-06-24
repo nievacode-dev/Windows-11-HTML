@@ -773,3 +773,131 @@ body.light-mode .taskbar-preview-menu .tv-card-preview {
     background-color: rgba(255, 255, 255, 0.6);
     border-color: rgba(0, 0, 0, 0.05);
 }
+
+/* ============================================================
+   Snap Layouts Menu
+   ============================================================ */
+
+.snap-layout-menu {
+    position: fixed;
+    background-color: rgba(32, 32, 32, 0.95);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    z-index: 10001;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-5px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    width: 250px;
+    justify-content: space-between;
+}
+
+.snap-layout-menu.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.snap-layout-menu[data-visible-top="true"] {
+    width: auto;
+    flex-wrap: nowrap;
+}
+
+.snap-layout-menu[data-visible-top="true"] .snap-grid {
+    width: 90px;
+    height: 62px;
+    gap: 6px;
+    padding: 3px;
+}
+
+body.light-mode .snap-layout-menu {
+    background-color: rgba(243, 243, 243, 0.95);
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.snap-grid {
+    width: 70px;
+    height: 48px;
+    display: grid;
+    gap: 4px;
+    border-radius: 4px;
+    padding: 2px;
+    transition: width 0.15s, height 0.15s, gap 0.15s, padding 0.15s;
+}
+
+.snap-grid:hover .snap-region,
+.snap-grid.hovered .snap-region {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+body.light-mode .snap-grid:hover .snap-region,
+body.light-mode .snap-grid.hovered .snap-region {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.snap-region {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: background-color 0.1s;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.light-mode .snap-region {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.snap-region:hover,
+.snap-region.hovered {
+    background-color: #60CDFF !important;
+    border-color: transparent !important;
+}
+
+/* Layout 1: Two Halves */
+.layout-1 { grid-template-columns: 1fr 1fr; }
+
+/* Layout 2: 60/40 */
+.layout-2 { grid-template-columns: 2fr 1fr; }
+
+/* Layout 3: Three Columns */
+.layout-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+/* Layout 4: Halves and Quarters */
+.layout-4 { 
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+.layout-4 .snap-region:first-child { grid-row: 1 / 3; }
+
+/* Layout 5: Four Quarters */
+.layout-5 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+
+/* Layout 6: Quarter / Half / Quarter */
+.layout-6 { grid-template-columns: 1fr 2fr 1fr; }
+
+/* Snap Assist Constraints */
+.task-view-overlay.snap-assist {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.task-view-overlay.snap-assist .task-view-desktops {
+    display: none; /* Hide desktops when in snap assist */
+}
+
+/* Base state for snap-assist card container */
+.task-view-overlay.snap-assist .task-view-windows {
+    align-items: center;
+    justify-content: center;
+}

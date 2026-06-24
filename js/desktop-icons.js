@@ -188,6 +188,17 @@ class DesktopIconManager {
     }
 
     setupDragEvents() {
+        // Prevent native drag for our custom dragged elements
+        document.addEventListener('dragstart', (e) => {
+            if (e.target.closest('.start-app') || e.target.closest('.app-desktop')) {
+                if (!e.target.closest('.taskbar-item')) {
+                    e.preventDefault();
+                }
+            }
+        });
+
+        let potentialDrag = null;
+
         document.addEventListener('mousedown', (e) => {
             if (e.button !== 0) return; // Only left click
 
@@ -198,43 +209,13 @@ class DesktopIconManager {
                 const span = startApp.querySelector('span');
                 
                 if (img && span) {
-                    const icon = document.createElement('div');
-                    icon.className = 'app-desktop dragging';
-                    icon.dataset.id = "icon_" + Math.random().toString(36).substr(2, 9);
-                    
-                    icon.innerHTML = `
-                        <div class="app-shortcut">
-                            <img src="${img.src}" class="app application" />
-                            <img src="icon/shortcut.ico" class="shortcut" />
-                        </div>
-                        <span class="app-name">${span.innerText}</span>
-                    `;
-                    icon.dataset.title = span.innerText;
-                    icon.dataset.fromStartMenu = "true";
-
-                    // Double click opens the app logic
-                    icon.addEventListener("dblclick", () => {
-                        if (typeof createWindow === 'function') {
-                            createWindow(span.innerText, span.innerText.toLowerCase().replace(/\s/g, ''), img.src);
-                        }
-                    });
-
-                    icon.addEventListener("click", (ev) => {
-                        ev.stopPropagation();
-                        document.querySelectorAll(".app-desktop").forEach(a => a.classList.remove("active"));
-                        icon.classList.add("active");
-                    });
-
-                    document.body.appendChild(icon);
-
-                    this.isDragging = true;
-                    this.currentIcon = icon;
-                    
-                    this.offsetX = this.gridCellWidth / 2;
-                    this.offsetY = this.gridCellHeight / 2;
-
-                    this.setPosition(icon, e.clientX - this.offsetX, e.clientY - this.offsetY);
-                    e.preventDefault();
+                    potentialDrag = {
+                        type: 'startMenu',
+                        img: img,
+                        span: span,
+                        startX: e.clientX,
+                        startY: e.clientY
+                    };
                     return;
                 }
             }
@@ -246,24 +227,74 @@ class DesktopIconManager {
             // Ignore double clicks rapidly creating drag
             if (e.detail > 1) return;
 
-            this.isDragging = true;
-            this.currentIcon = icon;
-            
-            icon.classList.remove('grid-aligned');
-            icon.classList.add('dragging');
-
-            const rect = icon.getBoundingClientRect();
-            // Save original position in case we need to revert due to overlap
-            icon.dataset.originalLeft = rect.left;
-            icon.dataset.originalTop = rect.top;
-
-            this.offsetX = e.clientX - rect.left;
-            this.offsetY = e.clientY - rect.top;
-
-            e.preventDefault();
+            potentialDrag = {
+                type: 'desktopIcon',
+                element: icon,
+                startX: e.clientX,
+                startY: e.clientY
+            };
         });
 
         document.addEventListener('mousemove', (e) => {
+            if (potentialDrag && !this.isDragging) {
+                const dist = Math.hypot(e.clientX - potentialDrag.startX, e.clientY - potentialDrag.startY);
+                if (dist > 5) {
+                    // Start dragging
+                    if (potentialDrag.type === 'startMenu') {
+                        const { img, span } = potentialDrag;
+                        const icon = document.createElement('div');
+                        icon.className = 'app-desktop dragging';
+                        icon.dataset.id = "icon_" + Math.random().toString(36).substr(2, 9);
+                        
+                        icon.innerHTML = `
+                            <div class="app-shortcut">
+                                <img src="${img.src}" class="app application" />
+                                <img src="icon/shortcut.ico" class="shortcut" />
+                            </div>
+                            <span class="app-name">${span.innerText}</span>
+                        `;
+                        icon.dataset.title = span.innerText;
+                        icon.dataset.fromStartMenu = "true";
+
+                        icon.addEventListener("dblclick", () => {
+                            if (typeof createWindow === 'function') {
+                                createWindow(span.innerText, span.innerText.toLowerCase().replace(/\s/g, ''), img.src);
+                            }
+                        });
+
+                        icon.addEventListener("click", (ev) => {
+                            ev.stopPropagation();
+                            document.querySelectorAll(".app-desktop").forEach(a => a.classList.remove("active"));
+                            icon.classList.add("active");
+                        });
+
+                        document.body.appendChild(icon);
+
+                        this.isDragging = true;
+                        this.currentIcon = icon;
+                        
+                        this.offsetX = this.gridCellWidth / 2;
+                        this.offsetY = this.gridCellHeight / 2;
+
+                        this.setPosition(icon, e.clientX - this.offsetX, e.clientY - this.offsetY);
+                    } else if (potentialDrag.type === 'desktopIcon') {
+                        const icon = potentialDrag.element;
+                        this.isDragging = true;
+                        this.currentIcon = icon;
+                        
+                        icon.classList.remove('grid-aligned');
+                        icon.classList.add('dragging');
+
+                        const rect = icon.getBoundingClientRect();
+                        icon.dataset.originalLeft = rect.left;
+                        icon.dataset.originalTop = rect.top;
+
+                        this.offsetX = e.clientX - rect.left;
+                        this.offsetY = e.clientY - rect.top;
+                    }
+                }
+            }
+
             if (!this.isDragging || !this.currentIcon) return;
 
             const newLeft = e.clientX - this.offsetX;
@@ -273,6 +304,8 @@ class DesktopIconManager {
         });
 
         document.addEventListener('mouseup', (e) => {
+            potentialDrag = null;
+
             if (!this.isDragging || !this.currentIcon) return;
 
             const icon = this.currentIcon;
