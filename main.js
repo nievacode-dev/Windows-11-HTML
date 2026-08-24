@@ -370,33 +370,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const appDesktop = window.currentContextApp;
       if (appDesktop) {
-        const nameSpan = appDesktop.querySelector('.app-name');
-        if (nameSpan) {
-          nameSpan.contentEditable = "true";
-          nameSpan.focus();
-
-          const range = document.createRange();
-          range.selectNodeContents(nameSpan);
-          const sel = window.getSelection();
-          sel.removeAllRanges();
-          sel.addRange(range);
-
-          const stopEditing = () => {
-            nameSpan.contentEditable = "false";
-            appDesktop.dataset.title = nameSpan.textContent;
-            nameSpan.removeEventListener("blur", stopEditing);
-            nameSpan.removeEventListener("keydown", keyHandler);
-          };
-
-          const keyHandler = (e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              nameSpan.blur();
-            }
-          };
-
-          nameSpan.addEventListener("blur", stopEditing);
-          nameSpan.addEventListener("keydown", keyHandler);
+        if (typeof window.startDesktopRename === "function") {
+          window.startDesktopRename(appDesktop);
+        } else if (typeof DesktopIconManager !== "undefined" && DesktopIconManager.startRename) {
+          DesktopIconManager.startRename(appDesktop);
         }
       }
     });
@@ -569,6 +546,7 @@ function shutdownwin() {
   const shutdownSelector = document.getElementById("shutdownSelector");
   if (shutdownSelector.value === "sleep") {
     document.getElementById("shutdownTab").style.display = "none";
+    sleep();
   } else if (shutdownSelector.value === "restart") {
     document.getElementById("shutdownTab").style.display = "none";
     restart();
@@ -779,19 +757,13 @@ document.getElementById("newFolder").addEventListener("click", function () {
     document.body.appendChild(divApp);
   }
 
-  // Double click opens the File Explorer
-  divApp.addEventListener("dblclick", () => {
-    if (typeof createWindow === 'function') {
-      createWindow("New Folder", "explorer", "icon/folder.ico");
-    }
-  });
-
-  // Make it selectable like other desktop apps
-  divApp.addEventListener("click", (e) => {
-    e.stopPropagation();
+  setTimeout(() => {
     document.querySelectorAll(".app-desktop").forEach(app => app.classList.remove("active"));
     divApp.classList.add("active");
-  });
+    if (typeof window.startDesktopRename === "function") {
+      window.startDesktopRename(divApp);
+    }
+  }, 60);
 });
 
 // shutdown, sleep, and restart
@@ -799,7 +771,58 @@ document.getElementById("newFolder").addEventListener("click", function () {
 const blackScreenDiv = document.createElement("div");
 const blackScreenTextSpan = document.createElement("span");
 
+function _closeAllMenusAndDialogs() {
+  if (typeof startMenu !== "undefined" && startMenu) {
+    startMenu.classList.remove("menu-open");
+    startMenu.style.bottom = "";
+  }
+  const searchMenu = document.getElementById("searchMenu");
+  if (searchMenu) {
+    searchMenu.classList.remove("menu-open");
+    const redirectContainer = document.getElementById("searchMenuRedirectBarContainer");
+    if (redirectContainer) redirectContainer.style.display = "none";
+  }
+  const shutDownMenu = document.getElementById("shutDownMenu");
+  if (shutDownMenu) {
+    shutDownMenu.classList.remove("menu-open");
+    shutDownMenu.style.display = "none";
+  }
+  const quickLink = document.getElementById("quickLink");
+  if (quickLink) quickLink.style.display = "none";
+
+  if (typeof closeQuickSettings === "function") closeQuickSettings();
+  else {
+    const qs = document.getElementById("quickSettings");
+    if (qs) qs.classList.remove("show", "closing");
+  }
+
+  if (typeof closeTray === "function") closeTray();
+  else {
+    const tc = document.getElementById("trayContent");
+    if (tc) tc.classList.remove("show", "closing");
+    const tb = document.getElementById("trayBtn");
+    if (tb) tb.classList.remove("open");
+  }
+
+  const dialogIds = ["shutdownTab", "aboutTab", "runProgram", "runFailed", "contextMenu", "appContextMenu", "taskbarContextMenu", "startAppContextMenu", "recycleBinMenu", "uacOverlay", "snapLayoutMenu", "taskbarPreviewMenu"];
+  dialogIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.style.display = "none";
+      el.classList.remove("visible", "show");
+    }
+  });
+}
+
 function _showBlackScreen() {
+  _closeAllMenusAndDialogs();
+
+  // Hide taskbar so it doesn't show during shutdown/restart/sleep
+  const taskbar = document.querySelector(".taskbar");
+  if (taskbar) {
+    taskbar.style.display = "none";
+  }
+
   // Clean up any leftover state from a previous call before reusing the div
   blackScreenDiv.className = "";
   blackScreenDiv.style.cssText = "";
@@ -811,7 +834,7 @@ function _showBlackScreen() {
 function shutdown() {
   _showBlackScreen();
   blackScreenDiv.appendChild(blackScreenTextSpan);
-  blackScreenTextSpan.classList.add("black-screen-text");
+  blackScreenTextSpan.className = "black-screen-text";
   blackScreenTextSpan.textContent = "Shutting down";
   setTimeout(() => {
     blackScreenTextSpan.remove();
@@ -826,6 +849,8 @@ function sleep() {
       blackScreenDiv.style.cssText = "";
       blackScreenDiv.className = "";
       blackScreenDiv.remove();
+      const taskbar = document.querySelector(".taskbar");
+      if (taskbar) taskbar.style.display = "";
       document.removeEventListener("click", wakeUp);
     });
   }, 100);
@@ -862,7 +887,7 @@ function restart() {
     blackScreenDiv.appendChild(restartLogo);
     blackScreenDiv.appendChild(spinnerDiv);
 
-    // Phase 3: Play startup sound then remove overlay
+    // Phase 3: Play startup sound then remove overlay and restore taskbar
     setTimeout(() => {
       const audio = new Audio("sound/startup.wav");
       audio.play();
@@ -874,6 +899,10 @@ function restart() {
       blackScreenDiv.className = "";
       blackScreenDiv.style.cssText = "";
       blackScreenDiv.remove();
+
+      // Restore taskbar
+      const taskbar = document.querySelector(".taskbar");
+      if (taskbar) taskbar.style.display = "";
     }, 7000);
   }, 4000);
 }
@@ -1259,29 +1288,96 @@ document.addEventListener("DOMContentLoaded", () => {
 // Tray and Quick Settings Toggle Logic
 const trayBtn = document.getElementById("trayBtn");
 const trayContent = document.getElementById("trayContent");
+const quickSettingsBtn = document.getElementById("quickSettingsBtn");
+const quickSettings = document.getElementById("quickSettings");
+
+function openQuickSettings() {
+  if (!quickSettings) return;
+  closeTray();
+  const searchMenu = document.getElementById("searchMenu");
+  if (searchMenu) searchMenu.classList.remove("menu-open");
+  const startMenu = document.getElementById("startMenu");
+  if (startMenu) startMenu.classList.remove("menu-open");
+
+  quickSettings.classList.remove("closing");
+  quickSettings.classList.add("show");
+}
+
+function closeQuickSettings() {
+  if (!quickSettings || !quickSettings.classList.contains("show") || quickSettings.classList.contains("closing")) return;
+  quickSettings.classList.add("closing");
+  setTimeout(() => {
+    quickSettings.classList.remove("show", "closing");
+  }, 180);
+}
+
+function toggleQuickSettings() {
+  if (!quickSettings) return;
+  if (quickSettings.classList.contains("show")) {
+    closeQuickSettings();
+  } else {
+    openQuickSettings();
+  }
+}
+
+function openTray() {
+  if (!trayContent) return;
+  closeQuickSettings();
+  const searchMenu = document.getElementById("searchMenu");
+  if (searchMenu) searchMenu.classList.remove("menu-open");
+  const startMenu = document.getElementById("startMenu");
+  if (startMenu) startMenu.classList.remove("menu-open");
+
+  if (trayBtn) trayBtn.classList.add("open");
+  trayContent.classList.remove("closing");
+  trayContent.classList.add("show");
+}
+
+function closeTray() {
+  if (!trayContent || !trayContent.classList.contains("show") || trayContent.classList.contains("closing")) return;
+  if (trayBtn) trayBtn.classList.remove("open");
+  trayContent.classList.add("closing");
+  setTimeout(() => {
+    trayContent.classList.remove("show", "closing");
+  }, 150);
+}
+
+function toggleTray() {
+  if (!trayContent) return;
+  if (trayContent.classList.contains("show")) {
+    closeTray();
+  } else {
+    openTray();
+  }
+}
+
 if (trayBtn && trayContent) {
   trayBtn.addEventListener("click", (e) => {
     e.stopPropagation();
-    trayContent.classList.toggle("show");
+    toggleTray();
+  });
+  trayContent.addEventListener("click", (e) => {
+    e.stopPropagation();
   });
 }
 
-const quickSettingsBtn = document.getElementById("quickSettingsBtn");
-const quickSettings = document.getElementById("quickSettings");
 if (quickSettingsBtn && quickSettings) {
   quickSettingsBtn.addEventListener("click", (e) => {
     e.stopPropagation();
-    quickSettings.classList.toggle("show");
+    toggleQuickSettings();
+  });
+  quickSettings.addEventListener("click", (e) => {
+    e.stopPropagation();
   });
 }
 
 // Close when clicking outside
 document.addEventListener("click", (e) => {
-  if (trayContent && trayContent.classList.contains("show") && !trayBtn.contains(e.target) && !trayContent.contains(e.target)) {
-    trayContent.classList.remove("show");
+  if (trayContent && trayContent.classList.contains("show") && (!trayBtn || !trayBtn.contains(e.target)) && !trayContent.contains(e.target)) {
+    closeTray();
   }
-  if (quickSettings && quickSettings.classList.contains("show") && !quickSettingsBtn.contains(e.target) && !quickSettings.contains(e.target)) {
-    quickSettings.classList.remove("show");
+  if (quickSettings && quickSettings.classList.contains("show") && (!quickSettingsBtn || !quickSettingsBtn.contains(e.target)) && !quickSettings.contains(e.target)) {
+    closeQuickSettings();
   }
   const searchMenu = document.getElementById("searchMenu");
   const searchBtn = document.getElementById("searchBtn");

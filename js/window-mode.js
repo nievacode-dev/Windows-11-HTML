@@ -174,34 +174,16 @@ function makeWindowInteractive(windowId, titleBar, resizeHandle) {
   };
 
   // Dragging Logic
+  let hasDetached = false;
+
   titleBar.addEventListener("pointerdown", (e) => {
-    // Ignore if clicked on controls
-    if (e.target.closest('.control-btn')) return;
+    // Ignore if clicked on controls or tabs
+    if (e.target.closest('.control-btn, .new-tab-btn, .terminal-tab, .edge-tab, .edge-tab-add')) return;
 
     updateZIndex(windowId);
     isDragging = true;
+    hasDetached = false;
     titleBar.setPointerCapture(e.pointerId);
-    win.isSnapped = false;
-
-    // If maximized, restore and attach to cursor proportionally
-    if (win.isMaximized) {
-      const pointerPercent = e.clientX / window.innerWidth;
-
-      // Detach and restore width implicitly
-      win.isMaximized = false;
-      el.classList.remove("maximized");
-
-      const targetWidth = win.originalState ? win.originalState.width : 600;
-      el.style.width = `${targetWidth}px`;
-
-      win.x = e.clientX - (targetWidth * pointerPercent);
-      win.y = 0;
-      el.style.left = `${win.x}px`;
-      el.style.top = `${win.y}px`;
-
-      // Save state so snap assist works smoothly
-      win.originalState = { width: targetWidth, height: win.originalState ? win.originalState.height : 400 };
-    }
 
     startPointerX = e.clientX;
     startPointerY = e.clientY;
@@ -218,6 +200,39 @@ function makeWindowInteractive(windowId, titleBar, resizeHandle) {
 
     const deltaX = e.clientX - startPointerX;
     const deltaY = e.clientY - startPointerY;
+    const dist = Math.hypot(deltaX, deltaY);
+
+    // If window was maximized or snapped, detach and restore original size upon drag movement
+    if ((win.isMaximized || win.isSnapped) && !hasDetached) {
+      if (dist > 3) {
+        hasDetached = true;
+        const currentWidth = el.offsetWidth || window.innerWidth;
+        const pointerPercent = Math.max(0.1, Math.min(0.9, (startPointerX - el.offsetLeft) / currentWidth));
+
+        win.isMaximized = false;
+        win.isSnapped = false;
+        el.classList.remove("maximized");
+
+        const targetWidth = (win.originalState && win.originalState.width) ? win.originalState.width : 600;
+        const targetHeight = (win.originalState && win.originalState.height) ? win.originalState.height : 400;
+
+        win.width = targetWidth;
+        win.height = targetHeight;
+        el.style.width = `${targetWidth}px`;
+        el.style.height = `${targetHeight}px`;
+
+        win.x = e.clientX - (targetWidth * pointerPercent);
+        win.y = Math.max(0, e.clientY - 15);
+        el.style.left = `${win.x}px`;
+        el.style.top = `${win.y}px`;
+
+        startX = win.x;
+        startY = win.y;
+        startPointerX = e.clientX;
+        startPointerY = e.clientY;
+      }
+      return;
+    }
 
     win.x = startX + deltaX;
     win.y = startY + deltaY;
@@ -363,6 +378,15 @@ function makeWindowInteractive(windowId, titleBar, resizeHandle) {
     resizeHandle.releasePointerCapture(e.pointerId);
     cancelAnimationFrame(animationFrameId);
     animationFrameId = null;
+
+    if (!win.isMaximized && !win.isSnapped) {
+      win.originalState = {
+        x: win.x,
+        y: win.y,
+        width: win.width,
+        height: win.height
+      };
+    }
   });
 
   // Focus on content click
@@ -483,12 +507,12 @@ function applySnap(windowId, type) {
   const el = win.element;
 
   // Save state before snapping
-  if (!win.isMaximized) {
+  if (!win.isMaximized && !win.isSnapped) {
     win.originalState = {
       x: win.x,
       y: win.y,
-      width: el.offsetWidth,
-      height: el.offsetHeight
+      width: win.width || el.offsetWidth || 600,
+      height: win.height || el.offsetHeight || 400
     };
   }
 
@@ -923,8 +947,13 @@ function maximizeWindow(windowId, forceMaximize = false) {
     win.isSnapped = false;
   } else {
     // Maximize
-    if (!win.isMaximized) {
-      win.originalState = { x: win.x, y: win.y, width: el.offsetWidth, height: el.offsetHeight };
+    if (!win.isMaximized && !win.isSnapped) {
+      win.originalState = {
+        x: win.x,
+        y: win.y,
+        width: win.width || el.offsetWidth || 600,
+        height: win.height || el.offsetHeight || 400
+      };
     }
 
     el.classList.add("maximized");
@@ -991,68 +1020,66 @@ function closeWindow(windowId) {
 
 // Global hook up
 function initializeAppShortcuts() {
-  const appShortcuts = document.querySelectorAll(".app-shortcut, .start-app");
+  const startApps = document.querySelectorAll(".start-app");
 
-  appShortcuts.forEach(shortcut => {
-    shortcut.style.cursor = "pointer";
-    const newShortcut = shortcut.cloneNode(true);
-    shortcut.parentNode.replaceChild(newShortcut, shortcut);
+  startApps.forEach(startApp => {
+    startApp.style.cursor = "pointer";
+    const newStartApp = startApp.cloneNode(true);
+    startApp.parentNode.replaceChild(newStartApp, startApp);
 
-    if (newShortcut.classList.contains("start-app")) {
-      newShortcut.setAttribute("draggable", "true");
-      newShortcut.addEventListener("dragstart", (e) => {
-        const appNameSpan = newShortcut.querySelector(".start-app-name");
-        const appTitle = appNameSpan ? appNameSpan.textContent : "Application";
-        let appId = appTitle.toLowerCase().replace(/\s+/g, '-');
-        if (appTitle.toLowerCase() === 'microsoft edge' || appTitle.toLowerCase() === 'edge') appId = 'edge';
-        if (appTitle.toLowerCase() === 'command prompt' || appTitle.toLowerCase() === 'terminal') appId = 'cmd';
-        const iconImg = newShortcut.querySelector("img.app-list");
-        const appIcon = iconImg ? iconImg.src : "";
+    newStartApp.setAttribute("draggable", "true");
+    newStartApp.addEventListener("dragstart", (e) => {
+      const appNameSpan = newStartApp.querySelector(".start-app-name");
+      const appTitle = appNameSpan ? appNameSpan.textContent : "Application";
+      let appId = appTitle.toLowerCase().replace(/\s+/g, '-');
+      if (appTitle.toLowerCase() === 'microsoft edge' || appTitle.toLowerCase() === 'edge') appId = 'edge';
+      if (appTitle.toLowerCase() === 'command prompt' || appTitle.toLowerCase() === 'terminal') appId = 'cmd';
+      const iconImg = newStartApp.querySelector("img.app-list");
+      const appIcon = iconImg ? iconImg.src : "";
 
-        e.dataTransfer.setData("text/plain", JSON.stringify({
-          appId, appTitle, appIcon
-        }));
-        e.dataTransfer.effectAllowed = "copy";
+      e.dataTransfer.setData("text/plain", JSON.stringify({
+        appId, appTitle, appIcon
+      }));
+      e.dataTransfer.effectAllowed = "copy";
+    });
+
+    newStartApp.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const menusToHide = ["contextMenu", "appContextMenu", "taskbarContextMenu", "recycleBinMenu", "quickLink"];
+      menusToHide.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = "none";
       });
 
-      newShortcut.addEventListener("contextmenu", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+      const menu = document.getElementById("startAppContextMenu");
+      if (!menu) return;
 
-        const menusToHide = ["contextMenu", "appContextMenu", "taskbarContextMenu", "recycleBinMenu", "quickLink"];
-        menusToHide.forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.style.display = "none";
-        });
+      const appNameSpan = newStartApp.querySelector(".start-app-name");
+      const appTitle = appNameSpan ? appNameSpan.textContent : "Application";
+      let appId = appTitle.toLowerCase().replace(/\s+/g, '-');
+      if (appTitle.toLowerCase() === 'microsoft edge' || appTitle.toLowerCase() === 'edge') appId = 'edge';
+      if (appTitle.toLowerCase() === 'command prompt' || appTitle.toLowerCase() === 'terminal') appId = 'cmd';
+      const iconImg = newStartApp.querySelector("img.app-list");
+      const appIcon = iconImg ? iconImg.src : "";
 
-        const menu = document.getElementById("startAppContextMenu");
-        if (!menu) return;
+      menu.dataset.targetId = appId;
+      menu.dataset.targetTitle = appTitle;
+      menu.dataset.targetIcon = appIcon;
 
-        const appNameSpan = newShortcut.querySelector(".start-app-name");
-        const appTitle = appNameSpan ? appNameSpan.textContent : "Application";
-        let appId = appTitle.toLowerCase().replace(/\s+/g, '-');
-        if (appTitle.toLowerCase() === 'microsoft edge' || appTitle.toLowerCase() === 'edge') appId = 'edge';
-        if (appTitle.toLowerCase() === 'command prompt' || appTitle.toLowerCase() === 'terminal') appId = 'cmd';
-        const iconImg = newShortcut.querySelector("img.app-list");
-        const appIcon = iconImg ? iconImg.src : "";
+      const isPinned = taskbarRegistry[appId] && taskbarRegistry[appId].isPinned;
+      const pinTextEl = document.getElementById("startAppPinText");
+      const pinIconEl = document.getElementById("startAppPinIcon");
+      if (pinTextEl) pinTextEl.textContent = isPinned ? "Unpin from taskbar" : "Pin to taskbar";
+      if (pinIconEl) pinIconEl.innerHTML = isPinned ? "&#xe77a;" : "&#xe840;";
 
-        menu.dataset.targetId = appId;
-        menu.dataset.targetTitle = appTitle;
-        menu.dataset.targetIcon = appIcon;
+      menu.style.display = "block";
+      menu.style.left = e.pageX + "px";
+      menu.style.top = e.pageY + "px";
+    });
 
-        const isPinned = taskbarRegistry[appId] && taskbarRegistry[appId].isPinned;
-        const pinTextEl = document.getElementById("startAppPinText");
-        const pinIconEl = document.getElementById("startAppPinIcon");
-        if (pinTextEl) pinTextEl.textContent = isPinned ? "Unpin from taskbar" : "Pin to taskbar";
-        if (pinIconEl) pinIconEl.innerHTML = isPinned ? "&#xe77a;" : "&#xe840;";
-
-        menu.style.display = "block";
-        menu.style.left = e.pageX + "px";
-        menu.style.top = e.pageY + "px";
-      });
-    }
-
-    newShortcut.addEventListener("click", (e) => {
+    newStartApp.addEventListener("click", (e) => {
       e.stopPropagation();
       
       const startMenu = document.getElementById("startMenu");
@@ -1060,22 +1087,13 @@ function initializeAppShortcuts() {
         startMenu.classList.remove("menu-open");
       }
       
-      let appTitle = "Application";
-      let appId = null;
-      let appIcon = null;
-
-      if (newShortcut.classList.contains("app-shortcut")) {
-        const appDesktop = newShortcut.closest(".app-desktop");
-        appTitle = appDesktop.dataset.title || "Application";
-        appId = appDesktop.dataset.id || null;
-        const iconImg = newShortcut.querySelector("img.app");
-        if (iconImg) appIcon = iconImg.src;
-      } else if (newShortcut.classList.contains("start-app")) {
-        const appNameSpan = newShortcut.querySelector(".start-app-name");
-        appTitle = appNameSpan ? appNameSpan.textContent : "Application";
-        const iconImg = newShortcut.querySelector("img.app-list");
-        if (iconImg) appIcon = iconImg.src;
-      }
+      const appNameSpan = newStartApp.querySelector(".start-app-name");
+      const appTitle = appNameSpan ? appNameSpan.textContent : "Application";
+      const iconImg = newStartApp.querySelector("img.app-list");
+      const appIcon = iconImg ? iconImg.src : "";
+      let appId = appTitle.toLowerCase().replace(/\s+/g, '-');
+      if (appTitle.toLowerCase() === 'microsoft edge' || appTitle.toLowerCase() === 'edge') appId = 'edge';
+      if (appTitle.toLowerCase() === 'command prompt' || appTitle.toLowerCase() === 'terminal') appId = 'cmd';
 
       if (appId === 'cmd') {
         if (typeof openTerminalWindow === 'function') openTerminalWindow();
@@ -1083,8 +1101,6 @@ function initializeAppShortcuts() {
         createWindow(appTitle, appId, appIcon);
       }
     });
-
-    newShortcut.addEventListener("dblclick", (e) => e.stopPropagation());
   });
 }
 

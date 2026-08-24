@@ -1,5 +1,5 @@
 // js/desktop-icons.js
-// Handles draggable desktop icons, grid snapping, and layout persistence
+// Handles draggable desktop icons, grid snapping, layout persistence, selection, double-click, and slow click-to-rename
 
 class DesktopIconManager {
     constructor() {
@@ -7,16 +7,17 @@ class DesktopIconManager {
         this.gridCellHeight = 100;
         this.paddingTop = 10;
         this.paddingLeft = 10;
-        
+
         // Settings
         this.alignToGrid = localStorage.getItem('alignToGrid') !== 'false'; // Default true
-        
+
         // State
         this.isDragging = false;
         this.currentIcon = null;
         this.offsetX = 0;
         this.offsetY = 0;
-        
+
+        DesktopIconManager.instance = this;
         this.init();
     }
 
@@ -24,7 +25,8 @@ class DesktopIconManager {
         this.setupToggleMenu();
         this.initializeIcons();
         this.setupDragEvents();
-        
+        this.setupGlobalEvents();
+
         // Observe body for new icons (like the New Folder context menu action)
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
@@ -32,12 +34,13 @@ class DesktopIconManager {
                     mutation.addedNodes.forEach((node) => {
                         if (node.nodeType === 1 && node.classList && node.classList.contains('app-desktop')) {
                             this.setupNewIcon(node);
+                            this.bindDesktopItemEvents(node);
                         }
                     });
                 }
             });
         });
-        
+
         observer.observe(document.body, { childList: true, subtree: false });
     }
 
@@ -48,11 +51,11 @@ class DesktopIconManager {
         this.updateToggleUI(toggleBtn);
 
         toggleBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent closing if we don't want to, though Windows usually closes the context menu
+            e.stopPropagation();
             this.alignToGrid = !this.alignToGrid;
             localStorage.setItem('alignToGrid', this.alignToGrid);
             this.updateToggleUI(toggleBtn);
-            
+
             // Re-align all icons instantly if turned on
             if (this.alignToGrid) {
                 document.querySelectorAll('.app-desktop').forEach(icon => {
@@ -62,8 +65,9 @@ class DesktopIconManager {
                     this.savePosition(icon, snapped.left, snapped.top);
                 });
             }
-            
-            document.getElementById('contextMenu').style.display = 'none';
+
+            const contextMenu = document.getElementById('contextMenu');
+            if (contextMenu) contextMenu.style.display = 'none';
         });
     }
 
@@ -77,25 +81,22 @@ class DesktopIconManager {
 
     initializeIcons() {
         const icons = document.querySelectorAll('.app-desktop');
-        
-        // Initial layout if positions aren't saved
+
         let defaultRow = 0;
         let defaultCol = 0;
-        const maxRows = Math.floor((window.innerHeight - 80) / this.gridCellHeight); // Leave room for taskbar
+        const maxRows = Math.floor((window.innerHeight - 80) / this.gridCellHeight);
 
         icons.forEach(icon => {
             if (!icon.dataset.id) {
-                // Ensure every icon has a unique ID for saving
                 icon.dataset.id = "icon_" + Math.random().toString(36).substr(2, 9);
             }
 
             const savedPos = localStorage.getItem(`desktop_pos_${icon.dataset.id}`);
-            
+
             if (savedPos) {
                 const { left, top } = JSON.parse(savedPos);
                 this.setPosition(icon, left, top);
             } else {
-                // Place in grid column-major order
                 const left = this.paddingLeft + (defaultCol * this.gridCellWidth);
                 const top = this.paddingTop + (defaultRow * this.gridCellHeight);
                 this.setPosition(icon, left, top);
@@ -107,6 +108,8 @@ class DesktopIconManager {
                     defaultCol++;
                 }
             }
+
+            this.bindDesktopItemEvents(icon);
         });
     }
 
@@ -114,28 +117,25 @@ class DesktopIconManager {
         if (!icon.dataset.id) {
             icon.dataset.id = "icon_" + Math.random().toString(36).substr(2, 9);
         }
-        
-        // Find first empty spot if we want, or just place at top left
+
         let placed = false;
         let c = 0, r = 0;
         const maxRows = Math.floor((window.innerHeight - 80) / this.gridCellHeight);
-        
-        // Simple empty slot finding algorithm
-        while (!placed && c < 20) { // Limit to 20 columns
+
+        while (!placed && c < 20) {
             const left = this.paddingLeft + (c * this.gridCellWidth);
             const top = this.paddingTop + (r * this.gridCellHeight);
-            
+
             let collision = false;
             document.querySelectorAll('.app-desktop').forEach(other => {
                 if (other !== icon) {
                     const rect = other.getBoundingClientRect();
-                    // Rough collision check
                     if (Math.abs(rect.left - left) < 10 && Math.abs(rect.top - top) < 10) {
                         collision = true;
                     }
                 }
             });
-            
+
             if (!collision) {
                 this.setPosition(icon, left, top);
                 this.savePosition(icon, left, top);
@@ -151,9 +151,8 @@ class DesktopIconManager {
     }
 
     setPosition(icon, left, top) {
-        // Constrain to viewport (approximate)
         left = Math.max(0, Math.min(left, window.innerWidth - 75));
-        top = Math.max(0, Math.min(top, window.innerHeight - 100)); // Leave taskbar space
+        top = Math.max(0, Math.min(top, window.innerHeight - 100));
 
         icon.style.left = left + 'px';
         icon.style.top = top + 'px';
@@ -167,7 +166,7 @@ class DesktopIconManager {
     calculateSnappedPosition(left, top) {
         const col = Math.round((left - this.paddingLeft) / this.gridCellWidth);
         const row = Math.round((top - this.paddingTop) / this.gridCellHeight);
-        
+
         return {
             left: this.paddingLeft + (Math.max(0, col) * this.gridCellWidth),
             top: this.paddingTop + (Math.max(0, row) * this.gridCellHeight)
@@ -187,8 +186,175 @@ class DesktopIconManager {
         return occupied;
     }
 
+    bindDesktopItemEvents(icon) {
+        if (icon._eventsBound) return;
+        icon._eventsBound = true;
+
+        // Selection & Slow Click-to-Rename
+        icon.addEventListener("click", (e) => {
+            // If we are currently editing the name, let editing happen
+            const nameSpan = icon.querySelector(".app-name");
+            if (nameSpan && nameSpan.isContentEditable) {
+                e.stopPropagation();
+                return;
+            }
+
+            e.stopPropagation();
+
+            const isAlreadyActive = icon.classList.contains("active");
+            const now = Date.now();
+            const lastClickTime = icon._lastClickTime || 0;
+            const timeSinceLastClick = now - lastClickTime;
+
+            if (!isAlreadyActive) {
+                // First click: select icon
+                document.querySelectorAll(".app-desktop").forEach(a => a.classList.remove("active"));
+                icon.classList.add("active");
+                icon._lastClickTime = now;
+                icon._lastClickTarget = e.target;
+            } else {
+                // Already selected: check if clicked on name after delay
+                const clickedOnName = e.target.closest(".app-name");
+                if (clickedOnName && timeSinceLastClick >= 500) {
+                    // Slow click on name -> Trigger rename!
+                    DesktopIconManager.startRename(icon);
+                } else {
+                    icon._lastClickTime = now;
+                    icon._lastClickTarget = e.target;
+                }
+            }
+        });
+
+        // Double-click to open window
+        icon.addEventListener("dblclick", (e) => {
+            const nameSpan = icon.querySelector(".app-name");
+            if (nameSpan && nameSpan.isContentEditable) {
+                e.stopPropagation();
+                return;
+            }
+
+            e.stopPropagation();
+            this.openDesktopApp(icon);
+        });
+    }
+
+    openDesktopApp(icon) {
+        if (typeof createWindow !== 'function') return;
+
+        const id = icon.dataset.id || "";
+        const title = icon.dataset.title || (icon.querySelector(".app-name") ? icon.querySelector(".app-name").textContent.trim() : "Application");
+        const img = icon.querySelector("img.application, img.app");
+        const iconSrc = img ? img.src : "icon/folder.ico";
+
+        if (id === "recycle-bin") {
+            createWindow("Recycle Bin", "recycle-bin", iconSrc);
+        } else if (id === "browser" || id === "edge") {
+            createWindow("Microsoft Edge", "edge", "icon/edge.ico");
+        } else if (id.startsWith("folder")) {
+            createWindow(title, "explorer", "icon/folder.ico");
+        } else if (id === "cmd") {
+            if (typeof openTerminalWindow === 'function') openTerminalWindow();
+        } else {
+            createWindow(title, id, iconSrc);
+        }
+    }
+
+    static startRename(icon) {
+        if (!icon) return;
+        const nameSpan = icon.querySelector('.app-name');
+        if (!nameSpan || nameSpan.isContentEditable) return;
+
+        const originalText = nameSpan.textContent.trim();
+        nameSpan.contentEditable = "true";
+        nameSpan.focus();
+
+        // Select all text in nameSpan
+        try {
+            const range = document.createRange();
+            range.selectNodeContents(nameSpan);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+        } catch (err) {
+            console.error("Selection error:", err);
+        }
+
+        let isDone = false;
+        const finishRename = (commit) => {
+            if (isDone) return;
+            isDone = true;
+
+            nameSpan.contentEditable = "false";
+            nameSpan.removeEventListener("keydown", onKeyDown);
+            nameSpan.removeEventListener("blur", onBlur);
+            nameSpan.removeEventListener("mousedown", stopProp);
+            nameSpan.removeEventListener("click", stopProp);
+            nameSpan.removeEventListener("dblclick", stopProp);
+
+            const newText = nameSpan.textContent.trim();
+            if (commit && newText !== "") {
+                icon.dataset.title = newText;
+                nameSpan.textContent = newText;
+            } else {
+                nameSpan.textContent = originalText;
+            }
+        };
+
+        const onKeyDown = (e) => {
+            e.stopPropagation(); // prevent global shortcuts like s, r, d
+            if (e.key === "Enter") {
+                e.preventDefault();
+                finishRename(true);
+            } else if (e.key === "Escape") {
+                e.preventDefault();
+                finishRename(false);
+            }
+        };
+
+        const onBlur = () => {
+            finishRename(true);
+        };
+
+        const stopProp = (e) => {
+            e.stopPropagation();
+        };
+
+        nameSpan.addEventListener("keydown", onKeyDown);
+        nameSpan.addEventListener("blur", onBlur);
+        nameSpan.addEventListener("mousedown", stopProp);
+        nameSpan.addEventListener("click", stopProp);
+        nameSpan.addEventListener("dblclick", stopProp);
+    }
+
+    setupGlobalEvents() {
+        // Deselect all desktop icons when clicking empty background
+        document.addEventListener("click", (e) => {
+            if (!e.target.closest(".app-desktop") &&
+                !e.target.closest(".taskbar") &&
+                !e.target.closest(".start-menu") &&
+                !e.target.closest(".search-menu") &&
+                !e.target.closest(".quick-settings") &&
+                !e.target.closest(".context-menu") &&
+                !e.target.closest(".window")) {
+                document.querySelectorAll(".app-desktop").forEach(icon => {
+                    icon.classList.remove("active");
+                });
+            }
+        });
+
+        // F2 to rename active desktop icon
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "F2") {
+                const activeIcon = document.querySelector(".app-desktop.active");
+                if (activeIcon) {
+                    e.preventDefault();
+                    DesktopIconManager.startRename(activeIcon);
+                }
+            }
+        });
+    }
+
     setupDragEvents() {
-        // Prevent native drag for our custom dragged elements
         document.addEventListener('dragstart', (e) => {
             if (e.target.closest('.start-app') || e.target.closest('.app-desktop')) {
                 if (!e.target.closest('.taskbar-item')) {
@@ -202,12 +368,16 @@ class DesktopIconManager {
         document.addEventListener('mousedown', (e) => {
             if (e.button !== 0) return; // Only left click
 
+            // Ignore drag start if editing name
+            const editing = e.target.closest('.app-name[contenteditable="true"]');
+            if (editing) return;
+
             // 1. Check if dragging from Start Menu
             const startApp = e.target.closest('.start-app');
             if (startApp) {
                 const img = startApp.querySelector('img');
                 const span = startApp.querySelector('span');
-                
+
                 if (img && span) {
                     potentialDrag = {
                         type: 'startMenu',
@@ -224,7 +394,6 @@ class DesktopIconManager {
             const icon = e.target.closest('.app-desktop');
             if (!icon) return;
 
-            // Ignore double clicks rapidly creating drag
             if (e.detail > 1) return;
 
             potentialDrag = {
@@ -239,13 +408,12 @@ class DesktopIconManager {
             if (potentialDrag && !this.isDragging) {
                 const dist = Math.hypot(e.clientX - potentialDrag.startX, e.clientY - potentialDrag.startY);
                 if (dist > 5) {
-                    // Start dragging
                     if (potentialDrag.type === 'startMenu') {
                         const { img, span } = potentialDrag;
                         const icon = document.createElement('div');
                         icon.className = 'app-desktop dragging';
                         icon.dataset.id = "icon_" + Math.random().toString(36).substr(2, 9);
-                        
+
                         icon.innerHTML = `
                             <div class="app-shortcut">
                                 <img src="${img.src}" class="app application" />
@@ -256,23 +424,12 @@ class DesktopIconManager {
                         icon.dataset.title = span.innerText;
                         icon.dataset.fromStartMenu = "true";
 
-                        icon.addEventListener("dblclick", () => {
-                            if (typeof createWindow === 'function') {
-                                createWindow(span.innerText, span.innerText.toLowerCase().replace(/\s/g, ''), img.src);
-                            }
-                        });
-
-                        icon.addEventListener("click", (ev) => {
-                            ev.stopPropagation();
-                            document.querySelectorAll(".app-desktop").forEach(a => a.classList.remove("active"));
-                            icon.classList.add("active");
-                        });
-
+                        this.bindDesktopItemEvents(icon);
                         document.body.appendChild(icon);
 
                         this.isDragging = true;
                         this.currentIcon = icon;
-                        
+
                         this.offsetX = this.gridCellWidth / 2;
                         this.offsetY = this.gridCellHeight / 2;
 
@@ -281,7 +438,7 @@ class DesktopIconManager {
                         const icon = potentialDrag.element;
                         this.isDragging = true;
                         this.currentIcon = icon;
-                        
+
                         icon.classList.remove('grid-aligned');
                         icon.classList.add('dragging');
 
@@ -299,7 +456,7 @@ class DesktopIconManager {
 
             const newLeft = e.clientX - this.offsetX;
             const newTop = e.clientY - this.offsetY;
-            
+
             this.setPosition(this.currentIcon, newLeft, newTop);
         });
 
@@ -314,24 +471,21 @@ class DesktopIconManager {
 
             icon.classList.remove('dragging');
 
-            // Handle drop from start menu
             if (icon.dataset.fromStartMenu === "true") {
                 const startMenu = document.getElementById('startMenu');
-                // Check if dropped inside the start menu
                 if (startMenu && startMenu.classList.contains("menu-open")) {
                     const smRect = startMenu.getBoundingClientRect();
                     if (e.clientX >= smRect.left && e.clientX <= smRect.right &&
                         e.clientY >= smRect.top && e.clientY <= smRect.bottom) {
-                        icon.remove(); // Destroy if dropped back into start menu
+                        icon.remove();
                         return;
                     }
                 }
                 icon.dataset.fromStartMenu = "false";
                 if (startMenu) {
-                    startMenu.classList.remove("menu-open"); // Close start menu properly
-                    startMenu.style.bottom = ""; // Clean up any inline styles
+                    startMenu.classList.remove("menu-open");
+                    startMenu.style.bottom = "";
                 }
-                // Don't have an original position to revert to, so if occupied, we'll let setupNewIcon handle it
             }
 
             const rect = icon.getBoundingClientRect();
@@ -340,14 +494,12 @@ class DesktopIconManager {
 
             if (this.alignToGrid) {
                 const snapped = this.calculateSnappedPosition(finalLeft, finalTop);
-                
+
                 if (this.isCellOccupied(snapped.left, snapped.top, icon)) {
-                    // Revert
                     if (icon.dataset.originalLeft !== undefined && icon.dataset.originalTop !== undefined) {
                         finalLeft = parseFloat(icon.dataset.originalLeft);
                         finalTop = parseFloat(icon.dataset.originalTop);
                     } else {
-                        // Find empty slot for start menu drops
                         this.setupNewIcon(icon);
                         return;
                     }
@@ -355,19 +507,23 @@ class DesktopIconManager {
                     finalLeft = snapped.left;
                     finalTop = snapped.top;
                 }
-                
+
                 icon.classList.add('grid-aligned');
             }
 
             this.savePosition(icon, finalLeft, finalTop);
-            
-            // Cleanup class after transition
+
             setTimeout(() => {
                 icon.classList.remove('grid-aligned');
             }, 200);
         });
     }
 }
+
+// Global hook
+window.startDesktopRename = (icon) => {
+    DesktopIconManager.startRename(icon);
+};
 
 document.addEventListener('DOMContentLoaded', () => {
     new DesktopIconManager();

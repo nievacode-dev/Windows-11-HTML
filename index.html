@@ -581,7 +581,7 @@
       <div class="shutdown-item">Lock</div>
       <div class="shutdown-item" id="sleepBtn" onclick="sleep()">Sleep</div>
       <div class="shutdown-item" onclick="shutdown()">Shutdown</div>
-      <div class="shutdown-item" id="restartBtn">Restart</div>
+      <div class="shutdown-item" id="restartBtn" onclick="restart()">Restart</div>
     </div>
     <div class="user-menu" id="userMenu">
       <div class="user-profile">
@@ -856,9 +856,9 @@
             <span>Shut down or sign out</span>
             <div class="shutdown-quick-link" id="shutdownQuickLinkHover">
               <div class="shutdown-quick-link-item">Lock</div>
-              <div class="shutdown-quick-link-item">Sleep</div>
-              <div class="shutdown-quick-link-item">Shutdown</div>
-              <div class="shutdown-quick-link-item" id="restartQuickLink">
+              <div class="shutdown-quick-link-item" onclick="sleep()">Sleep</div>
+              <div class="shutdown-quick-link-item" onclick="shutdown()">Shutdown</div>
+              <div class="shutdown-quick-link-item" id="restartQuickLink" onclick="restart()">
                 Restart
               </div>
             </div>
