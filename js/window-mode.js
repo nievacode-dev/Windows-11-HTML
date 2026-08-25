@@ -674,6 +674,14 @@ document.addEventListener("DOMContentLoaded", () => {
     menu.addEventListener("mouseleave", () => hideTaskbarPreview());
   }
   setupTaskbarTooltips();
+
+  // Dismiss tooltips and previews when clicking anywhere outside
+  document.addEventListener("pointerdown", (e) => {
+    if (!e.target.closest("#taskbarPreviewMenu") && !e.target.closest(".taskbar-item") && !e.target.closest(".taskbar-app") && !e.target.closest(".search-taskbar-btn") && !e.target.closest(".quick-settings-btn") && !e.target.closest(".tray") && !e.target.closest(".date-times")) {
+      hideTaskbarPreview(true);
+      hideTaskbarTooltip(true);
+    }
+  });
 });
 
 function getAppDisplayName(appId, appTitle, element) {
@@ -686,7 +694,7 @@ function getAppDisplayName(appId, appTitle, element) {
   const knownTitles = {
     "explorer": "File Explorer",
     "edge": "Microsoft Edge",
-    "cmd": "Command Prompt",
+    "cmd": "Windows Terminal",
     "terminal": "Windows Terminal",
     "taskmgr": "Task Manager",
     "taskManager": "Task Manager",
@@ -773,11 +781,17 @@ function renderLiveWindowPreview(win, container) {
   clone.style.borderRadius = "6px";
   clone.style.overflow = "hidden";
 
-  // Compute dimensions
+  // Compute dimensions accurately, handling maximized and minimized windows
   let origW = origEl.offsetWidth;
   let origH = origEl.offsetHeight;
-  if (!origW || origW < 100) origW = win.width || 800;
-  if (!origH || origH < 80) origH = win.height || 500;
+
+  if (win.isMaximized) {
+    origW = window.innerWidth;
+    origH = window.innerHeight - 48;
+  } else {
+    if (!origW || origW < 100) origW = win.width || (win.originalState && win.originalState.width) || 800;
+    if (!origH || origH < 80) origH = win.height || (win.originalState && win.originalState.height) || 500;
+  }
 
   clone.style.width = origW + "px";
   clone.style.height = origH + "px";
@@ -794,7 +808,7 @@ function renderLiveWindowPreview(win, container) {
     }
   }
 
-  // Copy Canvas bitmap buffers (live Task Manager CPU/Memory charts)
+  // Copy Canvas bitmap buffers (live Task Manager CPU/Memory/GPU charts)
   const origCanvases = origEl.querySelectorAll("canvas");
   const cloneCanvases = clone.querySelectorAll("canvas");
   for (let i = 0; i < origCanvases.length; i++) {
@@ -894,12 +908,35 @@ function syncLivePreviews() {
       }
     }
 
+    // Sync input and textarea values
+    const origInputs = win.element.querySelectorAll("input, textarea, select");
+    const cloneInputs = card.querySelectorAll("input, textarea, select");
+    for (let i = 0; i < origInputs.length; i++) {
+      if (cloneInputs[i] && cloneInputs[i].value !== origInputs[i].value) {
+        cloneInputs[i].value = origInputs[i].value;
+      }
+    }
+
     // Sync Terminal content
     if (windowId === "cmd") {
       const origBody = win.element.querySelector(".terminal-body");
       const cloneBody = card.querySelector(".terminal-body");
       if (origBody && cloneBody && origBody.innerHTML !== cloneBody.innerHTML) {
         cloneBody.innerHTML = origBody.innerHTML;
+      }
+    }
+
+    // Sync Task Manager live numbers / process rows
+    if (windowId === "taskManager") {
+      const origProcesses = win.element.querySelector("#tmProcessTableBody");
+      const cloneProcesses = card.querySelector("#tmProcessTableBody");
+      if (origProcesses && cloneProcesses && origProcesses.innerHTML !== cloneProcesses.innerHTML) {
+        cloneProcesses.innerHTML = origProcesses.innerHTML;
+      }
+      const origCpuSummary = win.element.querySelector("#tmCpuUsageVal");
+      const cloneCpuSummary = card.querySelector("#tmCpuUsageVal");
+      if (origCpuSummary && cloneCpuSummary && origCpuSummary.textContent !== cloneCpuSummary.textContent) {
+        cloneCpuSummary.textContent = origCpuSummary.textContent;
       }
     }
   });
@@ -1013,6 +1050,9 @@ function showTaskbarPreview(appId, taskbarElement) {
   positionTaskbarPreview(taskbarElement);
   menu.classList.add("visible");
 
+  // Re-adjust positioning once rendered
+  requestAnimationFrame(() => positionTaskbarPreview(taskbarElement));
+
   if (!previewLiveSyncTimer) {
     previewLiveSyncTimer = setInterval(syncLivePreviews, 60);
   }
@@ -1086,6 +1126,7 @@ function setupTaskbarTooltips() {
     { selector: "#widgetsIcon", text: "Widgets" },
     { selector: "#trayBtn", text: "Show hidden icons" },
     { selector: "#quickSettingsBtn", text: "Internet, sound, battery" },
+    { selector: ".language", text: "English (United States)\nUS keyboard" },
     {
       selector: "#dateTimes",
       text: () => {
@@ -1112,6 +1153,10 @@ function setupTaskbarTooltips() {
       if (selector === "#quickSettingsBtn") {
         const quickSettings = document.getElementById("quickSettings");
         if (quickSettings && quickSettings.style.display === "block") return;
+      }
+      if (selector === "#widgetsIcon") {
+        const widgetsMenu = document.getElementById("widgetsMenu");
+        if (widgetsMenu && widgetsMenu.style.display === "block") return;
       }
 
       clearTimeout(tooltipTimeout);
@@ -1169,6 +1214,10 @@ function handleTaskbarClick(appId, appTitle, appIcon) {
   if (!reg || reg.windows.length === 0) {
     if (appId === 'cmd') {
       if (typeof openTerminalWindow === 'function') openTerminalWindow();
+    } else if (appId === 'taskmgr' || appId === 'taskManager') {
+      if (typeof openTaskManagerWindow === 'function') openTaskManagerWindow();
+    } else if (appId === 'settings') {
+      if (typeof openSettingsWindow === 'function') openSettingsWindow();
     } else {
       createWindow(appTitle, appId, appIcon);
     }
@@ -1357,6 +1406,30 @@ function closeWindow(windowId) {
       }, 200);
     } else {
       delete windows[windowId];
+    }
+    return;
+  }
+
+  if (windowId === 'taskManager') {
+    if (typeof closeTaskManagerWindow === 'function') {
+      closeTaskManagerWindow();
+    } else {
+      detachTaskbarItem(windowId, win);
+      if (win) win.taskbarElement = null;
+      if (activeWindowId === 'taskManager') activeWindowId = null;
+      const tm = document.getElementById("taskManagerWindow");
+      if (tm) {
+        tm.classList.remove('tm-visible');
+        if (win) win.isMinimized = false;
+        delete windows['taskManager'];
+      }
+    }
+    return;
+  }
+
+  if (windowId === 'settings') {
+    if (typeof closeSettingsWindow === 'function') {
+      closeSettingsWindow();
     }
     return;
   }
@@ -1997,15 +2070,7 @@ function togglePinTaskbarItem(appId, appTitle, appIcon) {
     };
     
     setupTaskbarContextMenu(taskbarItem, appId, appTitle, appIcon);
-    
-    taskbarItem.addEventListener("mouseenter", () => {
-      clearTimeout(previewHideTimeout);
-      previewHoverTimeout = setTimeout(() => { showTaskbarPreview(appId, taskbarItem); }, 300);
-    });
-    taskbarItem.addEventListener("mouseleave", () => {
-      clearTimeout(previewHoverTimeout);
-      hideTaskbarPreview();
-    });
+    attachTaskbarItemHover(taskbarItem, appId, () => appTitle);
     
     if (taskbarApps) taskbarApps.appendChild(taskbarItem);
     

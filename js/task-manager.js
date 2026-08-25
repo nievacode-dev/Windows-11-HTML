@@ -85,7 +85,9 @@ window.closeTaskManagerWindow = function() {
     const el = tmWindow;
     const win = windows['taskManager'];
 
-    if (win && win.taskbarElement) {
+    if (typeof detachTaskbarItem === 'function') {
+        detachTaskbarItem('taskManager', win);
+    } else if (win && win.taskbarElement) {
         win.taskbarElement.remove();
         win.taskbarElement = null;
     }
@@ -106,6 +108,7 @@ window.closeTaskManagerWindow = function() {
         el.style.opacity = '';
         el.style.transform = '';
         if (win) win.isMinimized = false;
+        delete windows['taskManager'];
     }, 200);
 };
 

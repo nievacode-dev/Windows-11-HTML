@@ -727,7 +727,9 @@ body.light-mode .desktop-item.active .desktop-indicator {
     font-size: 12px;
     font-weight: 400;
     color: #ffffff;
-    white-space: nowrap;
+    white-space: pre-line;
+    text-align: center;
+    line-height: 1.35;
     pointer-events: none;
     z-index: 2147483647;
     opacity: 0;
