@@ -664,6 +664,8 @@ let taskbarRegistry = {}; // mapping appId -> { element: DOM, windows: [id1, id2
 
 let previewHoverTimeout = null;
 let previewHideTimeout = null;
+let previewLiveSyncTimer = null;
+let tooltipTimeout = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   const menu = document.getElementById("taskbarPreviewMenu");
@@ -671,15 +673,272 @@ document.addEventListener("DOMContentLoaded", () => {
     menu.addEventListener("mouseenter", () => clearTimeout(previewHideTimeout));
     menu.addEventListener("mouseleave", () => hideTaskbarPreview());
   }
+  setupTaskbarTooltips();
 });
+
+function getAppDisplayName(appId, appTitle, element) {
+  if (appTitle && appTitle !== "Application" && appTitle !== "Window") return appTitle;
+  if (element) {
+    if (element.dataset && element.dataset.appTitle) return element.dataset.appTitle;
+    const img = element.querySelector("img");
+    if (img && img.alt && img.alt !== "Application") return img.alt;
+  }
+  const knownTitles = {
+    "explorer": "File Explorer",
+    "edge": "Microsoft Edge",
+    "cmd": "Command Prompt",
+    "terminal": "Windows Terminal",
+    "taskmgr": "Task Manager",
+    "taskManager": "Task Manager",
+    "settings": "Settings",
+    "recycle-bin": "Recycle Bin",
+    "notepad": "Notepad",
+    "store": "Microsoft Store",
+    "vscode": "Visual Studio Code"
+  };
+  if (knownTitles[appId]) return knownTitles[appId];
+  return appId ? appId.charAt(0).toUpperCase() + appId.slice(1).replace(/-/g, " ") : "Application";
+}
+
+function showTaskbarTooltip(targetEl, text) {
+  const previewMenu = document.getElementById("taskbarPreviewMenu");
+  if (previewMenu && previewMenu.classList.contains("visible")) return;
+
+  let tooltip = document.getElementById("taskbarTooltip");
+  if (!tooltip) {
+    tooltip = document.createElement("div");
+    tooltip.id = "taskbarTooltip";
+    tooltip.className = "taskbar-tooltip";
+    document.body.appendChild(tooltip);
+  }
+
+  tooltip.textContent = text;
+
+  const rect = targetEl.getBoundingClientRect();
+  const centerX = rect.left + (rect.width / 2);
+
+  const halfWidth = (tooltip.offsetWidth || 70) / 2;
+  const padding = 8;
+  let clampedX = centerX;
+  if (clampedX - halfWidth < padding) clampedX = halfWidth + padding;
+  else if (clampedX + halfWidth > window.innerWidth - padding) clampedX = window.innerWidth - padding - halfWidth;
+
+  tooltip.style.left = `${clampedX}px`;
+  tooltip.classList.add("visible");
+}
+
+function hideTaskbarTooltip(instant = false) {
+  clearTimeout(tooltipTimeout);
+  tooltipTimeout = null;
+  const tooltip = document.getElementById("taskbarTooltip");
+  if (tooltip) {
+    tooltip.classList.remove("visible");
+  }
+}
+
+function renderLiveWindowPreview(win, container) {
+  container.innerHTML = "";
+  const origEl = win.element;
+  if (!origEl) return;
+
+  const viewport = document.createElement("div");
+  viewport.className = "tv-card-preview-viewport";
+
+  const scaleWrapper = document.createElement("div");
+  scaleWrapper.className = "tv-card-preview-scaler";
+
+  // Deep clone the window element
+  const clone = origEl.cloneNode(true);
+
+  // Strip IDs to avoid collision with live DOM
+  clone.removeAttribute("id");
+  clone.querySelectorAll("[id]").forEach(el => el.removeAttribute("id"));
+
+  // Strip transitional & hiding classes
+  clone.classList.remove("hidden", "minimizing", "opening", "closing", "animating");
+
+  // Enforce preview styles
+  clone.style.position = "absolute";
+  clone.style.top = "0";
+  clone.style.left = "0";
+  clone.style.margin = "0";
+  clone.style.transform = "none";
+  clone.style.display = "flex";
+  clone.style.flexDirection = "column";
+  clone.style.visibility = "visible";
+  clone.style.opacity = "1";
+  clone.style.pointerEvents = "none";
+  clone.style.userSelect = "none";
+  clone.style.boxShadow = "none";
+  clone.style.borderRadius = "6px";
+  clone.style.overflow = "hidden";
+
+  // Compute dimensions
+  let origW = origEl.offsetWidth;
+  let origH = origEl.offsetHeight;
+  if (!origW || origW < 100) origW = win.width || 800;
+  if (!origH || origH < 80) origH = win.height || 500;
+
+  clone.style.width = origW + "px";
+  clone.style.height = origH + "px";
+
+  // Copy input values
+  const origInputs = origEl.querySelectorAll("input, textarea, select");
+  const cloneInputs = clone.querySelectorAll("input, textarea, select");
+  for (let i = 0; i < origInputs.length; i++) {
+    if (cloneInputs[i]) {
+      cloneInputs[i].value = origInputs[i].value;
+      if (origInputs[i].checked !== undefined) {
+        cloneInputs[i].checked = origInputs[i].checked;
+      }
+    }
+  }
+
+  // Copy Canvas bitmap buffers (live Task Manager CPU/Memory charts)
+  const origCanvases = origEl.querySelectorAll("canvas");
+  const cloneCanvases = clone.querySelectorAll("canvas");
+  for (let i = 0; i < origCanvases.length; i++) {
+    const src = origCanvases[i];
+    const dst = cloneCanvases[i];
+    if (src && dst && src.width > 0 && src.height > 0) {
+      dst.width = src.width;
+      dst.height = src.height;
+      const ctx = dst.getContext("2d");
+      if (ctx) {
+        try {
+          ctx.drawImage(src, 0, 0);
+        } catch (e) {}
+      }
+    }
+  }
+
+  // Copy scroll positions
+  const origScrolls = origEl.querySelectorAll("*");
+  const cloneScrolls = clone.querySelectorAll("*");
+  for (let i = 0; i < origScrolls.length; i++) {
+    if (cloneScrolls[i]) {
+      if (origScrolls[i].scrollTop > 0) cloneScrolls[i].scrollTop = origScrolls[i].scrollTop;
+      if (origScrolls[i].scrollLeft > 0) cloneScrolls[i].scrollLeft = origScrolls[i].scrollLeft;
+    }
+  }
+
+  // Scaling calculation
+  const viewW = container.clientWidth || 206;
+  const viewH = container.clientHeight || 116;
+  const scale = Math.min(viewW / origW, viewH / origH);
+  const scaledW = origW * scale;
+  const scaledH = origH * scale;
+  const offsetX = Math.max(0, (viewW - scaledW) / 2);
+  const offsetY = Math.max(0, (viewH - scaledH) / 2);
+
+  scaleWrapper.style.width = origW + "px";
+  scaleWrapper.style.height = origH + "px";
+  scaleWrapper.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+  scaleWrapper.style.transformOrigin = "top left";
+
+  scaleWrapper.appendChild(clone);
+  viewport.appendChild(scaleWrapper);
+  container.appendChild(viewport);
+}
+
+function syncLivePreviews() {
+  const menu = document.getElementById("taskbarPreviewMenu");
+  if (!menu || !menu.classList.contains("visible")) {
+    if (previewLiveSyncTimer) {
+      clearInterval(previewLiveSyncTimer);
+      previewLiveSyncTimer = null;
+    }
+    return;
+  }
+
+  const cards = menu.querySelectorAll(".tv-card");
+  if (cards.length === 0) {
+    hideTaskbarPreview(true);
+    return;
+  }
+
+  cards.forEach(card => {
+    const windowId = card.dataset.windowId;
+    const win = windows[windowId];
+    if (!win || !win.element) return;
+
+    // Update title text if changed
+    const titleEl = card.querySelector(".tv-card-title");
+    let currentTitle = win.appTitle || "Window";
+    if (windowId === "cmd" && win.element) {
+      const activeTab = win.element.querySelector(".terminal-tab.active span");
+      if (activeTab && activeTab.textContent) currentTitle = activeTab.textContent;
+    }
+    if (titleEl && titleEl.textContent !== currentTitle) {
+      titleEl.textContent = currentTitle;
+    }
+
+    // Sync live canvas contents
+    const origCanvases = win.element.querySelectorAll("canvas");
+    const cloneCanvases = card.querySelectorAll("canvas");
+    if (origCanvases.length > 0 && origCanvases.length === cloneCanvases.length) {
+      for (let i = 0; i < origCanvases.length; i++) {
+        const src = origCanvases[i];
+        const dst = cloneCanvases[i];
+        if (src && dst && src.width > 0 && src.height > 0) {
+          if (dst.width !== src.width) dst.width = src.width;
+          if (dst.height !== src.height) dst.height = src.height;
+          const ctx = dst.getContext("2d");
+          if (ctx) {
+            try {
+              ctx.clearRect(0, 0, dst.width, dst.height);
+              ctx.drawImage(src, 0, 0);
+            } catch (e) {}
+          }
+        }
+      }
+    }
+
+    // Sync Terminal content
+    if (windowId === "cmd") {
+      const origBody = win.element.querySelector(".terminal-body");
+      const cloneBody = card.querySelector(".terminal-body");
+      if (origBody && cloneBody && origBody.innerHTML !== cloneBody.innerHTML) {
+        cloneBody.innerHTML = origBody.innerHTML;
+      }
+    }
+  });
+}
+
+function positionTaskbarPreview(taskbarElement) {
+  const menu = document.getElementById("taskbarPreviewMenu");
+  if (!menu || !taskbarElement) return;
+
+  const rect = taskbarElement.getBoundingClientRect();
+  const taskbarCenter = rect.left + (rect.width / 2);
+
+  const menuWidth = menu.offsetWidth || (menu.children.length * 228 + 16);
+  const halfWidth = menuWidth / 2;
+  const padding = 10;
+
+  let leftPos = taskbarCenter;
+  if (leftPos - halfWidth < padding) {
+    leftPos = halfWidth + padding;
+  } else if (leftPos + halfWidth > window.innerWidth - padding) {
+    leftPos = window.innerWidth - padding - halfWidth;
+  }
+
+  menu.style.left = `${leftPos}px`;
+}
 
 function showTaskbarPreview(appId, taskbarElement) {
   const reg = taskbarRegistry[appId];
-  if (!reg || reg.windows.length === 0) return;
+  if (!reg || !reg.windows || reg.windows.length === 0) {
+    hideTaskbarPreview(true);
+    return;
+  }
+
+  hideTaskbarTooltip(true);
 
   const menu = document.getElementById("taskbarPreviewMenu");
   if (!menu) return;
 
+  clearTimeout(previewHideTimeout);
   menu.innerHTML = "";
 
   reg.windows.forEach(windowId => {
@@ -688,81 +947,195 @@ function showTaskbarPreview(appId, taskbarElement) {
 
     const card = document.createElement("div");
     card.className = "tv-card";
-    
+    card.dataset.windowId = windowId;
+
     // Header
     const header = document.createElement("div");
     header.className = "tv-card-header";
-    
+
     const titleContainer = document.createElement("div");
     titleContainer.className = "tv-card-title-container";
-    
+
     if (win.appIcon) {
       const icon = document.createElement("img");
       icon.src = win.appIcon;
       icon.className = "tv-card-icon";
       titleContainer.appendChild(icon);
     }
-    
+
+    let currentTitle = win.appTitle || "Window";
+    if (windowId === "cmd" && win.element) {
+      const activeTab = win.element.querySelector(".terminal-tab.active span");
+      if (activeTab && activeTab.textContent) currentTitle = activeTab.textContent;
+    }
+
     const title = document.createElement("div");
     title.className = "tv-card-title";
-    title.textContent = win.appTitle || "Window";
+    title.textContent = currentTitle;
     titleContainer.appendChild(title);
-    
+
     const closeBtn = document.createElement("div");
     closeBtn.className = "tv-card-close";
     closeBtn.textContent = "×";
+    closeBtn.title = "Close";
     closeBtn.onclick = (e) => {
       e.stopPropagation();
       closeWindow(windowId);
       card.remove();
-      if (menu.children.length === 0) hideTaskbarPreview(true);
+      if (menu.children.length === 0) {
+        hideTaskbarPreview(true);
+      } else {
+        positionTaskbarPreview(taskbarElement);
+      }
     };
-    
+
     header.appendChild(titleContainer);
     header.appendChild(closeBtn);
-    
-    // Fake window preview block
-    const preview = document.createElement("div");
-    preview.className = "tv-card-preview";
-    if (win.appIcon) {
-      const pIcon = document.createElement("img");
-      pIcon.src = win.appIcon;
-      pIcon.style.width = "48px";
-      pIcon.style.height = "48px";
-      pIcon.style.filter = "drop-shadow(0 4px 12px rgba(0,0,0,0.5))";
-      preview.appendChild(pIcon);
-    }
-    
+
+    // Realtime window preview block
+    const previewBox = document.createElement("div");
+    previewBox.className = "tv-card-preview";
+    renderLiveWindowPreview(win, previewBox);
+
     card.appendChild(header);
-    card.appendChild(preview);
-    
+    card.appendChild(previewBox);
+
     card.onclick = (e) => {
       e.stopPropagation();
       if (win.isMinimized) minimizeWindow(windowId);
       updateZIndex(windowId);
       hideTaskbarPreview(true);
     };
-    
+
     menu.appendChild(card);
   });
 
-  const rect = taskbarElement.getBoundingClientRect();
-  const taskbarCenter = rect.left + (rect.width / 2);
-  menu.style.left = `${taskbarCenter}px`;
-
+  positionTaskbarPreview(taskbarElement);
   menu.classList.add("visible");
+
+  if (!previewLiveSyncTimer) {
+    previewLiveSyncTimer = setInterval(syncLivePreviews, 60);
+  }
 }
 
 function hideTaskbarPreview(instant = false) {
   const menu = document.getElementById("taskbarPreviewMenu");
   if (!menu) return;
+  if (previewLiveSyncTimer) {
+    clearInterval(previewLiveSyncTimer);
+    previewLiveSyncTimer = null;
+  }
   if (instant) {
+    clearTimeout(previewHideTimeout);
     menu.classList.remove("visible");
   } else {
+    clearTimeout(previewHideTimeout);
     previewHideTimeout = setTimeout(() => {
       menu.classList.remove("visible");
     }, 150);
   }
+}
+
+function attachTaskbarItemHover(taskbarItem, appId, appTitleGetter) {
+  taskbarItem.addEventListener("mouseenter", () => {
+    clearTimeout(previewHideTimeout);
+    clearTimeout(previewHoverTimeout);
+    clearTimeout(tooltipTimeout);
+
+    const reg = taskbarRegistry[appId];
+    const hasOpenWindows = reg && reg.windows && reg.windows.length > 0;
+
+    const isAnyActive =
+      (document.getElementById("taskbarTooltip") && document.getElementById("taskbarTooltip").classList.contains("visible")) ||
+      (document.getElementById("taskbarPreviewMenu") && document.getElementById("taskbarPreviewMenu").classList.contains("visible"));
+
+    const delay = isAnyActive ? 40 : 260;
+
+    if (hasOpenWindows) {
+      hideTaskbarTooltip(true);
+      previewHoverTimeout = setTimeout(() => {
+        showTaskbarPreview(appId, taskbarItem);
+      }, delay);
+    } else {
+      hideTaskbarPreview(true);
+      tooltipTimeout = setTimeout(() => {
+        const rawTitle = typeof appTitleGetter === "function" ? appTitleGetter() : appTitleGetter;
+        const title = getAppDisplayName(appId, rawTitle, taskbarItem);
+        showTaskbarTooltip(taskbarItem, title);
+      }, delay);
+    }
+  });
+
+  taskbarItem.addEventListener("mouseleave", () => {
+    clearTimeout(previewHoverTimeout);
+    clearTimeout(tooltipTimeout);
+    hideTaskbarPreview();
+    hideTaskbarTooltip();
+  });
+
+  taskbarItem.addEventListener("click", () => {
+    hideTaskbarTooltip(true);
+  });
+}
+
+function setupTaskbarTooltips() {
+  const items = [
+    { selector: "#startLogo", text: "Start" },
+    { selector: "#searchBtn", text: "Search" },
+    { selector: "#taskViewBtn", text: "Task View" },
+    { selector: "#widgetsIcon", text: "Widgets" },
+    { selector: "#trayBtn", text: "Show hidden icons" },
+    { selector: "#quickSettingsBtn", text: "Internet, sound, battery" },
+    {
+      selector: "#dateTimes",
+      text: () => {
+        const d = new Date();
+        return d.toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+      }
+    }
+  ];
+
+  items.forEach(({ selector, text }) => {
+    const el = document.querySelector(selector);
+    if (!el || el.dataset.tooltipAttached === "true") return;
+    el.dataset.tooltipAttached = "true";
+
+    el.addEventListener("mouseenter", () => {
+      if (selector === "#startLogo") {
+        const startMenu = document.getElementById("startMenu");
+        if (startMenu && startMenu.classList.contains("menu-open")) return;
+      }
+      if (selector === "#searchBtn") {
+        const searchMenu = document.getElementById("searchMenu");
+        if (searchMenu && searchMenu.classList.contains("menu-open")) return;
+      }
+      if (selector === "#quickSettingsBtn") {
+        const quickSettings = document.getElementById("quickSettings");
+        if (quickSettings && quickSettings.style.display === "block") return;
+      }
+
+      clearTimeout(tooltipTimeout);
+      const isAnyActive =
+        (document.getElementById("taskbarTooltip") && document.getElementById("taskbarTooltip").classList.contains("visible")) ||
+        (document.getElementById("taskbarPreviewMenu") && document.getElementById("taskbarPreviewMenu").classList.contains("visible"));
+
+      const delay = isAnyActive ? 40 : 260;
+      tooltipTimeout = setTimeout(() => {
+        hideTaskbarPreview(true);
+        const str = typeof text === "function" ? text() : text;
+        showTaskbarTooltip(el, str);
+      }, delay);
+    });
+
+    el.addEventListener("mouseleave", () => {
+      clearTimeout(tooltipTimeout);
+      hideTaskbarTooltip();
+    });
+
+    el.addEventListener("click", () => {
+      hideTaskbarTooltip(true);
+    });
+  });
 }
 
 function detachTaskbarItem(windowId, win) {
@@ -776,16 +1149,17 @@ function detachTaskbarItem(windowId, win) {
         reg.element.remove();
         delete taskbarRegistry[win.appId];
       }
+      hideTaskbarPreview(true);
     } else {
       if (reg.windows.length === 1) reg.element.classList.remove("stacked");
       if (activeWindowId === windowId) {
         updateZIndex(reg.windows[0]);
       }
-    }
-    // Update preview if it's currently showing this app
-    const menu = document.getElementById("taskbarPreviewMenu");
-    if (menu && menu.classList.contains("visible") && reg.windows.length > 0) {
-      showTaskbarPreview(win.appId, reg.element);
+      // Update preview if it's currently showing this app
+      const menu = document.getElementById("taskbarPreviewMenu");
+      if (menu && menu.classList.contains("visible")) {
+        showTaskbarPreview(win.appId, reg.element);
+      }
     }
   }
 }
@@ -827,6 +1201,8 @@ function createTaskbarItem(windowId) {
     : win.appTitle.toLowerCase().replace(/\s+/g, '-');
   if (windowId === 'edge') appId = 'edge';
   if (windowId === 'cmd') appId = 'cmd';
+  if (windowId === 'taskManager') appId = 'taskmgr';
+  if (windowId === 'settings') appId = 'settings';
   
   win.appId = appId;
   if (win.element) win.element.dataset.appId = appId;
@@ -854,18 +1230,7 @@ function createTaskbarItem(windowId) {
     };
 
     setupTaskbarContextMenu(taskbarItem, appId, win.appTitle, win.appIcon);
-
-    taskbarItem.addEventListener("mouseenter", () => {
-      clearTimeout(previewHideTimeout);
-      previewHoverTimeout = setTimeout(() => {
-        showTaskbarPreview(appId, taskbarItem);
-      }, 300);
-    });
-
-    taskbarItem.addEventListener("mouseleave", () => {
-      clearTimeout(previewHoverTimeout);
-      hideTaskbarPreview();
-    });
+    attachTaskbarItemHover(taskbarItem, appId, () => win.appTitle);
 
     if (taskbarApps) taskbarApps.appendChild(taskbarItem);
     
@@ -1125,19 +1490,9 @@ function initializeTaskbarApps() {
     });
     
     setupTaskbarContextMenu(appEl, appId, appTitle, appIcon);
-    
-    appEl.addEventListener("mouseenter", () => {
-      clearTimeout(previewHideTimeout);
-      previewHoverTimeout = setTimeout(() => {
-        showTaskbarPreview(appId, appEl);
-      }, 300);
-    });
-
-    appEl.addEventListener("mouseleave", () => {
-      clearTimeout(previewHoverTimeout);
-      hideTaskbarPreview();
-    });
+    attachTaskbarItemHover(appEl, appId, () => appTitle);
   });
+  setupTaskbarTooltips();
 }
 
 function removeDesktop(id) {

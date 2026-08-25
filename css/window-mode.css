@@ -709,27 +709,62 @@ body.light-mode .desktop-item.active .desktop-indicator {
 }
 
 /* ============================================================
-   Taskbar Hover Preview Menu
+   Taskbar Hover Tooltip & Preview Menu
    ============================================================ */
+
+.taskbar-tooltip {
+    position: fixed;
+    bottom: 58px;
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background-color: rgba(36, 36, 36, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    padding: 5px 11px;
+    font-family: "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    color: #ffffff;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 2147483647;
+    opacity: 0;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    transition: opacity 0.15s cubic-bezier(0.1, 0.9, 0.2, 1), transform 0.15s cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+
+.taskbar-tooltip.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+body.light-mode .taskbar-tooltip {
+    background-color: rgba(245, 245, 245, 0.94);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #1a1a1a;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
 
 .taskbar-preview-menu {
     position: fixed;
-    bottom: 60px; /* Right above taskbar */
+    bottom: 58px; /* Right above taskbar */
     left: 50%;
-    transform: translateX(-50%) translateY(10px);
-    background-color: rgba(35, 35, 35, 0.85);
+    transform: translateX(-50%) translateY(8px);
+    background-color: rgba(32, 32, 32, 0.88);
     backdrop-filter: blur(40px);
     -webkit-backdrop-filter: blur(40px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
-    padding: 10px;
+    padding: 8px;
     display: flex;
-    gap: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    z-index: 9999;
+    gap: 8px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+    z-index: 2147483647;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
+    transition: opacity 0.18s cubic-bezier(0.1, 0.9, 0.2, 1), transform 0.18s cubic-bezier(0.1, 0.9, 0.2, 1);
 }
 
 .taskbar-preview-menu.visible {
@@ -739,39 +774,127 @@ body.light-mode .desktop-item.active .desktop-indicator {
 }
 
 body.light-mode .taskbar-preview-menu {
-    background-color: rgba(243, 243, 243, 0.85);
+    background-color: rgba(242, 242, 242, 0.9);
     border-color: rgba(0, 0, 0, 0.1);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.15);
 }
 
-/* We reuse .tv-card inside the preview menu, but scale it down a bit */
+/* We reuse .tv-card inside the preview menu, styled for authentic Windows 11 preview */
 .taskbar-preview-menu .tv-card {
     width: 220px;
-    height: 140px;
+    height: 152px;
     border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: none;
+    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.taskbar-preview-menu .tv-card:hover {
+    transform: none;
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 
 .taskbar-preview-menu .tv-card-header {
     height: 28px;
     background-color: transparent;
     border-bottom: none;
-    padding: 0 8px;
+    padding: 0 6px 0 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .taskbar-preview-menu .tv-card-title {
-    font-size: 11px;
+    font-size: 11.5px;
+    font-weight: 400;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.taskbar-preview-menu .tv-card-close {
+    width: 20px;
+    height: 20px;
+    font-size: 14px;
+    border-radius: 4px;
+    opacity: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #ffffff;
+    cursor: pointer;
+    transition: opacity 0.15s ease, background-color 0.1s ease;
+}
+
+.taskbar-preview-menu .tv-card:hover .tv-card-close {
+    opacity: 0.85;
+}
+
+.taskbar-preview-menu .tv-card-close:hover {
+    opacity: 1;
+    background-color: #c42b1c;
+    color: #ffffff;
 }
 
 .taskbar-preview-menu .tv-card-preview {
-    background-color: rgba(0, 0, 0, 0.4);
-    margin: 0 8px 8px 8px;
+    background-color: rgba(18, 18, 18, 0.95);
+    margin: 0 6px 6px 6px;
     border-radius: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    flex-grow: 1;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tv-card-preview-viewport {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    background: transparent;
+}
+
+.tv-card-preview-scaler {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: top left;
+    pointer-events: none;
+    user-select: none;
+}
+
+body.light-mode .taskbar-preview-menu .tv-card {
+    background-color: rgba(255, 255, 255, 0.5);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .taskbar-preview-menu .tv-card:hover {
+    background-color: rgba(255, 255, 255, 0.85);
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+body.light-mode .taskbar-preview-menu .tv-card-title {
+    color: #1a1a1a;
+}
+
+body.light-mode .taskbar-preview-menu .tv-card-close {
+    color: #1a1a1a;
 }
 
 body.light-mode .taskbar-preview-menu .tv-card-preview {
-    background-color: rgba(255, 255, 255, 0.6);
-    border-color: rgba(0, 0, 0, 0.05);
+    background-color: rgba(255, 255, 255, 0.85);
+    border-color: rgba(0, 0, 0, 0.08);
 }
 
 /* ============================================================

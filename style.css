@@ -2810,6 +2810,6 @@ body.search-logo-only .search-results-container {
 }
 
 /* Force Menus to stay on top of everything */
-#startMenu, #searchMenu, #quickSettings, #widgetsMenu, #trayContent, #taskbarPreviewMenu, #snapLayoutMenu, .taskbar {
+#startMenu, #searchMenu, #quickSettings, #widgetsMenu, #trayContent, #taskbarPreviewMenu, #snapLayoutMenu, #taskbarTooltip, .taskbar {
     z-index: 2147483647 !important;
 }
